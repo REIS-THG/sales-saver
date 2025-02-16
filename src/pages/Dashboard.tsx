@@ -3,51 +3,16 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import type { Deal } from "@/types/types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import {
-  CheckCircle2,
-  AlertCircle,
-  Clock,
-  Ban,
-  LogOut,
-  Plus,
-} from "lucide-react";
+import { LogOut } from "lucide-react";
+import CreateDealForm from "@/components/deals/CreateDealForm";
+import DealCard from "@/components/deals/DealCard";
 
 const Dashboard = () => {
   const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [newDeal, setNewDeal] = useState({
-    deal_name: "",
-    company_name: "",
-    amount: "",
-    status: "open" as Deal["status"],
-    contact_first_name: "",
-    contact_last_name: "",
-    contact_email: "",
-    source: "",
-    start_date: new Date().toISOString().split('T')[0],
-    expected_close_date: "",
-  });
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -102,134 +67,6 @@ const Dashboard = () => {
     fetchDeals();
   }, []);
 
-  const validateEmail = (email: string) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  };
-
-  const validateDates = () => {
-    const start = new Date(newDeal.start_date);
-    const end = new Date(newDeal.expected_close_date);
-    const today = new Date();
-
-    if (start > end) {
-      return "Start date cannot be after expected close date";
-    }
-    if (start < today && start.toDateString() !== today.toDateString()) {
-      return "Start date cannot be in the past";
-    }
-    return null;
-  };
-
-  const formatAmount = (value: string) => {
-    // Remove all non-numeric characters except decimal point
-    const number = value.replace(/[^\d.]/g, '');
-    // Ensure only one decimal point
-    const parts = number.split('.');
-    const wholePart = parts[0];
-    const decimalPart = parts[1] ? '.' + parts[1].slice(0, 2) : '';
-    
-    // Format with commas
-    const formatted = Number(wholePart).toLocaleString('en-US') + decimalPart;
-    return formatted;
-  };
-
-  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const formatted = formatAmount(e.target.value);
-    setNewDeal({ ...newDeal, amount: formatted });
-  };
-
-  const handleCreateDeal = async () => {
-    try {
-      setIsSubmitting(true);
-      setError(null);
-
-      // Validate email
-      if (!validateEmail(newDeal.contact_email)) {
-        throw new Error("Please enter a valid email address");
-      }
-
-      // Validate dates
-      const dateError = validateDates();
-      if (dateError) {
-        throw new Error(dateError);
-      }
-
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error("No authenticated user found");
-      }
-
-      // Remove commas and convert to number for storage
-      const amountAsNumber = parseFloat(newDeal.amount.replace(/,/g, ''));
-      if (isNaN(amountAsNumber)) {
-        throw new Error("Please enter a valid amount");
-      }
-
-      const { error: insertError } = await supabase.from("deals").insert([
-        {
-          ...newDeal,
-          amount: amountAsNumber,
-          health_score: 50,
-          user_id: user.id,
-          custom_fields: null,
-        },
-      ]);
-
-      if (insertError) throw insertError;
-
-      toast({
-        title: "Success",
-        description: "Deal created successfully",
-      });
-
-      setNewDeal({
-        deal_name: "",
-        company_name: "",
-        amount: "",
-        status: "open",
-        contact_first_name: "",
-        contact_last_name: "",
-        contact_email: "",
-        source: "",
-        start_date: new Date().toISOString().split('T')[0],
-        expected_close_date: "",
-      });
-      
-      fetchDeals();
-    } catch (err) {
-      console.error("Error creating deal:", err);
-      const errorMessage = err instanceof Error ? err.message : "Failed to create deal";
-      setError(errorMessage);
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const getStatusIcon = (status: Deal["status"]) => {
-    switch (status) {
-      case "won":
-        return <CheckCircle2 className="text-green-500" />;
-      case "lost":
-        return <Ban className="text-red-500" />;
-      case "stalled":
-        return <AlertCircle className="text-yellow-500" />;
-      default:
-        return <Clock className="text-blue-500" />;
-    }
-  };
-
-  const getHealthScoreColor = (score: number) => {
-    if (score >= 70) return "bg-green-100 text-green-800";
-    if (score >= 40) return "bg-yellow-100 text-yellow-800";
-    return "bg-red-100 text-red-800";
-  };
-
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     navigate("/auth");
@@ -260,156 +97,7 @@ const Dashboard = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-900">Sales Dashboard</h1>
           <div className="flex items-center gap-4">
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button>
-                  <Plus className="h-5 w-5 mr-2" />
-                  Create Deal
-                </Button>
-              </SheetTrigger>
-              <SheetContent className="overflow-y-auto">
-                <SheetHeader>
-                  <SheetTitle>Create New Deal</SheetTitle>
-                </SheetHeader>
-                <div className="space-y-4 mt-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="deal_name">Deal Name</Label>
-                    <Input
-                      id="deal_name"
-                      value={newDeal.deal_name}
-                      onChange={(e) =>
-                        setNewDeal({ ...newDeal, deal_name: e.target.value })
-                      }
-                      placeholder="Enter deal name"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="company_name">Company Name</Label>
-                    <Input
-                      id="company_name"
-                      value={newDeal.company_name}
-                      onChange={(e) =>
-                        setNewDeal({ ...newDeal, company_name: e.target.value })
-                      }
-                      placeholder="Enter company name"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="amount">Amount ($)</Label>
-                    <Input
-                      id="amount"
-                      value={newDeal.amount}
-                      onChange={handleAmountChange}
-                      placeholder="Enter deal amount"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="contact_first_name">Contact First Name</Label>
-                      <Input
-                        id="contact_first_name"
-                        value={newDeal.contact_first_name}
-                        onChange={(e) =>
-                          setNewDeal({ ...newDeal, contact_first_name: e.target.value })
-                        }
-                        placeholder="First name"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="contact_last_name">Contact Last Name</Label>
-                      <Input
-                        id="contact_last_name"
-                        value={newDeal.contact_last_name}
-                        onChange={(e) =>
-                          setNewDeal({ ...newDeal, contact_last_name: e.target.value })
-                        }
-                        placeholder="Last name"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="contact_email">Contact Email</Label>
-                    <Input
-                      id="contact_email"
-                      type="email"
-                      value={newDeal.contact_email}
-                      onChange={(e) =>
-                        setNewDeal({ ...newDeal, contact_email: e.target.value })
-                      }
-                      placeholder="contact@company.com"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="source">Deal Source</Label>
-                    <Input
-                      id="source"
-                      value={newDeal.source}
-                      onChange={(e) =>
-                        setNewDeal({ ...newDeal, source: e.target.value })
-                      }
-                      placeholder="How did you find this deal?"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="start_date">Start Date</Label>
-                      <Input
-                        id="start_date"
-                        type="date"
-                        value={newDeal.start_date}
-                        onChange={(e) =>
-                          setNewDeal({ ...newDeal, start_date: e.target.value })
-                        }
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="expected_close_date">Expected Close Date</Label>
-                      <Input
-                        id="expected_close_date"
-                        type="date"
-                        value={newDeal.expected_close_date}
-                        onChange={(e) =>
-                          setNewDeal({ ...newDeal, expected_close_date: e.target.value })
-                        }
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="status">Status</Label>
-                    <Select
-                      value={newDeal.status}
-                      onValueChange={(value: Deal["status"]) =>
-                        setNewDeal({ ...newDeal, status: value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="open">Open</SelectItem>
-                        <SelectItem value="won">Won</SelectItem>
-                        <SelectItem value="lost">Lost</SelectItem>
-                        <SelectItem value="stalled">Stalled</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <Button
-                    className="w-full mt-4"
-                    onClick={handleCreateDeal}
-                    disabled={
-                      !newDeal.deal_name ||
-                      !newDeal.company_name ||
-                      !newDeal.amount ||
-                      !newDeal.contact_first_name ||
-                      !newDeal.contact_last_name ||
-                      !newDeal.contact_email
-                    }
-                  >
-                    Create Deal
-                  </Button>
-                </div>
-              </SheetContent>
-            </Sheet>
+            <CreateDealForm onDealCreated={fetchDeals} />
             <Button variant="ghost" onClick={handleSignOut}>
               <LogOut className="h-5 w-5 mr-2" />
               Sign Out
@@ -421,44 +109,7 @@ const Dashboard = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {deals.map((deal) => (
-            <Card key={deal.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-lg">{deal.deal_name}</CardTitle>
-                {getStatusIcon(deal.status)}
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm text-gray-500">Company</p>
-                    <p className="font-medium">{deal.company_name}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Amount</p>
-                    <p className="font-medium">
-                      ${Number(deal.amount).toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Contact</p>
-                    <p className="font-medium">{`${deal.contact_first_name} ${deal.contact_last_name}`}</p>
-                    <p className="text-sm text-gray-500">{deal.contact_email}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Health Score</p>
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getHealthScoreColor(
-                        deal.health_score
-                      )}`}
-                    >
-                      {deal.health_score}%
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <DealCard key={deal.id} deal={deal} />
           ))}
         </div>
       </main>
