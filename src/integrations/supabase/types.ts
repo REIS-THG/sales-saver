@@ -9,6 +9,48 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      bulk_imports: {
+        Row: {
+          created_at: string | null
+          error_count: number | null
+          errors: Json | null
+          filename: string
+          id: string
+          processed_records: number | null
+          status: string
+          success_count: number | null
+          total_records: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          error_count?: number | null
+          errors?: Json | null
+          filename: string
+          id?: string
+          processed_records?: number | null
+          status?: string
+          success_count?: number | null
+          total_records?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          error_count?: number | null
+          errors?: Json | null
+          filename?: string
+          id?: string
+          processed_records?: number | null
+          status?: string
+          success_count?: number | null
+          total_records?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       custom_fields: {
         Row: {
           created_at: string | null
@@ -43,6 +85,7 @@ export type Database = {
         Row: {
           amount: number
           company_name: string
+          company_url: string | null
           contact_email: string | null
           contact_first_name: string | null
           contact_last_name: string | null
@@ -54,7 +97,7 @@ export type Database = {
           id: string
           last_contacted: string | null
           next_action: string | null
-          source: string | null
+          notes: string | null
           start_date: string | null
           status: string | null
           updated_at: string | null
@@ -63,6 +106,7 @@ export type Database = {
         Insert: {
           amount: number
           company_name: string
+          company_url?: string | null
           contact_email?: string | null
           contact_first_name?: string | null
           contact_last_name?: string | null
@@ -74,7 +118,7 @@ export type Database = {
           id?: string
           last_contacted?: string | null
           next_action?: string | null
-          source?: string | null
+          notes?: string | null
           start_date?: string | null
           status?: string | null
           updated_at?: string | null
@@ -83,6 +127,7 @@ export type Database = {
         Update: {
           amount?: number
           company_name?: string
+          company_url?: string | null
           contact_email?: string | null
           contact_first_name?: string | null
           contact_last_name?: string | null
@@ -94,7 +139,7 @@ export type Database = {
           id?: string
           last_contacted?: string | null
           next_action?: string | null
-          source?: string | null
+          notes?: string | null
           start_date?: string | null
           status?: string | null
           updated_at?: string | null

@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,6 +9,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
+import Settings from "./pages/Settings";
 
 const queryClient = new QueryClient();
 
@@ -54,6 +54,16 @@ const App = () => {
               element={
                 isAuthenticated ? (
                   <Dashboard />
+                ) : (
+                  <Navigate to="/auth" replace />
+                )
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                isAuthenticated ? (
+                  <Settings />
                 ) : (
                   <Navigate to="/auth" replace />
                 )

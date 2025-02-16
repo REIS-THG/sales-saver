@@ -21,6 +21,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Plus } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 
 const CreateDealForm = ({ onDealCreated }: { onDealCreated: () => void }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -28,12 +29,13 @@ const CreateDealForm = ({ onDealCreated }: { onDealCreated: () => void }) => {
   const [newDeal, setNewDeal] = useState({
     deal_name: "",
     company_name: "",
+    company_url: "",
     amount: "",
     status: "open" as Deal["status"],
     contact_first_name: "",
     contact_last_name: "",
     contact_email: "",
-    source: "",
+    notes: "",
     start_date: new Date().toISOString().split('T')[0],
     expected_close_date: "",
   });
@@ -118,12 +120,13 @@ const CreateDealForm = ({ onDealCreated }: { onDealCreated: () => void }) => {
       setNewDeal({
         deal_name: "",
         company_name: "",
+        company_url: "",
         amount: "",
         status: "open",
         contact_first_name: "",
         contact_last_name: "",
         contact_email: "",
-        source: "",
+        notes: "",
         start_date: new Date().toISOString().split('T')[0],
         expected_close_date: "",
       });
@@ -179,6 +182,18 @@ const CreateDealForm = ({ onDealCreated }: { onDealCreated: () => void }) => {
             />
           </div>
           <div className="space-y-2">
+            <Label htmlFor="company_url">Company URL</Label>
+            <Input
+              id="company_url"
+              type="url"
+              value={newDeal.company_url}
+              onChange={(e) =>
+                setNewDeal({ ...newDeal, company_url: e.target.value })
+              }
+              placeholder="https://example.com"
+            />
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="amount">Amount ($)</Label>
             <Input
               id="amount"
@@ -224,14 +239,15 @@ const CreateDealForm = ({ onDealCreated }: { onDealCreated: () => void }) => {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="source">Deal Source</Label>
-            <Input
-              id="source"
-              value={newDeal.source}
+            <Label htmlFor="notes">Notes</Label>
+            <Textarea
+              id="notes"
+              value={newDeal.notes}
               onChange={(e) =>
-                setNewDeal({ ...newDeal, source: e.target.value })
+                setNewDeal({ ...newDeal, notes: e.target.value })
               }
-              placeholder="How did you find this deal?"
+              placeholder="Add any notes about this deal..."
+              className="min-h-[100px]"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -280,14 +296,7 @@ const CreateDealForm = ({ onDealCreated }: { onDealCreated: () => void }) => {
           <Button
             className="w-full mt-4"
             onClick={handleCreateDeal}
-            disabled={
-              !newDeal.deal_name ||
-              !newDeal.company_name ||
-              !newDeal.amount ||
-              !newDeal.contact_first_name ||
-              !newDeal.contact_last_name ||
-              !newDeal.contact_email
-            }
+            disabled={isSubmitting || !newDeal.deal_name || !newDeal.company_name || !newDeal.amount}
           >
             Create Deal
           </Button>
