@@ -26,7 +26,7 @@ export interface Deal {
   source: string;
   start_date: string;
   expected_close_date: string;
-  custom_fields?: Record<string, string | number | boolean>;
+  custom_fields?: Record<string, string | number | boolean> | null;
 }
 
 export interface FollowUp {

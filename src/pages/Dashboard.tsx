@@ -61,17 +61,24 @@ const Dashboard = () => {
     }
 
     const typedDeals = (dealsData || []).map((deal) => ({
-      ...deal,
+      id: deal.id,
+      user_id: deal.user_id,
+      deal_name: deal.deal_name,
+      company_name: deal.company_name,
+      amount: deal.amount,
       status: deal.status as Deal["status"],
+      health_score: deal.health_score || 50,
       last_contacted: deal.last_contacted || null,
       next_action: deal.next_action || null,
+      created_at: deal.created_at,
+      updated_at: deal.updated_at,
       contact_first_name: deal.contact_first_name || "",
       contact_last_name: deal.contact_last_name || "",
       contact_email: deal.contact_email || "",
       source: deal.source || "",
       start_date: deal.start_date || new Date().toISOString(),
       expected_close_date: deal.expected_close_date || "",
-      custom_fields: deal.custom_fields || {},
+      custom_fields: deal.custom_fields as Record<string, string | number | boolean> | null,
     }));
 
     setDeals(typedDeals);
