@@ -19,9 +19,18 @@ const Dashboard = () => {
   const fetchDeals = async () => {
     try {
       setError(null);
+      const { data: authData } = await supabase.auth.getUser();
+      const userId = authData.user?.id;
+
+      if (!userId) {
+        navigate("/auth");
+        return;
+      }
+
       const { data: dealsData, error: fetchError } = await supabase
         .from("deals")
         .select("*")
+        .eq("user_id", userId)
         .order("created_at", { ascending: false });
 
       if (fetchError) {
