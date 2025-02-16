@@ -81,14 +81,59 @@ const Settings = () => {
   };
 
   const fetchUserPreferences = async () => {
-    const { data, error } = await supabase
+    const { data: authData } = await supabase.auth.getUser();
+    const userId = authData.user?.id;
+
+    if (!userId) {
+      toast({
+        title: "Error",
+        description: "Not authenticated",
+        variant: "destructive",
+      });
+      navigate("/auth");
+      return;
+    }
+
+    const { data: userData, error: fetchError } = await supabase
       .from("users")
       .select("theme, default_deal_view")
-      .single();
+      .eq("user_id", userId)
+      .maybeSingle();
 
-    if (!error && data) {
-      setTheme(data.theme || "light");
-      setDefaultView(data.default_deal_view || "table");
+    if (fetchError) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch user preferences",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!userData) {
+      const { error: createError } = await supabase
+        .from("users")
+        .insert({
+          user_id: userId,
+          full_name: authData.user?.email?.split('@')[0] || 'User',
+          theme: 'light',
+          default_deal_view: 'table',
+          role: 'sales_rep'
+        });
+
+      if (createError) {
+        toast({
+          title: "Error",
+          description: "Failed to create user preferences",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setTheme('light');
+      setDefaultView('table');
+    } else {
+      setTheme(userData.theme || "light");
+      setDefaultView(userData.default_deal_view || "table");
     }
   };
 
@@ -176,12 +221,19 @@ const Settings = () => {
     const { data: userData } = await supabase.auth.getUser();
     const userId = userData.user?.id;
 
-    if (!userId) return;
+    if (!userId) {
+      toast({
+        title: "Error",
+        description: "Not authenticated",
+        variant: "destructive",
+      });
+      return;
+    }
 
     const { error } = await supabase
       .from("users")
       .update({ theme: newTheme })
-      .eq("id", userId);
+      .eq("user_id", userId);
 
     if (error) {
       toast({
@@ -202,12 +254,19 @@ const Settings = () => {
     const { data: userData } = await supabase.auth.getUser();
     const userId = userData.user?.id;
 
-    if (!userId) return;
+    if (!userId) {
+      toast({
+        title: "Error",
+        description: "Not authenticated",
+        variant: "destructive",
+      });
+      return;
+    }
 
     const { error } = await supabase
       .from("users")
       .update({ default_deal_view: newView })
-      .eq("id", userId);
+      .eq("user_id", userId);
 
     if (error) {
       toast({
