@@ -20,6 +20,13 @@ export interface Deal {
   next_action: string | null;
   created_at?: string;
   updated_at?: string;
+  contact_first_name: string;
+  contact_last_name: string;
+  contact_email: string;
+  source: string;
+  start_date: string;
+  expected_close_date: string;
+  custom_fields?: Record<string, string | number | boolean>;
 }
 
 export interface FollowUp {
@@ -40,3 +47,4 @@ export interface Engagement {
   sentiment: 'positive' | 'neutral' | 'negative';
   created_at?: string;
 }
+
