@@ -136,9 +136,26 @@ const Settings = () => {
   };
 
   const onSubmitCustomField = async (values: z.infer<typeof CustomFieldSchema>) => {
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData.user?.id;
+
+    if (!userId) {
+      toast({
+        title: "Error",
+        description: "User not authenticated",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const { error } = await supabase
       .from("custom_fields")
-      .insert([values]);
+      .insert({
+        field_name: values.field_name,
+        field_type: values.field_type,
+        is_required: values.is_required,
+        user_id: userId
+      });
 
     if (error) {
       toast({
@@ -157,10 +174,15 @@ const Settings = () => {
   };
 
   const updateTheme = async (newTheme: string) => {
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData.user?.id;
+
+    if (!userId) return;
+
     const { error } = await supabase
       .from("users")
       .update({ theme: newTheme })
-      .eq("user_id", supabase.auth.getUser());
+      .eq("id", userId);
 
     if (error) {
       toast({
@@ -178,10 +200,15 @@ const Settings = () => {
   };
 
   const updateDefaultView = async (newView: string) => {
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData.user?.id;
+
+    if (!userId) return;
+
     const { error } = await supabase
       .from("users")
       .update({ default_deal_view: newView })
-      .eq("user_id", supabase.auth.getUser());
+      .eq("id", userId);
 
     if (error) {
       toast({

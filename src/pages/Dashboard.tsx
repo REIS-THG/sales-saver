@@ -1,9 +1,10 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import type { Deal } from "@/types/types";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { LogOut, Settings as SettingsIcon } from "lucide-react";
 import CreateDealForm from "@/components/deals/CreateDealForm";
 import { DealsTable } from "@/components/deals/DealsTable";
@@ -42,7 +43,6 @@ const Dashboard = () => {
         contact_first_name: deal.contact_first_name || "",
         contact_last_name: deal.contact_last_name || "",
         contact_email: deal.contact_email || "",
-        source: deal.source || "",
         start_date: deal.start_date || new Date().toISOString(),
         expected_close_date: deal.expected_close_date || "",
         custom_fields: deal.custom_fields as Record<string, string | number | boolean> | null,

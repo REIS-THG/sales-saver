@@ -6,6 +6,9 @@ export interface User {
   role: 'sales_rep' | 'manager';
   created_at?: string;
   updated_at?: string;
+  theme?: string;
+  default_deal_view?: string;
+  custom_views?: Record<string, any>[];
 }
 
 export interface Deal {
@@ -23,7 +26,6 @@ export interface Deal {
   contact_first_name: string;
   contact_last_name: string;
   contact_email: string;
-  source: string;
   start_date: string;
   expected_close_date: string;
   custom_fields?: Record<string, string | number | boolean> | null;
@@ -48,3 +50,12 @@ export interface Engagement {
   created_at?: string;
 }
 
+export interface CustomField {
+  id: string;
+  field_name: string;
+  field_type: "text" | "number" | "boolean" | "date";
+  is_required: boolean;
+  created_at?: string;
+  updated_at?: string;
+  user_id?: string;
+}
