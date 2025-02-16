@@ -231,25 +231,34 @@ export type Database = {
       users: {
         Row: {
           created_at: string | null
+          custom_views: Json | null
+          default_deal_view: string | null
           full_name: string
           id: string
           role: string | null
+          theme: string | null
           updated_at: string | null
           user_id: string | null
         }
         Insert: {
           created_at?: string | null
+          custom_views?: Json | null
+          default_deal_view?: string | null
           full_name: string
           id?: string
           role?: string | null
+          theme?: string | null
           updated_at?: string | null
           user_id?: string | null
         }
         Update: {
           created_at?: string | null
+          custom_views?: Json | null
+          default_deal_view?: string | null
           full_name?: string
           id?: string
           role?: string | null
+          theme?: string | null
           updated_at?: string | null
           user_id?: string | null
         }
