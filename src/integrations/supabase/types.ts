@@ -101,7 +101,7 @@ export type Database = {
           start_date: string | null
           status: string | null
           updated_at: string | null
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           amount: number
@@ -122,7 +122,7 @@ export type Database = {
           start_date?: string | null
           status?: string | null
           updated_at?: string | null
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           amount?: number
@@ -143,7 +143,7 @@ export type Database = {
           start_date?: string | null
           status?: string | null
           updated_at?: string | null
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: [
           {
@@ -151,7 +151,7 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
-            referencedColumns: ["id"]
+            referencedColumns: ["user_id"]
           },
         ]
       }
