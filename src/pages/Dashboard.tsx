@@ -20,7 +20,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     const fetchDeals = async () => {
-      const { data: deals, error } = await supabase
+      const { data: dealsData, error } = await supabase
         .from("deals")
         .select("*")
         .order("created_at", { ascending: false });
@@ -30,14 +30,22 @@ const Dashboard = () => {
         return;
       }
 
-      setDeals(deals || []);
+      // Type check and transform the status field
+      const typedDeals = (dealsData || []).map(deal => ({
+        ...deal,
+        status: deal.status as Deal['status'], // This ensures status is one of the allowed values
+        last_contacted: deal.last_contacted || null,
+        next_action: deal.next_action || null
+      }));
+
+      setDeals(typedDeals);
       setLoading(false);
     };
 
     fetchDeals();
   }, []);
 
-  const getStatusIcon = (status: string) => {
+  const getStatusIcon = (status: Deal['status']) => {
     switch (status) {
       case "won":
         return <CheckCircle2 className="text-green-500" />;
