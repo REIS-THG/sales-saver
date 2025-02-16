@@ -18,7 +18,7 @@ import {
   Sun,
   Moon,
   Upload,
-  User,
+  User as UserIcon,
   Mail,
   Lock,
   CreditCard,
@@ -57,7 +57,7 @@ const Settings = () => {
   const [customFields, setCustomFields] = useState<any[]>([]);
   const [theme, setTheme] = useState("light");
   const [defaultView, setDefaultView] = useState("table");
-  const [user, setUser] = useState<User | null>(null);
+  const [userData, setUserData] = useState<User | null>(null);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
@@ -166,7 +166,7 @@ const Settings = () => {
       return;
     }
 
-    const { data: userData, error: fetchError } = await supabase
+    const { data: userDataResult, error: fetchError } = await supabase
       .from("users")
       .select("*")
       .eq("user_id", userId)
@@ -181,7 +181,7 @@ const Settings = () => {
       return;
     }
 
-    setUser(userData);
+    setUserData(userDataResult);
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -377,10 +377,10 @@ const Settings = () => {
             <CardContent className="space-y-6">
               <div className="space-y-4">
                 <div className="flex items-center space-x-4">
-                  <User className="h-5 w-5 text-gray-500" />
+                  <UserIcon className="h-5 w-5 text-gray-500" />
                   <div className="flex-1">
                     <Label>Full Name</Label>
-                    <Input value={user?.full_name || ''} disabled />
+                    <Input value={userData?.full_name || ''} disabled />
                   </div>
                 </div>
 
@@ -388,7 +388,7 @@ const Settings = () => {
                   <Mail className="h-5 w-5 text-gray-500" />
                   <div className="flex-1">
                     <Label>Email</Label>
-                    <Input value={user?.email || ''} disabled />
+                    <Input value={userData?.email || ''} disabled />
                   </div>
                 </div>
 
@@ -424,14 +424,14 @@ const Settings = () => {
                   <div className="flex-1">
                     <Label>Subscription Status</Label>
                     <div className="flex items-center justify-between mt-2">
-                      <span className="capitalize">{user?.subscription_status || 'free'}</span>
-                      {user?.subscription_status === 'free' && (
+                      <span className="capitalize">{userData?.subscription_status || 'free'}</span>
+                      {userData?.subscription_status === 'free' && (
                         <Button>Upgrade to Pro</Button>
                       )}
                     </div>
-                    {user?.subscription_end_date && (
+                    {userData?.subscription_end_date && (
                       <p className="text-sm text-gray-500 mt-1">
-                        Expires: {new Date(user.subscription_end_date).toLocaleDateString()}
+                        Expires: {new Date(userData.subscription_end_date).toLocaleDateString()}
                       </p>
                     )}
                   </div>
