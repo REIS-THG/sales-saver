@@ -9,7 +9,156 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      deals: {
+        Row: {
+          amount: number
+          company_name: string
+          created_at: string | null
+          deal_name: string
+          health_score: number | null
+          id: string
+          last_contacted: string | null
+          next_action: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          company_name: string
+          created_at?: string | null
+          deal_name: string
+          health_score?: number | null
+          id?: string
+          last_contacted?: string | null
+          next_action?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          company_name?: string
+          created_at?: string | null
+          deal_name?: string
+          health_score?: number | null
+          id?: string
+          last_contacted?: string | null
+          next_action?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deals_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      engagement: {
+        Row: {
+          created_at: string | null
+          deal_id: string | null
+          engagement_type: string | null
+          id: string
+          sentiment: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          deal_id?: string | null
+          engagement_type?: string | null
+          id?: string
+          sentiment?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          deal_id?: string | null
+          engagement_type?: string | null
+          id?: string
+          sentiment?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "engagement_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      followups: {
+        Row: {
+          ai_suggested: boolean | null
+          created_at: string | null
+          deal_id: string | null
+          id: string
+          message_content: string
+          message_type: string | null
+          sent: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          ai_suggested?: boolean | null
+          created_at?: string | null
+          deal_id?: string | null
+          id?: string
+          message_content: string
+          message_type?: string | null
+          sent?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          ai_suggested?: boolean | null
+          created_at?: string | null
+          deal_id?: string | null
+          id?: string
+          message_content?: string
+          message_type?: string | null
+          sent?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "followups_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users: {
+        Row: {
+          created_at: string | null
+          full_name: string
+          id: string
+          role: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          full_name: string
+          id?: string
+          role?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          full_name?: string
+          id?: string
+          role?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
