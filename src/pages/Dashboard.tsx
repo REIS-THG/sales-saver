@@ -71,11 +71,19 @@ const Dashboard = () => {
 
   const handleCreateDeal = async () => {
     try {
+      // Get the current user's ID
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error("No authenticated user found");
+      }
+
       const { error } = await supabase.from("deals").insert([
         {
           ...newDeal,
           amount: parseFloat(newDeal.amount),
           health_score: 50, // Default health score
+          user_id: user.id, // Add the user_id to the new deal
         },
       ]);
 
