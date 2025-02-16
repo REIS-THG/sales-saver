@@ -25,18 +25,38 @@ const Auth = () => {
         const { error: signUpError } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth/callback`
+          }
         });
-        if (signUpError) throw signUpError;
+        
+        if (signUpError) {
+          if (signUpError.message.includes("already registered")) {
+            throw new Error("This email is already registered. Please try signing in instead.");
+          }
+          throw signUpError;
+        }
+        
         toast({
-          title: "Success!",
-          description: "Please check your email to confirm your account.",
+          title: "Account created!",
+          description: "Please check your email to confirm your account. You can also try signing in directly.",
         });
+        
+        // Switch to sign in mode after successful registration
+        setIsSignUp(false);
       } else {
         const { error: signInError } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
-        if (signInError) throw signInError;
+        
+        if (signInError) {
+          if (signInError.message.includes("Invalid login credentials")) {
+            throw new Error("Invalid email or password. Please try again.");
+          }
+          throw signInError;
+        }
+        
         navigate("/dashboard");
       }
     } catch (error: any) {
@@ -58,6 +78,7 @@ const Auth = () => {
           redirectTo: `${window.location.origin}/auth/callback`
         }
       });
+      
       if (error) throw error;
     } catch (error: any) {
       toast({
@@ -101,37 +122,40 @@ const Auth = () => {
               </span>
             </div>
           </div>
-          <form onSubmit={handleAuth}>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <label htmlFor="email" className="text-sm font-medium">
-                  Email
-                </label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@company.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="password" className="text-sm font-medium">
-                  Password
-                </label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Loading..." : isSignUp ? "Sign Up" : "Sign In"}
-              </Button>
+          <form onSubmit={handleAuth} className="space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="email" className="text-sm font-medium">
+                Email
+              </label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="you@company.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
             </div>
+            <div className="space-y-2">
+              <label htmlFor="password" className="text-sm font-medium">
+                Password
+              </label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={6}
+              />
+              <p className="text-xs text-muted-foreground">
+                Password must be at least 6 characters long
+              </p>
+            </div>
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Loading..." : isSignUp ? "Sign Up" : "Sign In"}
+            </Button>
           </form>
         </CardContent>
         <CardFooter>
@@ -139,7 +163,11 @@ const Auth = () => {
             type="button"
             variant="ghost"
             className="w-full"
-            onClick={() => setIsSignUp(!isSignUp)}
+            onClick={() => {
+              setIsSignUp(!isSignUp);
+              setEmail("");
+              setPassword("");
+            }}
           >
             {isSignUp
               ? "Already have an account? Sign In"
