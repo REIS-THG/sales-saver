@@ -9,16 +9,53 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      custom_fields: {
+        Row: {
+          created_at: string | null
+          field_name: string
+          field_type: string
+          id: string
+          is_required: boolean | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          field_name: string
+          field_type: string
+          id?: string
+          is_required?: boolean | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          field_name?: string
+          field_type?: string
+          id?: string
+          is_required?: boolean | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       deals: {
         Row: {
           amount: number
           company_name: string
+          contact_email: string | null
+          contact_first_name: string | null
+          contact_last_name: string | null
           created_at: string | null
+          custom_fields: Json | null
           deal_name: string
+          expected_close_date: string | null
           health_score: number | null
           id: string
           last_contacted: string | null
           next_action: string | null
+          source: string | null
+          start_date: string | null
           status: string | null
           updated_at: string | null
           user_id: string | null
@@ -26,12 +63,19 @@ export type Database = {
         Insert: {
           amount: number
           company_name: string
+          contact_email?: string | null
+          contact_first_name?: string | null
+          contact_last_name?: string | null
           created_at?: string | null
+          custom_fields?: Json | null
           deal_name: string
+          expected_close_date?: string | null
           health_score?: number | null
           id?: string
           last_contacted?: string | null
           next_action?: string | null
+          source?: string | null
+          start_date?: string | null
           status?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -39,12 +83,19 @@ export type Database = {
         Update: {
           amount?: number
           company_name?: string
+          contact_email?: string | null
+          contact_first_name?: string | null
+          contact_last_name?: string | null
           created_at?: string | null
+          custom_fields?: Json | null
           deal_name?: string
+          expected_close_date?: string | null
           health_score?: number | null
           id?: string
           last_contacted?: string | null
           next_action?: string | null
+          source?: string | null
+          start_date?: string | null
           status?: string | null
           updated_at?: string | null
           user_id?: string | null

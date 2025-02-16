@@ -39,6 +39,12 @@ const Dashboard = () => {
     company_name: "",
     amount: "",
     status: "open" as Deal["status"],
+    contact_first_name: "",
+    contact_last_name: "",
+    contact_email: "",
+    source: "",
+    start_date: new Date().toISOString().split('T')[0],
+    expected_close_date: "",
   });
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -59,31 +65,53 @@ const Dashboard = () => {
       status: deal.status as Deal["status"],
       last_contacted: deal.last_contacted || null,
       next_action: deal.next_action || null,
+      contact_first_name: deal.contact_first_name || "",
+      contact_last_name: deal.contact_last_name || "",
+      contact_email: deal.contact_email || "",
+      source: deal.source || "",
+      start_date: deal.start_date || new Date().toISOString(),
+      expected_close_date: deal.expected_close_date || "",
+      custom_fields: deal.custom_fields || {},
     }));
 
     setDeals(typedDeals);
     setLoading(false);
   };
 
-  useEffect(() => {
-    fetchDeals();
-  }, []);
+  const formatAmount = (value: string) => {
+    // Remove all non-numeric characters
+    const number = value.replace(/[^0-9.]/g, '');
+    // Convert to number and format with commas
+    const formatted = new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(Number(number) || 0);
+    return formatted;
+  };
+
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatAmount(e.target.value);
+    setNewDeal({ ...newDeal, amount: formatted });
+  };
 
   const handleCreateDeal = async () => {
     try {
-      // Get the current user's ID
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
         throw new Error("No authenticated user found");
       }
 
+      // Remove commas and convert to number for storage
+      const amountAsNumber = parseFloat(newDeal.amount.replace(/,/g, ''));
+
       const { error } = await supabase.from("deals").insert([
         {
           ...newDeal,
-          amount: parseFloat(newDeal.amount),
-          health_score: 50, // Default health score
-          user_id: user.id, // Add the user_id to the new deal
+          amount: amountAsNumber,
+          health_score: 50,
+          user_id: user.id,
+          custom_fields: {},
         },
       ]);
 
@@ -94,13 +122,19 @@ const Dashboard = () => {
         description: "Deal created successfully",
       });
 
-      // Reset form and refresh deals
       setNewDeal({
         deal_name: "",
         company_name: "",
         amount: "",
         status: "open",
+        contact_first_name: "",
+        contact_last_name: "",
+        contact_email: "",
+        source: "",
+        start_date: new Date().toISOString().split('T')[0],
+        expected_close_date: "",
       });
+      
       fetchDeals();
     } catch (error) {
       console.error("Error creating deal:", error);
@@ -157,7 +191,7 @@ const Dashboard = () => {
                   Create Deal
                 </Button>
               </SheetTrigger>
-              <SheetContent>
+              <SheetContent className="overflow-y-auto">
                 <SheetHeader>
                   <SheetTitle>Create New Deal</SheetTitle>
                 </SheetHeader>
@@ -185,16 +219,84 @@ const Dashboard = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="amount">Amount</Label>
+                    <Label htmlFor="amount">Amount ($)</Label>
                     <Input
                       id="amount"
-                      type="number"
                       value={newDeal.amount}
-                      onChange={(e) =>
-                        setNewDeal({ ...newDeal, amount: e.target.value })
-                      }
+                      onChange={handleAmountChange}
                       placeholder="Enter deal amount"
                     />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="contact_first_name">Contact First Name</Label>
+                      <Input
+                        id="contact_first_name"
+                        value={newDeal.contact_first_name}
+                        onChange={(e) =>
+                          setNewDeal({ ...newDeal, contact_first_name: e.target.value })
+                        }
+                        placeholder="First name"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="contact_last_name">Contact Last Name</Label>
+                      <Input
+                        id="contact_last_name"
+                        value={newDeal.contact_last_name}
+                        onChange={(e) =>
+                          setNewDeal({ ...newDeal, contact_last_name: e.target.value })
+                        }
+                        placeholder="Last name"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="contact_email">Contact Email</Label>
+                    <Input
+                      id="contact_email"
+                      type="email"
+                      value={newDeal.contact_email}
+                      onChange={(e) =>
+                        setNewDeal({ ...newDeal, contact_email: e.target.value })
+                      }
+                      placeholder="contact@company.com"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="source">Deal Source</Label>
+                    <Input
+                      id="source"
+                      value={newDeal.source}
+                      onChange={(e) =>
+                        setNewDeal({ ...newDeal, source: e.target.value })
+                      }
+                      placeholder="How did you find this deal?"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="start_date">Start Date</Label>
+                      <Input
+                        id="start_date"
+                        type="date"
+                        value={newDeal.start_date}
+                        onChange={(e) =>
+                          setNewDeal({ ...newDeal, start_date: e.target.value })
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="expected_close_date">Expected Close Date</Label>
+                      <Input
+                        id="expected_close_date"
+                        type="date"
+                        value={newDeal.expected_close_date}
+                        onChange={(e) =>
+                          setNewDeal({ ...newDeal, expected_close_date: e.target.value })
+                        }
+                      />
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="status">Status</Label>
@@ -221,7 +323,10 @@ const Dashboard = () => {
                     disabled={
                       !newDeal.deal_name ||
                       !newDeal.company_name ||
-                      !newDeal.amount
+                      !newDeal.amount ||
+                      !newDeal.contact_first_name ||
+                      !newDeal.contact_last_name ||
+                      !newDeal.contact_email
                     }
                   >
                     Create Deal
@@ -254,8 +359,16 @@ const Dashboard = () => {
                   <div>
                     <p className="text-sm text-gray-500">Amount</p>
                     <p className="font-medium">
-                      ${deal.amount.toLocaleString()}
+                      ${Number(deal.amount).toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
                     </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Contact</p>
+                    <p className="font-medium">{`${deal.contact_first_name} ${deal.contact_last_name}`}</p>
+                    <p className="text-sm text-gray-500">{deal.contact_email}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Health Score</p>
