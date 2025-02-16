@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { LogOut } from "lucide-react";
 import CreateDealForm from "@/components/deals/CreateDealForm";
-import DealCard from "@/components/deals/DealCard";
+import { DealsTable } from "@/components/deals/DealsTable";
 
 const Dashboard = () => {
   const [deals, setDeals] = useState<Deal[]>([]);
@@ -107,11 +107,7 @@ const Dashboard = () => {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {deals.map((deal) => (
-            <DealCard key={deal.id} deal={deal} />
-          ))}
-        </div>
+        <DealsTable initialDeals={deals} />
       </main>
     </div>
   );
