@@ -41,10 +41,6 @@ const DealDetailsModal = ({ deal, onClose }: DealDetailsModalProps) => {
             <p className="text-sm text-gray-500">{deal.contact_email}</p>
           </div>
           <div>
-            <p className="text-sm text-gray-500">Source</p>
-            <p className="font-medium">{deal.source || "N/A"}</p>
-          </div>
-          <div>
             <p className="text-sm text-gray-500">Dates</p>
             <p className="font-medium">
               Start: {new Date(deal.start_date).toLocaleDateString()}

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,7 +37,7 @@ import * as z from "zod";
 
 const CustomFieldSchema = z.object({
   field_name: z.string().min(1, "Field name is required"),
-  field_type: z.enum(["text", "number", "boolean", "date"]),
+  field_type: z.enum(["text", "number", "boolean", "date"] as const),
   is_required: z.boolean().default(false),
 });
 
@@ -50,7 +49,7 @@ const Settings = () => {
   const [defaultView, setDefaultView] = useState("table");
   const navigate = useNavigate();
   const { toast } = useToast();
-  const form = useForm({
+  const form = useForm<z.infer<typeof CustomFieldSchema>>({
     resolver: zodResolver(CustomFieldSchema),
     defaultValues: {
       field_name: "",
