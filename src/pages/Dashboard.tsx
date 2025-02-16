@@ -34,6 +34,8 @@ import {
 const Dashboard = () => {
   const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [newDeal, setNewDeal] = useState({
     deal_name: "",
     company_name: "",
@@ -50,49 +52,84 @@ const Dashboard = () => {
   const { toast } = useToast();
 
   const fetchDeals = async () => {
-    const { data: dealsData, error } = await supabase
-      .from("deals")
-      .select("*")
-      .order("created_at", { ascending: false });
+    try {
+      setError(null);
+      const { data: dealsData, error: fetchError } = await supabase
+        .from("deals")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-    if (error) {
-      console.error("Error fetching deals:", error);
-      return;
+      if (fetchError) {
+        throw fetchError;
+      }
+
+      const typedDeals = (dealsData || []).map((deal) => ({
+        id: deal.id,
+        user_id: deal.user_id,
+        deal_name: deal.deal_name,
+        company_name: deal.company_name,
+        amount: deal.amount,
+        status: deal.status as Deal["status"],
+        health_score: deal.health_score || 50,
+        last_contacted: deal.last_contacted || null,
+        next_action: deal.next_action || null,
+        created_at: deal.created_at,
+        updated_at: deal.updated_at,
+        contact_first_name: deal.contact_first_name || "",
+        contact_last_name: deal.contact_last_name || "",
+        contact_email: deal.contact_email || "",
+        source: deal.source || "",
+        start_date: deal.start_date || new Date().toISOString(),
+        expected_close_date: deal.expected_close_date || "",
+        custom_fields: deal.custom_fields as Record<string, string | number | boolean> | null,
+      }));
+
+      setDeals(typedDeals);
+    } catch (err) {
+      console.error("Error fetching deals:", err);
+      setError(err instanceof Error ? err.message : "Failed to fetch deals");
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to fetch deals. Please try again.",
+      });
+    } finally {
+      setLoading(false);
     }
+  };
 
-    const typedDeals = (dealsData || []).map((deal) => ({
-      id: deal.id,
-      user_id: deal.user_id,
-      deal_name: deal.deal_name,
-      company_name: deal.company_name,
-      amount: deal.amount,
-      status: deal.status as Deal["status"],
-      health_score: deal.health_score || 50,
-      last_contacted: deal.last_contacted || null,
-      next_action: deal.next_action || null,
-      created_at: deal.created_at,
-      updated_at: deal.updated_at,
-      contact_first_name: deal.contact_first_name || "",
-      contact_last_name: deal.contact_last_name || "",
-      contact_email: deal.contact_email || "",
-      source: deal.source || "",
-      start_date: deal.start_date || new Date().toISOString(),
-      expected_close_date: deal.expected_close_date || "",
-      custom_fields: deal.custom_fields as Record<string, string | number | boolean> | null,
-    }));
+  useEffect(() => {
+    fetchDeals();
+  }, []);
 
-    setDeals(typedDeals);
-    setLoading(false);
+  const validateEmail = (email: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
+  const validateDates = () => {
+    const start = new Date(newDeal.start_date);
+    const end = new Date(newDeal.expected_close_date);
+    const today = new Date();
+
+    if (start > end) {
+      return "Start date cannot be after expected close date";
+    }
+    if (start < today && start.toDateString() !== today.toDateString()) {
+      return "Start date cannot be in the past";
+    }
+    return null;
   };
 
   const formatAmount = (value: string) => {
-    // Remove all non-numeric characters
-    const number = value.replace(/[^0-9.]/g, '');
-    // Convert to number and format with commas
-    const formatted = new Intl.NumberFormat('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(Number(number) || 0);
+    // Remove all non-numeric characters except decimal point
+    const number = value.replace(/[^\d.]/g, '');
+    // Ensure only one decimal point
+    const parts = number.split('.');
+    const wholePart = parts[0];
+    const decimalPart = parts[1] ? '.' + parts[1].slice(0, 2) : '';
+    
+    // Format with commas
+    const formatted = Number(wholePart).toLocaleString('en-US') + decimalPart;
     return formatted;
   };
 
@@ -103,6 +140,20 @@ const Dashboard = () => {
 
   const handleCreateDeal = async () => {
     try {
+      setIsSubmitting(true);
+      setError(null);
+
+      // Validate email
+      if (!validateEmail(newDeal.contact_email)) {
+        throw new Error("Please enter a valid email address");
+      }
+
+      // Validate dates
+      const dateError = validateDates();
+      if (dateError) {
+        throw new Error(dateError);
+      }
+
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
@@ -111,18 +162,21 @@ const Dashboard = () => {
 
       // Remove commas and convert to number for storage
       const amountAsNumber = parseFloat(newDeal.amount.replace(/,/g, ''));
+      if (isNaN(amountAsNumber)) {
+        throw new Error("Please enter a valid amount");
+      }
 
-      const { error } = await supabase.from("deals").insert([
+      const { error: insertError } = await supabase.from("deals").insert([
         {
           ...newDeal,
           amount: amountAsNumber,
           health_score: 50,
           user_id: user.id,
-          custom_fields: {},
+          custom_fields: null,
         },
       ]);
 
-      if (error) throw error;
+      if (insertError) throw insertError;
 
       toast({
         title: "Success",
@@ -143,13 +197,17 @@ const Dashboard = () => {
       });
       
       fetchDeals();
-    } catch (error) {
-      console.error("Error creating deal:", error);
+    } catch (err) {
+      console.error("Error creating deal:", err);
+      const errorMessage = err instanceof Error ? err.message : "Failed to create deal";
+      setError(errorMessage);
       toast({
         title: "Error",
-        description: "Failed to create deal. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -181,6 +239,17 @@ const Dashboard = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
+
+  if (error && !deals.length) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">{error}</p>
+          <Button onClick={fetchDeals}>Retry</Button>
+        </div>
       </div>
     );
   }
