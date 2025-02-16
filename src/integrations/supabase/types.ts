@@ -230,34 +230,46 @@ export type Database = {
       }
       users: {
         Row: {
+          billing_address: Json | null
           created_at: string | null
           custom_views: Json | null
           default_deal_view: string | null
+          email: string | null
           full_name: string
           id: string
           role: string | null
+          subscription_end_date: string | null
+          subscription_status: string | null
           theme: string | null
           updated_at: string | null
           user_id: string | null
         }
         Insert: {
+          billing_address?: Json | null
           created_at?: string | null
           custom_views?: Json | null
           default_deal_view?: string | null
+          email?: string | null
           full_name: string
           id?: string
           role?: string | null
+          subscription_end_date?: string | null
+          subscription_status?: string | null
           theme?: string | null
           updated_at?: string | null
           user_id?: string | null
         }
         Update: {
+          billing_address?: Json | null
           created_at?: string | null
           custom_views?: Json | null
           default_deal_view?: string | null
+          email?: string | null
           full_name?: string
           id?: string
           role?: string | null
+          subscription_end_date?: string | null
+          subscription_status?: string | null
           theme?: string | null
           updated_at?: string | null
           user_id?: string | null

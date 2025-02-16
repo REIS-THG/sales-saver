@@ -1,4 +1,3 @@
-
 export interface User {
   id: string;
   user_id: string;
@@ -9,6 +8,16 @@ export interface User {
   theme?: string;
   default_deal_view?: string;
   custom_views?: Record<string, any>[];
+  email?: string;
+  subscription_status?: 'free' | 'pro' | 'enterprise';
+  subscription_end_date?: string;
+  billing_address?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    postal_code?: string;
+  };
 }
 
 export interface Deal {

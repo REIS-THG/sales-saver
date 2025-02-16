@@ -12,7 +12,17 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Settings as SettingsIcon, Sun, Moon, Upload } from "lucide-react";
+import {
+  ArrowLeft,
+  Settings as SettingsIcon,
+  Sun,
+  Moon,
+  Upload,
+  User,
+  Mail,
+  Lock,
+  CreditCard,
+} from "lucide-react";
 import {
   Table,
   TableBody,
@@ -29,11 +39,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import type { User } from "@/types/types";
 
 const CustomFieldSchema = z.object({
   field_name: z.string().min(1, "Field name is required"),
@@ -47,6 +57,10 @@ const Settings = () => {
   const [customFields, setCustomFields] = useState<any[]>([]);
   const [theme, setTheme] = useState("light");
   const [defaultView, setDefaultView] = useState("table");
+  const [user, setUser] = useState<User | null>(null);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
   const form = useForm<z.infer<typeof CustomFieldSchema>>({
@@ -61,6 +75,7 @@ const Settings = () => {
   useEffect(() => {
     fetchCustomFields();
     fetchUserPreferences();
+    fetchUserProfile();
   }, []);
 
   const fetchCustomFields = async () => {
@@ -135,6 +150,38 @@ const Settings = () => {
       setTheme(userData.theme || "light");
       setDefaultView(userData.default_deal_view || "table");
     }
+  };
+
+  const fetchUserProfile = async () => {
+    const { data: authData } = await supabase.auth.getUser();
+    const userId = authData.user?.id;
+
+    if (!userId) {
+      toast({
+        title: "Error",
+        description: "Not authenticated",
+        variant: "destructive",
+      });
+      navigate("/auth");
+      return;
+    }
+
+    const { data: userData, error: fetchError } = await supabase
+      .from("users")
+      .select("*")
+      .eq("user_id", userId)
+      .single();
+
+    if (fetchError) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch user profile",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUser(userData);
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -283,6 +330,30 @@ const Settings = () => {
     }
   };
 
+  const handlePasswordChange = async () => {
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Password updated successfully",
+      });
+      setIsChangingPassword(false);
+      setNewPassword("");
+      setCurrentPassword("");
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update password",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -296,6 +367,79 @@ const Settings = () => {
         </Button>
 
         <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Account Settings</CardTitle>
+              <CardDescription>
+                Manage your account details and preferences
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <div className="flex items-center space-x-4">
+                  <User className="h-5 w-5 text-gray-500" />
+                  <div className="flex-1">
+                    <Label>Full Name</Label>
+                    <Input value={user?.full_name || ''} disabled />
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-4">
+                  <Mail className="h-5 w-5 text-gray-500" />
+                  <div className="flex-1">
+                    <Label>Email</Label>
+                    <Input value={user?.email || ''} disabled />
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-4">
+                  <Lock className="h-5 w-5 text-gray-500" />
+                  <div className="flex-1 space-y-2">
+                    <Label>Password</Label>
+                    {isChangingPassword ? (
+                      <div className="space-y-2">
+                        <Input
+                          type="password"
+                          placeholder="New password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                        />
+                        <div className="flex space-x-2">
+                          <Button onClick={handlePasswordChange}>Save Password</Button>
+                          <Button variant="ghost" onClick={() => setIsChangingPassword(false)}>
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <Button variant="outline" onClick={() => setIsChangingPassword(true)}>
+                        Change Password
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-4">
+                  <CreditCard className="h-5 w-5 text-gray-500" />
+                  <div className="flex-1">
+                    <Label>Subscription Status</Label>
+                    <div className="flex items-center justify-between mt-2">
+                      <span className="capitalize">{user?.subscription_status || 'free'}</span>
+                      {user?.subscription_status === 'free' && (
+                        <Button>Upgrade to Pro</Button>
+                      )}
+                    </div>
+                    {user?.subscription_end_date && (
+                      <p className="text-sm text-gray-500 mt-1">
+                        Expires: {new Date(user.subscription_end_date).toLocaleDateString()}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle>User Preferences</CardTitle>
