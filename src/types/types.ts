@@ -1,3 +1,4 @@
+
 export interface StandardField {
   field_name: string;
   field: string;
@@ -53,7 +54,7 @@ export interface Deal {
   contact_first_name?: string;
   contact_last_name?: string;
   company_url?: string;
-  notes: string[];
+  notes: string;
   custom_fields: Record<string, any>;
   last_note_at?: string;
   notes_count?: number;
@@ -77,6 +78,8 @@ export interface DealInsight {
   is_processed?: boolean;
   tone_analysis?: Record<string, any>;
   purpose_notes?: string;
+  priority?: 'low' | 'medium' | 'high';
+  status?: 'open' | 'acknowledged' | 'resolved';
 }
 
 export interface DealNote {
@@ -113,21 +116,8 @@ export interface BulkImport {
   updated_at?: string;
 }
 
-export interface Insight {
-  id: string;
-  deal_id: string;
-  insight_type: 'risk' | 'opportunity' | 'action_item';
-  content: string;
+export interface Insight extends DealInsight {
   priority: 'low' | 'medium' | 'high';
   status: 'open' | 'acknowledged' | 'resolved';
-  created_at?: string;
-  updated_at?: string;
-  confidence_score?: number;
-  coaching_suggestion?: string;
-  communication_template?: string;
-  sales_approach?: 'consultative_selling' | 'solution_selling' | 'transactional_selling' | 'value_based_selling';
-  communication_channel?: 'f2f' | 'email' | 'social_media';
-  industry?: string;
-  word_choice_analysis?: Record<string, any>;
-  source_data?: Record<string, any>;
 }
+

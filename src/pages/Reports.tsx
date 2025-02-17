@@ -74,7 +74,9 @@ const Reports = () => {
         ...data,
         role: data.role as 'sales_rep' | 'manager',
         subscription_status: data.subscription_status as 'free' | 'pro' | 'enterprise',
-        custom_views: Array.isArray(data.custom_views) ? data.custom_views : [],
+        custom_views: Array.isArray(data.custom_views) 
+          ? data.custom_views.map(view => typeof view === 'string' ? JSON.parse(view) : view)
+          : [],
         successful_deals_count: data.successful_deals_count || 0
       });
     } catch (err) {
@@ -179,7 +181,8 @@ const Reports = () => {
       const typedDeals: Deal[] = (dealsData || []).map(deal => ({
         ...deal,
         status: (deal.status || 'open') as 'open' | 'stalled' | 'won' | 'lost',
-        custom_fields: deal.custom_fields as Record<string, string | number | boolean> | null
+        notes: deal.notes || '',
+        custom_fields: deal.custom_fields as Record<string, any> || {}
       }));
 
       setDeals(typedDeals);

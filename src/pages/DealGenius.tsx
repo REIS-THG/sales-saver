@@ -91,24 +91,14 @@ const DealGenius = () => {
         description: "Failed to fetch insights",
       });
     } else if (data) {
-      const typedInsights: DealInsight[] = data.map(insight => ({
-        id: insight.id,
-        deal_id: insight.deal_id,
+      const typedInsights: Insight[] = data.map(insight => ({
+        ...insight,
         insight_type: insight.insight_type as 'risk' | 'opportunity' | 'action_item',
-        content: insight.content,
-        created_at: insight.created_at,
-        updated_at: insight.updated_at,
-        confidence_score: insight.confidence_score,
-        coaching_suggestion: insight.coaching_suggestion,
-        communication_template: insight.communication_template,
-        sales_approach: insight.sales_approach,
-        communication_channel: insight.communication_channel,
-        industry: insight.industry,
-        word_choice_analysis: insight.word_choice_analysis,
-        source_data: insight.source_data,
-        is_processed: insight.is_processed,
-        tone_analysis: insight.tone_analysis,
-        purpose_notes: insight.purpose_notes
+        word_choice_analysis: insight.word_choice_analysis as Record<string, any> || {},
+        source_data: insight.source_data as Record<string, any> || {},
+        tone_analysis: insight.tone_analysis as Record<string, any> || {},
+        priority: 'medium', // Default value
+        status: 'open', // Default value
       }));
       
       setInsights(typedInsights);
