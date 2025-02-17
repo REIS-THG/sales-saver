@@ -2,39 +2,18 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { Spinner } from "@/components/ui/spinner";
-import { loadStripe } from "@stripe/stripe-js";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { SubscriptionPlanCard, type Plan } from "@/components/subscription/SubscriptionPlanCard";
 import { subscriptionPlans } from "@/components/subscription/plans-data";
 import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 
-let stripePromise: Promise<any> | null = null;
-
-const getStripe = async () => {
-  if (!stripePromise) {
-    try {
-      const { data, error } = await supabase.functions.invoke('get-stripe-key');
-      
-      if (error) {
-        throw error;
-      }
-
-      if (!data?.publishableKey) {
-        throw new Error('Could not retrieve Stripe publishable key');
-      }
-
-      console.log('Stripe Key Status: Present');
-      console.log('Initializing Stripe with key:', data.publishableKey.slice(0, 8) + '...');
-      
-      stripePromise = loadStripe(data.publishableKey);
-    } catch (error) {
-      console.error('Stripe Initialization Error:', error);
-      throw error;
-    }
-  }
-  return stripePromise;
+// Load Stripe Buy Button Script
+const loadStripeScript = () => {
+  const script = document.createElement('script');
+  script.src = 'https://js.stripe.com/v3/buy-button.js';
+  script.async = true;
+  document.body.appendChild(script);
 };
 
 export default function Subscription() {
@@ -42,6 +21,10 @@ export default function Subscription() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    loadStripeScript();
+  }, []);
 
   useEffect(() => {
     const success = searchParams.get('success');
@@ -86,81 +69,59 @@ export default function Subscription() {
     }
 
     if (planType === "pro") {
-      try {
-        const stripe = await getStripe();
-        const proPlan = plans.find(p => p.name.toLowerCase() === 'pro');
-        
-        if (!proPlan?.priceId) {
-          throw new Error('Pro plan price ID not found');
-        }
+      // The buy button will handle the pro subscription
+      const buyButton = document.createElement('stripe-buy-button');
+      buyButton.setAttribute('buy-button-id', 'buy_btn_1QtdHaDaihWQpHM6vSaLMfRh');
+      buyButton.setAttribute('publishable-key', 'pk_live_51Qtb8WDaihWQpHM6zckr56vWVg2BeBX6sFXA9FgOrmbdN3H5HY3GBMiO3DaO5rYOuCDsOjUrQAQV9xdbtvh3VSXR005zCbf5Dz');
+      
+      // Create a modal to display the buy button
+      const modal = document.createElement('div');
+      modal.style.position = 'fixed';
+      modal.style.top = '50%';
+      modal.style.left = '50%';
+      modal.style.transform = 'translate(-50%, -50%)';
+      modal.style.backgroundColor = 'white';
+      modal.style.padding = '20px';
+      modal.style.borderRadius = '8px';
+      modal.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.1)';
+      modal.style.zIndex = '1000';
 
-        if (!user.user_id || !user.email) {
-          throw new Error('User information is missing');
-        }
+      // Add close button
+      const closeButton = document.createElement('button');
+      closeButton.textContent = '×';
+      closeButton.style.position = 'absolute';
+      closeButton.style.right = '10px';
+      closeButton.style.top = '10px';
+      closeButton.style.border = 'none';
+      closeButton.style.background = 'none';
+      closeButton.style.fontSize = '24px';
+      closeButton.style.cursor = 'pointer';
+      closeButton.onclick = () => {
+        document.body.removeChild(modal);
+        document.body.removeChild(overlay);
+      };
 
-        console.log('Creating checkout session with:', {
-          priceId: proPlan.priceId,
-          userId: user.user_id,
-          customerEmail: user.email
-        });
+      // Add overlay
+      const overlay = document.createElement('div');
+      overlay.style.position = 'fixed';
+      overlay.style.top = '0';
+      overlay.style.left = '0';
+      overlay.style.right = '0';
+      overlay.style.bottom = '0';
+      overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+      overlay.style.zIndex = '999';
 
-        const { data, error } = await supabase.functions.invoke('create-checkout-session', {
-          body: {
-            priceId: proPlan.priceId,
-            userId: user.user_id,
-            customerEmail: user.email
-          }
-        });
-
-        if (error) {
-          console.error('Checkout session error:', error);
-          throw error;
-        }
-
-        if (!data?.sessionId) {
-          throw new Error('No session ID returned from the server');
-        }
-
-        // Redirect to Stripe Checkout
-        const result = await stripe.redirectToCheckout({
-          sessionId: data.sessionId
-        });
-
-        if (result?.error) {
-          throw result.error;
-        }
-
-      } catch (error) {
-        console.error('Error:', error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: error instanceof Error ? error.message : "Failed to start checkout process. Please try again later."
-        });
-      }
+      modal.appendChild(closeButton);
+      modal.appendChild(buyButton);
+      document.body.appendChild(overlay);
+      document.body.appendChild(modal);
     }
 
     if (planType === "free") {
-      try {
-        const { error } = await supabase.functions.invoke('cancel-subscription', {
-          body: { userId: user.user_id }
-        });
-
-        if (error) throw error;
-
-        toast({
-          title: "Success",
-          description: "Your subscription has been cancelled. Changes will take effect at the end of your billing period."
-        });
-
-      } catch (error) {
-        console.error('Error:', error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to cancel subscription. Please try again later."
-        });
-      }
+      toast({
+        title: "Success",
+        description: "Your subscription has been cancelled. Changes will take effect at the end of your billing period."
+      });
     }
   };
 
