@@ -23,7 +23,7 @@ const Breadcrumbs = () => {
           <ol className="flex items-center space-x-4 text-sm">
             <li>
               <div>
-                <a href="/" className="text-gray-400 hover:text-gray-500">
+                <a href="/dashboard" className="text-gray-400 hover:text-gray-500">
                   Home
                 </a>
               </div>
