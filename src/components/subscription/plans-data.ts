@@ -32,8 +32,7 @@ export const subscriptionPlans = [
       "Custom fields",
       "AI-powered insights",
       "Team collaboration",
-      "Export capabilities",
-      "API access"
+      "Export capabilities"
     ]
   },
   {
