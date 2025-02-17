@@ -5,8 +5,9 @@ import { CustomFieldsManager } from "@/components/settings/CustomFieldsManager";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Spinner } from "@/components/ui/spinner";
+import { Button } from "@/components/ui/button";
 
 export default function Settings() {
   const { user, loading } = useAuth();
@@ -47,7 +48,14 @@ export default function Settings() {
 
   return (
     <div className="container py-10 max-w-5xl">
-      <h1 className="text-3xl font-bold mb-8">Settings</h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">Settings</h1>
+        <Link to="/subscription">
+          <Button variant="outline">
+            Manage Subscription
+          </Button>
+        </Link>
+      </div>
       
       <Tabs defaultValue="account" className="space-y-8">
         <TabsList>

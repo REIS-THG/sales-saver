@@ -1,4 +1,3 @@
-
 export interface StandardField {
   field_name: string;
   field: string;
@@ -34,6 +33,8 @@ export interface User {
     country?: string;
     postal_code?: string;
   };
+  stripe_customer_id?: string;
+  stripe_subscription_id?: string;
 }
 
 export interface Deal {
@@ -120,4 +121,3 @@ export interface Insight extends DealInsight {
   priority: 'low' | 'medium' | 'high';
   status: 'open' | 'acknowledged' | 'resolved';
 }
-
