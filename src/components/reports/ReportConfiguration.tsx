@@ -18,20 +18,28 @@ export const ReportConfiguration = ({
   visualizationTypes,
 }: ReportConfigurationProps) => {
   const mapFieldToOption = (field: StandardField | CustomField): StandardField => {
+    // Explicitly type the field_type
     let fieldType: "text" | "number" | "boolean" | "date";
     
-    if ('field_type' in field) {
+    // Check if it's a CustomField by looking for the id property
+    if ('id' in field) {
+      // Handle CustomField type
       switch (field.field_type) {
         case 'number':
+          fieldType = 'number';
+          break;
         case 'boolean':
+          fieldType = 'boolean';
+          break;
         case 'date':
-          fieldType = field.field_type;
+          fieldType = 'date';
           break;
         default:
           fieldType = 'text';
       }
     } else {
-      fieldType = 'text';
+      // Handle StandardField type which already has the correct type
+      fieldType = field.field_type;
     }
 
     return {
