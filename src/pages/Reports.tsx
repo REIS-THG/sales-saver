@@ -72,12 +72,22 @@ const Reports = () => {
 
       setUserData({
         ...data,
+        id: data.id,
+        user_id: data.user_id || userId,
+        full_name: data.full_name,
         role: data.role as 'sales_rep' | 'manager',
-        subscription_status: data.subscription_status as 'free' | 'pro' | 'enterprise',
+        theme: data.theme,
+        default_deal_view: data.default_deal_view,
         custom_views: Array.isArray(data.custom_views) 
           ? data.custom_views.map(view => typeof view === 'string' ? JSON.parse(view) : view)
           : [],
-        successful_deals_count: data.successful_deals_count || 0
+        email: data.email,
+        subscription_status: data.subscription_status as 'free' | 'pro' | 'enterprise',
+        subscription_end_date: data.subscription_end_date,
+        successful_deals_count: data.successful_deals_count || 0,
+        billing_address: typeof data.billing_address === 'object' ? data.billing_address : {},
+        created_at: data.created_at,
+        updated_at: data.updated_at
       });
     } catch (err) {
       console.error("Error fetching user data:", err);

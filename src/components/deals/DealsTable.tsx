@@ -72,14 +72,16 @@ export function DealsTable({ initialDeals, customFields, showCustomFields }: Dea
   };
 
   useEffect(() => {
-    setDeals(initialDeals.map(deal => ({
+    const formattedDeals: Deal[] = initialDeals.map(deal => ({
       ...deal,
-      name: deal.deal_name,
-      value: deal.amount,
-      notes: Array.isArray(deal.notes) ? deal.notes : [],
-      custom_fields: deal.custom_fields ? (typeof deal.custom_fields === 'string' ? JSON.parse(deal.custom_fields) : deal.custom_fields) : {},
+      notes: typeof deal.notes === 'string' ? deal.notes : Array.isArray(deal.notes) ? deal.notes.join('\n') : '',
+      custom_fields: typeof deal.custom_fields === 'object' ? deal.custom_fields : {},
       status: (deal.status || 'open') as Deal['status'],
-    })));
+      deal_name: deal.deal_name || deal.name || '',
+      amount: deal.amount || deal.value || 0,
+      health_score: deal.health_score || 50
+    }));
+    setDeals(formattedDeals);
   }, [initialDeals]);
 
   const table = useReactTable({

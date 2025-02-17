@@ -65,12 +65,27 @@ const DealGenius = () => {
     }
 
     const typedDeals: Deal[] = (data || []).map(deal => ({
-      ...deal,
-      name: deal.deal_name,
-      value: deal.amount,
+      id: deal.id,
+      deal_name: deal.deal_name,
+      company_name: deal.company_name,
+      amount: Number(deal.amount),
       status: (deal.status || 'open') as Deal['status'],
-      notes: Array.isArray(deal.notes) ? deal.notes : [],
-      custom_fields: deal.custom_fields ? deal.custom_fields as Record<string, any> : {}
+      health_score: deal.health_score || 50,
+      user_id: deal.user_id,
+      created_at: deal.created_at,
+      updated_at: deal.updated_at,
+      start_date: deal.start_date,
+      expected_close_date: deal.expected_close_date,
+      last_contacted: deal.last_contacted,
+      next_action: deal.next_action,
+      contact_email: deal.contact_email,
+      contact_first_name: deal.contact_first_name,
+      contact_last_name: deal.contact_last_name,
+      company_url: deal.company_url,
+      notes: typeof deal.notes === 'string' ? deal.notes : Array.isArray(deal.notes) ? deal.notes.join('\n') : '',
+      custom_fields: typeof deal.custom_fields === 'object' ? deal.custom_fields : {},
+      last_note_at: deal.last_note_at,
+      notes_count: deal.notes_count
     }));
 
     setDeals(typedDeals);
