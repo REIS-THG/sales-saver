@@ -10,15 +10,21 @@ import { subscriptionPlans } from "@/components/subscription/plans-data";
 import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 
-// Initialize Stripe with proper error handling
+// Initialize Stripe with proper error handling and debugging
 let stripePromise: Promise<any> | null = null;
 
 const getStripe = () => {
   if (!stripePromise) {
     const key = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+    console.log('Stripe Key Status:', key ? 'Present' : 'Missing');
+    
     if (!key) {
-      return Promise.reject(new Error('Stripe publishable key is not configured'));
+      const error = new Error('Stripe publishable key is not configured. Please ensure VITE_STRIPE_PUBLISHABLE_KEY is set.');
+      console.error('Stripe Initialization Error:', error);
+      return Promise.reject(error);
     }
+    
+    console.log('Initializing Stripe with key:', key.slice(0, 8) + '...');
     stripePromise = loadStripe(key);
   }
   return stripePromise;
