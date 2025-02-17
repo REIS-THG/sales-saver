@@ -2,19 +2,50 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import type { Deal } from "@/types/types";
+import type { Deal, CustomField } from "@/types/types";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { LogOut, Settings as SettingsIcon } from "lucide-react";
 import CreateDealForm from "@/components/deals/CreateDealForm";
 import { DealsTable } from "@/components/deals/DealsTable";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 const Dashboard = () => {
   const [deals, setDeals] = useState<Deal[]>([]);
+  const [customFields, setCustomFields] = useState<CustomField[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showCustomFields, setShowCustomFields] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const fetchCustomFields = async () => {
+    try {
+      const { data: authData } = await supabase.auth.getUser();
+      const userId = authData.user?.id;
+
+      if (!userId) {
+        navigate("/auth");
+        return;
+      }
+
+      const { data: fieldsData, error: fieldsError } = await supabase
+        .from("custom_fields")
+        .select("*")
+        .eq("user_id", userId);
+
+      if (fieldsError) throw fieldsError;
+      setCustomFields(fieldsData || []);
+    } catch (err) {
+      console.error("Error fetching custom fields:", err);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to fetch custom fields",
+      });
+    }
+  };
 
   const fetchDeals = async () => {
     try {
@@ -73,6 +104,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchDeals();
+    fetchCustomFields();
   }, []);
 
   const handleSignOut = async () => {
@@ -105,7 +137,7 @@ const Dashboard = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-900">Sales Dashboard</h1>
           <div className="flex items-center gap-4">
-            <CreateDealForm onDealCreated={fetchDeals} />
+            <CreateDealForm onDealCreated={fetchDeals} customFields={customFields} />
             <Button variant="ghost" onClick={() => navigate("/settings")}>
               <SettingsIcon className="h-5 w-5 mr-2" />
               Settings
@@ -119,7 +151,19 @@ const Dashboard = () => {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <DealsTable initialDeals={deals} />
+        <div className="mb-4 flex items-center gap-2">
+          <Switch
+            id="custom-fields"
+            checked={showCustomFields}
+            onCheckedChange={setShowCustomFields}
+          />
+          <Label htmlFor="custom-fields">Show Custom Fields</Label>
+        </div>
+        <DealsTable 
+          initialDeals={deals} 
+          customFields={customFields}
+          showCustomFields={showCustomFields}
+        />
       </main>
     </div>
   );

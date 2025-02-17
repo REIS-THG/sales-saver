@@ -2,11 +2,11 @@
 import { createColumnHelper } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { ArrowUpDown, CheckCircle2, AlertCircle, Clock, Ban } from "lucide-react";
-import { type Deal } from "@/types/types";
+import { type Deal, type CustomField } from "@/types/types";
 
 const columnHelper = createColumnHelper<Deal>();
 
-export const columns = [
+const baseColumns = [
   columnHelper.accessor("deal_name", {
     header: ({ column }) => {
       return (
@@ -126,3 +126,37 @@ export const columns = [
     },
   }),
 ];
+
+export const getColumns = (customFields: CustomField[], showCustomFields: boolean) => {
+  if (!showCustomFields) return baseColumns;
+
+  const customColumns = customFields.map((field) => 
+    columnHelper.accessor(
+      row => row.custom_fields?.[field.field_name] as string | number | boolean,
+      {
+        id: field.field_name,
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+              className="p-0 hover:bg-transparent"
+            >
+              {field.field_name}
+              <ArrowUpDown className="ml-2 h-4 w-4" />
+            </Button>
+          );
+        },
+        cell: (info) => {
+          const value = info.getValue();
+          if (typeof value === "boolean") {
+            return value ? "Yes" : "No";
+          }
+          return value?.toString() || "-";
+        },
+      }
+    )
+  );
+
+  return [...baseColumns, ...customColumns];
+};

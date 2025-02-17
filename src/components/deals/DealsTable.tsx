@@ -24,20 +24,22 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { type Deal } from "@/types/types";
+import { type Deal, type CustomField } from "@/types/types";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import DealDetailsModal from "./DealDetailsModal";
 import { SortableTableRow } from "./SortableTableRow";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { columns } from "./table/columns";
+import { getColumns } from "./table/columns";
 import { TableSearch } from "./table/TableSearch";
 
 interface DealsTableProps {
   initialDeals: Deal[];
+  customFields: CustomField[];
+  showCustomFields: boolean;
 }
 
-export function DealsTable({ initialDeals }: DealsTableProps) {
+export function DealsTable({ initialDeals, customFields, showCustomFields }: DealsTableProps) {
   const [deals, setDeals] = useState<Deal[]>(initialDeals);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -45,16 +47,14 @@ export function DealsTable({ initialDeals }: DealsTableProps) {
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
   const navigate = useNavigate();
 
+  const columns = getColumns(customFields, showCustomFields);
+
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
-
-  const handleHealthScoreClick = (dealId: string) => {
-    navigate(`/deal-genius?dealId=${dealId}`);
-  };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -86,13 +86,8 @@ export function DealsTable({ initialDeals }: DealsTableProps) {
     }
   };
 
-  const dealsWithHandler = deals.map(deal => ({
-    ...deal,
-    onHealthScoreClick: handleHealthScoreClick
-  }));
-
   const table = useReactTable({
-    data: dealsWithHandler,
+    data: deals,
     columns,
     state: {
       sorting,
@@ -107,6 +102,10 @@ export function DealsTable({ initialDeals }: DealsTableProps) {
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
   });
+
+  useEffect(() => {
+    setDeals(initialDeals);
+  }, [initialDeals]);
 
   useEffect(() => {
     const channel = supabase
@@ -189,6 +188,7 @@ export function DealsTable({ initialDeals }: DealsTableProps) {
         deal={selectedDeal}
         onClose={() => setSelectedDeal(null)}
         onDealUpdated={handleDealUpdated}
+        customFields={customFields}
       />
     </div>
   );
