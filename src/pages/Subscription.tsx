@@ -7,6 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { SubscriptionPlanCard, type Plan } from "@/components/subscription/SubscriptionPlanCard";
 import { subscriptionPlans } from "@/components/subscription/plans-data";
+import { useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 
 // Initialize Stripe with a check for the publishable key
 const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY 
@@ -17,6 +19,25 @@ export default function Subscription() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const success = searchParams.get('success');
+    const canceled = searchParams.get('canceled');
+    const sessionId = searchParams.get('session_id');
+
+    if (success === 'true' && sessionId) {
+      toast({
+        title: "Success!",
+        description: "Your subscription has been activated. Welcome to Pro!",
+      });
+    } else if (canceled === 'true') {
+      toast({
+        title: "Subscription canceled",
+        description: "You can upgrade anytime when you're ready.",
+      });
+    }
+  }, [searchParams, toast]);
 
   if (loading) {
     return (

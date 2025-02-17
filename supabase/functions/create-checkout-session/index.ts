@@ -27,9 +27,8 @@ serve(async (req) => {
       throw new Error('Missing required fields');
     }
 
-    if (!Deno.env.get('STRIPE_SECRET_KEY')) {
-      throw new Error('Stripe secret key is not configured');
-    }
+    const origin = req.headers.get('origin') || 'http://localhost:5173';
+    console.log('Origin:', origin);
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -40,13 +39,14 @@ serve(async (req) => {
         },
       ],
       mode: 'subscription',
-      success_url: `${Deno.env.get('SITE_URL')}/subscription?success=true`,
-      cancel_url: `${Deno.env.get('SITE_URL')}/subscription?canceled=true`,
+      success_url: `${origin}/subscription?success=true&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/subscription?canceled=true`,
       customer_email: customerEmail,
       client_reference_id: userId,
       metadata: {
         userId,
       },
+      allow_promotion_codes: true,
     })
 
     console.log('Checkout session created:', session.id);
