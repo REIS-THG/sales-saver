@@ -43,10 +43,7 @@ const Auth = () => {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback`,
-            data: {
-              remember_me: rememberMe
-            }
+            emailRedirectTo: `${window.location.origin}/auth/callback`
           }
         });
         
@@ -66,12 +63,7 @@ const Auth = () => {
       } else {
         const { error: signInError } = await supabase.auth.signInWithPassword({
           email,
-          password,
-          options: {
-            data: {
-              remember_me: rememberMe
-            }
-          }
+          password
         });
         
         if (signInError) {
