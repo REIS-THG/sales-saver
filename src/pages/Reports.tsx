@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -98,10 +97,9 @@ const Reports = () => {
 
       if (error) throw error;
 
-      // Transform the data to match our ReportConfiguration type
       const typedReports: ReportConfiguration[] = (reportsData || []).map(report => ({
         ...report,
-        config: report.config as unknown as ReportConfig // Cast the JSON to our type
+        config: report.config as unknown as ReportConfig
       }));
 
       setReports(typedReports);
@@ -165,7 +163,6 @@ const Reports = () => {
 
       if (error) throw error;
 
-      // Transform the data to match our Deal type
       const typedDeals: Deal[] = (dealsData || []).map(deal => ({
         ...deal,
         status: (deal.status || 'open') as 'open' | 'stalled' | 'won' | 'lost',
@@ -202,12 +199,11 @@ const Reports = () => {
         visualization: 'bar'
       };
 
-      // Convert the config to a JSON-compatible format
       const newReportData = {
         name: "New Report",
         description: "Custom report description",
         user_id: userId,
-        config: JSON.parse(JSON.stringify(initialConfig)) // This ensures the object is JSON-compatible
+        config: JSON.parse(JSON.stringify(initialConfig))
       };
 
       const { data, error } = await supabase
@@ -218,7 +214,6 @@ const Reports = () => {
 
       if (error) throw error;
 
-      // Transform the returned data to match our ReportConfiguration type
       const newReport: ReportConfiguration = {
         ...data,
         config: data.config as unknown as ReportConfig
@@ -237,6 +232,72 @@ const Reports = () => {
         variant: "destructive",
         title: "Error",
         description: "Failed to create report",
+      });
+    }
+  };
+
+  const deleteReport = async (reportId: string) => {
+    try {
+      const { error } = await supabase
+        .from('report_configurations')
+        .delete()
+        .eq('id', reportId);
+
+      if (error) throw error;
+
+      setReports(prev => prev.filter(report => report.id !== reportId));
+      if (selectedReport?.id === reportId) {
+        setSelectedReport(null);
+      }
+
+      toast({
+        title: "Success",
+        description: "Report deleted successfully",
+      });
+    } catch (err) {
+      console.error('Error deleting report:', err);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete report",
+      });
+    }
+  };
+
+  const updateReport = async (reportId: string, updates: Partial<ReportConfiguration>) => {
+    try {
+      const { data, error } = await supabase
+        .from('report_configurations')
+        .update({
+          ...updates,
+          config: JSON.parse(JSON.stringify(updates.config))
+        })
+        .eq('id', reportId)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const updatedReport: ReportConfiguration = {
+        ...data,
+        config: data.config as unknown as ReportConfig
+      };
+
+      setReports(prev => prev.map(report => 
+        report.id === reportId ? updatedReport : report
+      ));
+      setSelectedReport(updatedReport);
+
+      toast({
+        title: "Success",
+        description: "Report updated successfully",
+      });
+    } catch (err) {
+      console.error('Error updating report:', err);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update report",
       });
     }
   };
@@ -337,11 +398,24 @@ const Reports = () => {
           {reports.map((report) => (
             <Card key={report.id} className="cursor-pointer hover:shadow-lg transition-shadow">
               <CardHeader>
-                <CardTitle>{report.name}</CardTitle>
-                <CardDescription>{report.description}</CardDescription>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle>{report.name}</CardTitle>
+                    <CardDescription>{report.description}</CardDescription>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteReport(report.id);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4 text-red-500" />
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
-                {/* Report preview or summary could go here */}
                 <Button 
                   variant="outline" 
                   className="w-full"
@@ -358,13 +432,174 @@ const Reports = () => {
           <div className="mt-8">
             <Card>
               <CardHeader>
-                <CardTitle>Report Configuration</CardTitle>
-                <CardDescription>Customize your report visualization</CardDescription>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>Report Configuration</CardTitle>
+                    <CardDescription>Customize your report visualization</CardDescription>
+                  </div>
+                  <Button
+                    variant="outline"
+                    onClick={() => setSelectedReport(null)}
+                  >
+                    Close
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
-                {/* Report configuration UI will go here */}
-                <div className="space-y-4">
-                  {/* Visualization type selector */}
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      Select Fields
+                    </label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <h3 className="text-sm font-medium mb-2">Dimensions</h3>
+                        <Select
+                          onValueChange={(value) => {
+                            const field = [...standardFields, ...customFields].find(f => f.field === value);
+                            if (field) {
+                              const newDimension = {
+                                field: value,
+                                type: 'standard',
+                                label: field.field_name || field.label
+                              };
+                              updateReport(selectedReport.id, {
+                                ...selectedReport,
+                                config: {
+                                  ...selectedReport.config,
+                                  dimensions: [...selectedReport.config.dimensions, newDimension]
+                                }
+                              });
+                            }
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Add dimension" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {[...standardFields, ...customFields].map((field) => (
+                              <SelectItem key={field.field} value={field.field}>
+                                {field.field_name || field.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <div className="mt-2 space-y-2">
+                          {selectedReport.config.dimensions.map((dim, index) => (
+                            <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                              <span>{dim.label}</span>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  const newDimensions = selectedReport.config.dimensions.filter((_, i) => i !== index);
+                                  updateReport(selectedReport.id, {
+                                    ...selectedReport,
+                                    config: {
+                                      ...selectedReport.config,
+                                      dimensions: newDimensions
+                                    }
+                                  });
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4 text-red-500" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <h3 className="text-sm font-medium mb-2">Metrics</h3>
+                        <div className="flex gap-2">
+                          <Select
+                            onValueChange={(value) => {
+                              const field = [...standardFields, ...customFields].find(f => f.field === value);
+                              if (field) {
+                                const newMetric = {
+                                  field: value,
+                                  aggregation: 'sum',
+                                  label: `Sum of ${field.field_name || field.label}`
+                                };
+                                updateReport(selectedReport.id, {
+                                  ...selectedReport,
+                                  config: {
+                                    ...selectedReport.config,
+                                    metrics: [...selectedReport.config.metrics, newMetric]
+                                  }
+                                });
+                              }
+                            }}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Add metric" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {[...standardFields, ...customFields]
+                                .filter(field => field.type === 'number')
+                                .map((field) => (
+                                  <SelectItem key={field.field} value={field.field}>
+                                    {field.field_name || field.label}
+                                  </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="mt-2 space-y-2">
+                          {selectedReport.config.metrics.map((metric, index) => (
+                            <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                              <div className="flex items-center gap-2">
+                                <span>{metric.label}</span>
+                                <Select
+                                  value={metric.aggregation}
+                                  onValueChange={(value) => {
+                                    const newMetrics = selectedReport.config.metrics.map((m, i) => 
+                                      i === index ? { ...m, aggregation: value as any } : m
+                                    );
+                                    updateReport(selectedReport.id, {
+                                      ...selectedReport,
+                                      config: {
+                                        ...selectedReport.config,
+                                        metrics: newMetrics
+                                      }
+                                    });
+                                  }}
+                                >
+                                  <SelectTrigger className="h-7 w-24">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {aggregations.map((agg) => (
+                                      <SelectItem key={agg.value} value={agg.value}>
+                                        {agg.label}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  const newMetrics = selectedReport.config.metrics.filter((_, i) => i !== index);
+                                  updateReport(selectedReport.id, {
+                                    ...selectedReport,
+                                    config: {
+                                      ...selectedReport.config,
+                                      metrics: newMetrics
+                                    }
+                                  });
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4 text-red-500" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   <div>
                     <label className="block text-sm font-medium mb-2">
                       Visualization Type
@@ -375,7 +610,7 @@ const Reports = () => {
                           key={type.value}
                           variant={selectedReport.config.visualization === type.value ? "default" : "outline"}
                           onClick={() => {
-                            setSelectedReport({
+                            updateReport(selectedReport.id, {
                               ...selectedReport,
                               config: {
                                 ...selectedReport.config,
@@ -391,7 +626,6 @@ const Reports = () => {
                     </div>
                   </div>
 
-                  {/* Placeholder for the actual visualization */}
                   <div className="bg-white p-4 rounded-lg border mt-4">
                     {renderVisualization(selectedReport.config, [])}
                   </div>
