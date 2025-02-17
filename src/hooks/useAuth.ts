@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { User } from '@/types/types';
+import type { Json } from '@/integrations/supabase/types';
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -60,13 +61,14 @@ export function useAuth() {
         : [];
 
       // Ensure billing_address is a valid object
-      const billing_address = typeof data.billing_address === 'object' && data.billing_address
+      const billingAddressData = data.billing_address as { [key: string]: Json };
+      const billing_address = typeof billingAddressData === 'object' && billingAddressData
         ? {
-            street: data.billing_address.street as string || undefined,
-            city: data.billing_address.city as string || undefined,
-            state: data.billing_address.state as string || undefined,
-            country: data.billing_address.country as string || undefined,
-            postal_code: data.billing_address.postal_code as string || undefined
+            street: (billingAddressData.street as string) || undefined,
+            city: (billingAddressData.city as string) || undefined,
+            state: (billingAddressData.state as string) || undefined,
+            country: (billingAddressData.country as string) || undefined,
+            postal_code: (billingAddressData.postal_code as string) || undefined
           }
         : {};
 
