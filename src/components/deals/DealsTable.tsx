@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import {
   flexRender,
@@ -166,6 +165,30 @@ export function DealsTable({ initialDeals }: DealsTableProps) {
     }
   };
 
+  const handleDealUpdated = () => {
+    const fetchDeals = async () => {
+      const { data: authData } = await supabase.auth.getUser();
+      const userId = authData.user?.id;
+
+      if (!userId) return;
+
+      const { data: dealsData, error: fetchError } = await supabase
+        .from("deals")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false });
+
+      if (fetchError) {
+        console.error("Error fetching deals:", fetchError);
+        return;
+      }
+
+      setDeals(dealsData as Deal[]);
+    };
+
+    fetchDeals();
+  };
+
   return (
     <div className="rounded-md border">
       <DndContext
@@ -198,6 +221,7 @@ export function DealsTable({ initialDeals }: DealsTableProps) {
                   key={row.original.id}
                   row={row}
                   onClick={() => setSelectedDeal(row.original)}
+                  onDealUpdated={handleDealUpdated}
                 />
               ))}
             </SortableContext>
@@ -208,6 +232,7 @@ export function DealsTable({ initialDeals }: DealsTableProps) {
       <DealDetailsModal
         deal={selectedDeal}
         onClose={() => setSelectedDeal(null)}
+        onDealUpdated={handleDealUpdated}
       />
     </div>
   );

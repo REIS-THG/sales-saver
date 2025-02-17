@@ -20,6 +20,17 @@ export interface User {
   };
 }
 
+export interface DealNote {
+  id: string;
+  deal_id: string;
+  user_id: string;
+  content: string;
+  sentiment_score?: number;
+  ai_analysis?: Record<string, any>;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Deal {
   id: string;
   user_id: string;
@@ -38,6 +49,9 @@ export interface Deal {
   start_date: string;
   expected_close_date: string;
   custom_fields?: Record<string, string | number | boolean> | null;
+  notes_count?: number;
+  last_note_at?: string;
+  notes?: string;
 }
 
 export interface FollowUp {

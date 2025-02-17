@@ -81,6 +81,47 @@ export type Database = {
         }
         Relationships: []
       }
+      deal_notes: {
+        Row: {
+          ai_analysis: Json | null
+          content: string
+          created_at: string | null
+          deal_id: string
+          id: string
+          sentiment_score: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          ai_analysis?: Json | null
+          content: string
+          created_at?: string | null
+          deal_id: string
+          id?: string
+          sentiment_score?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          ai_analysis?: Json | null
+          content?: string
+          created_at?: string | null
+          deal_id?: string
+          id?: string
+          sentiment_score?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_notes_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deals: {
         Row: {
           amount: number
@@ -96,8 +137,10 @@ export type Database = {
           health_score: number | null
           id: string
           last_contacted: string | null
+          last_note_at: string | null
           next_action: string | null
           notes: string | null
+          notes_count: number | null
           start_date: string | null
           status: string | null
           updated_at: string | null
@@ -117,8 +160,10 @@ export type Database = {
           health_score?: number | null
           id?: string
           last_contacted?: string | null
+          last_note_at?: string | null
           next_action?: string | null
           notes?: string | null
+          notes_count?: number | null
           start_date?: string | null
           status?: string | null
           updated_at?: string | null
@@ -138,8 +183,10 @@ export type Database = {
           health_score?: number | null
           id?: string
           last_contacted?: string | null
+          last_note_at?: string | null
           next_action?: string | null
           notes?: string | null
+          notes_count?: number | null
           start_date?: string | null
           status?: string | null
           updated_at?: string | null
