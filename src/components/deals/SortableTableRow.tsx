@@ -4,7 +4,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { Row } from "@tanstack/react-table";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { flexRender } from "@tanstack/react-table";
-import { GripVertical } from "lucide-react";
+import { GripVertical, Sparkles } from "lucide-react";
 import { type Deal } from "@/types/types";
 import {
   Select,
@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
@@ -20,10 +21,10 @@ import { useState } from "react";
 interface SortableTableRowProps {
   row: Row<Deal>;
   onClick: () => void;
-  onDealUpdated?: () => void;
+  onAnalyze: () => void;
 }
 
-export function SortableTableRow({ row, onClick, onDealUpdated }: SortableTableRowProps) {
+export function SortableTableRow({ row, onClick, onAnalyze }: SortableTableRowProps) {
   const [isUpdating, setIsUpdating] = useState(false);
   const { toast } = useToast();
   
@@ -57,7 +58,6 @@ export function SortableTableRow({ row, onClick, onDealUpdated }: SortableTableR
       });
       console.error("Error updating status:", error);
     } else {
-      if (onDealUpdated) onDealUpdated();
       toast({
         title: "Success",
         description: "Status updated successfully.",
@@ -84,7 +84,7 @@ export function SortableTableRow({ row, onClick, onDealUpdated }: SortableTableR
           {flexRender(row.getVisibleCells()[0].column.columnDef.cell, row.getVisibleCells()[0].getContext())}
         </div>
       </TableCell>
-      {row.getVisibleCells().slice(1, -1).map((cell) => (
+      {row.getVisibleCells().slice(1, -2).map((cell) => (
         <TableCell key={cell.id} onClick={onClick}>
           {flexRender(cell.column.columnDef.cell, cell.getContext())}
         </TableCell>
@@ -105,6 +105,17 @@ export function SortableTableRow({ row, onClick, onDealUpdated }: SortableTableR
             <SelectItem value="stalled">Stalled</SelectItem>
           </SelectContent>
         </Select>
+      </TableCell>
+      <TableCell onClick={(e) => e.stopPropagation()}>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onAnalyze}
+          className="w-full flex items-center gap-2"
+        >
+          <Sparkles className="h-4 w-4" />
+          Analyze
+        </Button>
       </TableCell>
     </TableRow>
   );

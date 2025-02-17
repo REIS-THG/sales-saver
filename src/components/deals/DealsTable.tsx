@@ -1,11 +1,12 @@
+
 import { useState, useEffect } from "react";
 import {
   flexRender,
   getCoreRowModel,
   getSortedRowModel,
   getFilteredRowModel,
-  SortingState,
-  ColumnFiltersState,
+  type SortingState,
+  type ColumnFiltersState,
   useReactTable,
 } from "@tanstack/react-table";
 import {
@@ -15,7 +16,7 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  DragEndEvent,
+  type DragEndEvent,
 } from "@dnd-kit/core";
 import {
   arrayMove,
@@ -31,6 +32,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { getColumns } from "./table/columns";
 import { TableSearch } from "./table/TableSearch";
+import { Button } from "@/components/ui/button";
+import { Sparkles } from "lucide-react";
 
 interface DealsTableProps {
   initialDeals: Deal[];
@@ -39,7 +42,7 @@ interface DealsTableProps {
 }
 
 export function DealsTable({ initialDeals, customFields, showCustomFields }: DealsTableProps) {
-  const [deals, setDeals] = useState<Deal[]>(initialDeals);
+  const [deals, setDeals] = useState<Deal[]>([]);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
@@ -68,22 +71,16 @@ export function DealsTable({ initialDeals, customFields, showCustomFields }: Dea
     }
   };
 
-  const handleDealUpdated = async () => {
-    const { data: authData } = await supabase.auth.getUser();
-    const userId = authData.user?.id;
-
-    if (!userId) return;
-
-    const { data: dealsData } = await supabase
-      .from("deals")
-      .select("*")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false });
-
-    if (dealsData) {
-      setDeals(dealsData as Deal[]);
-    }
-  };
+  useEffect(() => {
+    setDeals(initialDeals.map(deal => ({
+      ...deal,
+      name: deal.deal_name,
+      value: deal.amount,
+      notes: Array.isArray(deal.notes) ? deal.notes : [],
+      custom_fields: deal.custom_fields ? (typeof deal.custom_fields === 'string' ? JSON.parse(deal.custom_fields) : deal.custom_fields) : {},
+      status: (deal.status || 'open') as Deal['status'],
+    })));
+  }, [initialDeals]);
 
   const table = useReactTable({
     data: deals,
@@ -102,53 +99,21 @@ export function DealsTable({ initialDeals, customFields, showCustomFields }: Dea
     getSortedRowModel: getSortedRowModel(),
   });
 
-  useEffect(() => {
-    setDeals(initialDeals.map(deal => ({
-      ...deal,
-      name: deal.deal_name, // Map deal_name to name for compatibility
-      value: deal.amount, // Map amount to value for compatibility
-      custom_fields: deal.custom_fields as Record<string, any> || {},
-    })));
-  }, [initialDeals]);
-
-  useEffect(() => {
-    const channel = supabase
-      .channel('table-db-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'deals'
-        },
-        (payload) => {
-          if (payload.eventType === 'INSERT') {
-            setDeals((currentDeals) => [...currentDeals, payload.new as Deal]);
-          } else if (payload.eventType === 'DELETE') {
-            setDeals((currentDeals) => 
-              currentDeals.filter((deal) => deal.id !== payload.old.id)
-            );
-          } else if (payload.eventType === 'UPDATE') {
-            setDeals((currentDeals) =>
-              currentDeals.map((deal) =>
-                deal.id === payload.new.id ? { ...deal, ...payload.new } : deal
-              )
-            );
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
   return (
     <div className="space-y-4">
-      <TableSearch value={globalFilter} onChange={setGlobalFilter} />
+      <div className="flex justify-between items-center">
+        <TableSearch value={globalFilter} onChange={setGlobalFilter} />
+        <Button 
+          variant="outline" 
+          onClick={() => navigate("/deal-genius")}
+          className="gap-2"
+        >
+          <Sparkles className="h-4 w-4" />
+          AI Analysis
+        </Button>
+      </div>
 
-      <div className="rounded-md border">
+      <div className="rounded-md border overflow-auto max-h-[calc(100vh-280px)]">
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -179,7 +144,7 @@ export function DealsTable({ initialDeals, customFields, showCustomFields }: Dea
                     key={row.original.id}
                     row={row}
                     onClick={() => setSelectedDeal(row.original)}
-                    onDealUpdated={handleDealUpdated}
+                    onAnalyze={() => navigate(`/deal-genius?dealId=${row.original.id}`)}
                   />
                 ))}
               </SortableContext>
@@ -191,7 +156,6 @@ export function DealsTable({ initialDeals, customFields, showCustomFields }: Dea
       <DealDetailsModal
         deal={selectedDeal}
         onClose={() => setSelectedDeal(null)}
-        onDealUpdated={handleDealUpdated}
         customFields={customFields}
       />
     </div>

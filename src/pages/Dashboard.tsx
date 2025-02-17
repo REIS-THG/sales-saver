@@ -1,11 +1,10 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import type { Deal, CustomField, User } from "@/types/types";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut, Settings as SettingsIcon, BarChart2 } from "lucide-react";
+import { LogOut, Settings as SettingsIcon, BarChart2, Sparkles } from "lucide-react";
 import CreateDealForm from "@/components/deals/CreateDealForm";
 import { DealsTable } from "@/components/deals/DealsTable";
 import { Switch } from "@/components/ui/switch";
@@ -199,7 +198,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow">
+      <header className="bg-white shadow sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-900">Sales Dashboard</h1>
           <div className="flex items-center gap-4">
@@ -208,6 +207,10 @@ const Dashboard = () => {
               customFields={customFields}
               onBeforeCreate={handleCreateDeal}
             />
+            <Button variant="outline" onClick={() => navigate("/deal-genius")}>
+              <Sparkles className="h-5 w-5 mr-2" />
+              AI Analysis
+            </Button>
             <Button variant="ghost" onClick={() => navigate("/reports")}>
               <BarChart2 className="h-5 w-5 mr-2" />
               Reports
@@ -246,26 +249,6 @@ const Dashboard = () => {
           showCustomFields={showCustomFields}
         />
       </main>
-
-      <AlertDialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Upgrade to Pro</AlertDialogTitle>
-            <AlertDialogDescription>
-              You've reached the limit of {FREE_DEAL_LIMIT} deals on the free plan. 
-              Upgrade to Pro for unlimited deals and additional features.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="flex justify-end gap-4 mt-4">
-            <Button variant="outline" onClick={() => setShowUpgradeDialog(false)}>
-              Cancel
-            </Button>
-            <Button onClick={() => navigate("/settings")}>
-              Upgrade Now
-            </Button>
-          </div>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 };
