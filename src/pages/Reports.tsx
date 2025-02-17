@@ -44,8 +44,16 @@ import {
   Star,
   StarOff,
   Pencil,
-  ArrowLeft
+  ArrowLeft,
+  Download
 } from "lucide-react";
+import * as XLSX from 'xlsx';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { 
   ReportConfiguration, 
   ReportConfig, 
@@ -397,6 +405,118 @@ const Reports = () => {
     }
   };
 
+  const generateReportData = (report: ReportConfiguration) => {
+    const formattedData = deals.map(deal => {
+      const row: Record<string, any> = {};
+      
+      report.config.dimensions.forEach(dim => {
+        if (dim.type === 'standard') {
+          row[dim.label] = deal[dim.field as keyof Deal];
+        } else if (dim.type === 'custom' && deal.custom_fields) {
+          row[dim.label] = deal.custom_fields[dim.field];
+        }
+      });
+
+      report.config.metrics.forEach(metric => {
+        const value = deal[metric.field as keyof Deal];
+        if (typeof value === 'number') {
+          row[metric.label] = value;
+        }
+      });
+
+      return row;
+    });
+
+    return formattedData;
+  };
+
+  const downloadExcel = async (report: ReportConfiguration) => {
+    try {
+      const data = generateReportData(report);
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Report");
+      
+      const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+      const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      
+      const fileName = `${supabase.auth.user()?.id}/${report.name}_${Date.now()}.xlsx`;
+      const { error: uploadError } = await supabase.storage
+        .from('report_exports')
+        .upload(fileName, blob);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('report_exports')
+        .getPublicUrl(fileName);
+
+      const link = document.createElement('a');
+      link.href = publicUrl;
+      link.download = `${report.name}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast({
+        title: "Success",
+        description: "Report downloaded successfully",
+      });
+    } catch (err) {
+      console.error('Error downloading Excel:', err);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to download Excel file",
+      });
+    }
+  };
+
+  const downloadGoogleSheets = async (report: ReportConfiguration) => {
+    try {
+      const data = generateReportData(report);
+      
+      const headers = Object.keys(data[0] || {});
+      const csvContent = [
+        headers.join(','),
+        ...data.map(row => headers.map(header => {
+          const cell = row[header];
+          return typeof cell === 'string' && cell.includes(',') 
+            ? `"${cell}"`
+            : cell;
+        }).join(','))
+      ].join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      
+      const fileName = `${supabase.auth.user()?.id}/${report.name}_${Date.now()}.csv`;
+      const { error: uploadError } = await supabase.storage
+        .from('report_exports')
+        .upload(fileName, blob);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('report_exports')
+        .getPublicUrl(fileName);
+
+      const googleSheetsUrl = `https://docs.google.com/spreadsheets/d/create?usp=sheets_web&source=csv&url=${encodeURIComponent(publicUrl)}`;
+      window.open(googleSheetsUrl, '_blank');
+
+      toast({
+        title: "Success",
+        description: "Opening report in Google Sheets",
+      });
+    } catch (err) {
+      console.error('Error exporting to Google Sheets:', err);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to export to Google Sheets",
+      });
+    }
+  };
+
   const renderVisualization = (config: ReportConfig, data: any[]) => {
     const { visualization } = config;
     
@@ -470,6 +590,88 @@ const Reports = () => {
     }
   };
 
+  const renderReportCard = (report: ReportConfiguration) => (
+    <Card key={report.id} className="cursor-pointer hover:shadow-lg transition-shadow">
+      <CardHeader>
+        <div className="flex justify-between items-start">
+          <div className="flex-1">
+            {editingReportId === report.id ? (
+              <div className="flex gap-2">
+                <Input
+                  value={editingName}
+                  onChange={(e) => setEditingName(e.target.value)}
+                  className="text-lg font-semibold"
+                />
+                <Button size="sm" onClick={saveReportName}>
+                  <Save className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <CardTitle>{report.name}</CardTitle>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => startEditingName(report)}
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+            <CardDescription>{report.description}</CardDescription>
+          </div>
+          <div className="flex gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <Download className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => downloadExcel(report)}>
+                  Download Excel
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => downloadGoogleSheets(report)}>
+                  Open in Google Sheets
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => toggleFavorite(report.id, !!report.is_favorite)}
+            >
+              {report.is_favorite ? (
+                <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
+              ) : (
+                <StarOff className="h-4 w-4" />
+              )}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                deleteReport(report.id);
+              }}
+            >
+              <Trash2 className="h-4 w-4 text-red-500" />
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <Button 
+          variant="outline" 
+          className="w-full"
+          onClick={() => setSelectedReport(report)}
+        >
+          View Report
+        </Button>
+      </CardContent>
+    </Card>
+  );
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -507,70 +709,7 @@ const Reports = () => {
             <h2 className="text-xl font-semibold mb-4">Favorite Reports</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
               {favoriteReports.map((report) => (
-                <Card key={report.id} className="cursor-pointer hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        {editingReportId === report.id ? (
-                          <div className="flex gap-2">
-                            <Input
-                              value={editingName}
-                              onChange={(e) => setEditingName(e.target.value)}
-                              className="text-lg font-semibold"
-                            />
-                            <Button size="sm" onClick={saveReportName}>
-                              <Save className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <CardTitle>{report.name}</CardTitle>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => startEditingName(report)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
-                        <CardDescription>{report.description}</CardDescription>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => toggleFavorite(report.id, !!report.is_favorite)}
-                        >
-                          {report.is_favorite ? (
-                            <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
-                          ) : (
-                            <StarOff className="h-4 w-4" />
-                          )}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            deleteReport(report.id);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4 text-red-500" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <Button 
-                      variant="outline" 
-                      className="w-full"
-                      onClick={() => setSelectedReport(report)}
-                    >
-                      View Report
-                    </Button>
-                  </CardContent>
-                </Card>
+                renderReportCard(report)
               ))}
             </div>
           </>
@@ -579,70 +718,7 @@ const Reports = () => {
         <h2 className="text-xl font-semibold mb-4">All Reports</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {otherReports.map((report) => (
-            <Card key={report.id} className="cursor-pointer hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    {editingReportId === report.id ? (
-                      <div className="flex gap-2">
-                        <Input
-                          value={editingName}
-                          onChange={(e) => setEditingName(e.target.value)}
-                          className="text-lg font-semibold"
-                        />
-                        <Button size="sm" onClick={saveReportName}>
-                          <Save className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <CardTitle>{report.name}</CardTitle>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => startEditingName(report)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    )}
-                    <CardDescription>{report.description}</CardDescription>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => toggleFavorite(report.id, !!report.is_favorite)}
-                    >
-                      {report.is_favorite ? (
-                        <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
-                      ) : (
-                        <StarOff className="h-4 w-4" />
-                      )}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteReport(report.id);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4 text-red-500" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Button 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={() => setSelectedReport(report)}
-                >
-                  View Report
-                </Button>
-              </CardContent>
-            </Card>
+            renderReportCard(report)
           ))}
         </div>
 
