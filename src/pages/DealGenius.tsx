@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, FileText, Mail, Mic, ListChecks } from "lucide-react";
+import { ArrowLeft, FileText, Mail, Mic, ListChecks, Sparkles } from "lucide-react";
 import { AnalysisForm } from "@/components/deal-genius/AnalysisForm";
 import { InsightsList } from "@/components/deal-genius/InsightsList";
 import { useDealGenius } from "@/hooks/use-deal-genius";
@@ -128,30 +128,41 @@ const DealGenius = () => {
 
             <TabsContent value="analysis" className="p-6">
               <div className="space-y-6">
-                <AnalysisForm
-                  deals={deals}
-                  selectedDeal={selectedDeal}
-                  onDealChange={(dealId) => {
-                    setSelectedDeal(dealId);
-                    fetchInsights(dealId);
-                  }}
-                  isAnalyzing={isAnalyzing}
-                  isLoading={isLoading}
-                  isLimited={isAnalysisLimited}
-                  onAnalyze={(params) => {
-                    if (selectedDeal) {
-                      analyzeDeal(selectedDeal, {
-                        ...params,
-                        toneAnalysis: {
-                          formality,
-                          persuasiveness,
-                          urgency,
-                        },
-                        communicationChannel: selectedChannel,
-                      });
-                    }
-                  }}
-                />
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Select Deal</label>
+                  <DealSelector
+                    deals={deals}
+                    selectedDeal={selectedDeal}
+                    onDealChange={(dealId) => {
+                      setSelectedDeal(dealId);
+                      fetchInsights(dealId);
+                    }}
+                  />
+                </div>
+
+                <div className="mt-6">
+                  <label className="text-sm font-medium mb-2 block">
+                    Tone
+                  </label>
+                  <ToneAnalysis
+                    formality={formality}
+                    setFormality={setFormality}
+                    persuasiveness={persuasiveness}
+                    setPersuasiveness={setPersuasiveness}
+                    urgency={urgency}
+                    setUrgency={setUrgency}
+                  />
+                </div>
+                
+                <div className="mt-6">
+                  <label className="text-sm font-medium mb-2 block">
+                    Communication Channel
+                  </label>
+                  <CommunicationChannel
+                    selectedChannel={selectedChannel}
+                    setSelectedChannel={setSelectedChannel}
+                  />
+                </div>
 
                 <Card className="mt-6">
                   <CardHeader>
@@ -189,6 +200,29 @@ const DealGenius = () => {
                     </div>
                   </CardContent>
                 </Card>
+
+                <Button 
+                  className="w-full"
+                  onClick={() => {
+                    if (selectedDeal) {
+                      analyzeDeal(selectedDeal, {
+                        salesApproach: 'consultative_selling',
+                        industry: '',
+                        purposeNotes: '',
+                        toneAnalysis: {
+                          formality,
+                          persuasiveness,
+                          urgency,
+                        },
+                        communicationChannel: selectedChannel,
+                      });
+                    }
+                  }}
+                  disabled={isAnalyzing || isAnalysisLimited || !selectedDeal}
+                >
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  {isAnalyzing ? 'Analyzing Deal...' : 'Analyze Deal'}
+                </Button>
               </div>
             </TabsContent>
 
