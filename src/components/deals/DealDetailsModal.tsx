@@ -61,14 +61,26 @@ const DealDetailsModal = ({ deal, onClose, onDealUpdated }: DealDetailsModalProp
     if (!deal || !newNote.trim()) return;
 
     setIsLoading(true);
+    const { data: authData } = await supabase.auth.getUser();
+    const userId = authData.user?.id;
+
+    if (!userId) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "User not authenticated.",
+      });
+      setIsLoading(false);
+      return;
+    }
+
     const { error } = await supabase
       .from("deal_notes")
-      .insert([
-        {
-          deal_id: deal.id,
-          content: newNote.trim(),
-        },
-      ]);
+      .insert({
+        deal_id: deal.id,
+        user_id: userId,
+        content: newNote.trim(),
+      });
 
     if (error) {
       toast({
