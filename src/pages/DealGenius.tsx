@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -205,7 +206,7 @@ const DealGenius = () => {
             <TabsContent value="next-steps" className="p-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Next Steps Configuration</CardTitle>
+                  <CardTitle>Next Steps</CardTitle>
                   <CardDescription>
                     Customize how you want your next steps to be presented
                   </CardDescription>
@@ -226,9 +227,6 @@ const DealGenius = () => {
                   </div>
 
                   <div className="mt-6">
-                    <label className="text-sm font-medium mb-2 block">
-                      Tone
-                    </label>
                     <ToneAnalysis
                       formality={formality}
                       setFormality={setFormality}
@@ -238,6 +236,7 @@ const DealGenius = () => {
                       setUrgency={setUrgency}
                     />
                   </div>
+
                   <div className="mt-6">
                     <label className="text-sm font-medium mb-2 block">
                       Communication Channel
@@ -247,6 +246,7 @@ const DealGenius = () => {
                       setSelectedChannel={setSelectedChannel}
                     />
                   </div>
+
                   <Button 
                     className="w-full mt-6"
                     onClick={handleCreateNextSteps}
