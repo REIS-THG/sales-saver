@@ -1,8 +1,8 @@
 
-import { useSensors, useSensor, PointerSensor, KeyboardSensor, type Sensor } from "@dnd-kit/core";
+import { useSensors, useSensor, PointerSensor, KeyboardSensor, type SensorDescriptor } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 
-export function useDragSensors(): Sensor<any>[] {
+export function useDragSensors(): SensorDescriptor<any>[] {
   return useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
