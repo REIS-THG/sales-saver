@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { type Deal, type DealNote } from "@/types/types";
+import { type Deal, type DealNote, type CustomField } from "@/types/types";
 import {
   Dialog,
   DialogContent,
@@ -24,9 +24,10 @@ interface DealDetailsModalProps {
   deal: Deal | null;
   onClose: () => void;
   onDealUpdated?: () => void;
+  customFields: CustomField[];
 }
 
-const DealDetailsModal = ({ deal, onClose, onDealUpdated }: DealDetailsModalProps) => {
+const DealDetailsModal = ({ deal, onClose, onDealUpdated, customFields }: DealDetailsModalProps) => {
   const [notes, setNotes] = useState<DealNote[]>([]);
   const [newNote, setNewNote] = useState("");
   const [status, setStatus] = useState(deal?.status || "open");

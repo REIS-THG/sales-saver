@@ -1,6 +1,7 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { Deal } from "@/types/types";
+import type { Deal, CustomField } from "@/types/types";
 import {
   Sheet,
   SheetContent,
