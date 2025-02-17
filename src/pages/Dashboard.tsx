@@ -1,155 +1,27 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import type { Deal, CustomField, User } from "@/types/types";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { LogOut, Settings as SettingsIcon, BarChart2, Sparkles } from "lucide-react";
-import CreateDealForm from "@/components/deals/CreateDealForm";
-import { DealsTable } from "@/components/deals/DealsTable";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+
+import { useEffect } from "react";
+import { useDashboard } from "@/hooks/use-dashboard";
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { DashboardContent } from "@/components/dashboard/DashboardContent";
 
 const FREE_DEAL_LIMIT = 5;
 
 const Dashboard = () => {
-  const [deals, setDeals] = useState<Deal[]>([]);
-  const [customFields, setCustomFields] = useState<CustomField[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [showCustomFields, setShowCustomFields] = useState(false);
-  const [userData, setUserData] = useState<User | null>(null);
-  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
-  const navigate = useNavigate();
-  const { toast } = useToast();
-
-  const fetchUserData = async () => {
-    const { data: authData } = await supabase.auth.getUser();
-    if (!authData.user) {
-      navigate("/auth");
-      return;
-    }
-
-    const { data, error } = await supabase
-      .from("users")
-      .select("*")
-      .eq("user_id", authData.user.id)
-      .single();
-
-    if (error) {
-      console.error("Error fetching user data:", error);
-      return;
-    }
-
-    setUserData(data as User);
-  };
-
-  const fetchCustomFields = async () => {
-    try {
-      const { data: authData } = await supabase.auth.getUser();
-      const userId = authData.user?.id;
-
-      if (!userId) {
-        navigate("/auth");
-        return;
-      }
-
-      const { data: fieldsData, error: fieldsError } = await supabase
-        .from("custom_fields")
-        .select("*")
-        .eq("user_id", userId);
-
-      if (fieldsError) throw fieldsError;
-      
-      const typedCustomFields: CustomField[] = (fieldsData || []).map(field => ({
-        ...field,
-        field_type: field.field_type as "text" | "number" | "boolean" | "date"
-      }));
-      
-      setCustomFields(typedCustomFields);
-    } catch (err) {
-      console.error("Error fetching custom fields:", err);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to fetch custom fields",
-      });
-    }
-  };
-
-  const fetchDeals = async () => {
-    try {
-      setError(null);
-      const { data: authData } = await supabase.auth.getUser();
-      const userId = authData.user?.id;
-
-      if (!userId) {
-        navigate("/auth");
-        return;
-      }
-
-      const { data: dealsData, error: fetchError } = await supabase
-        .from("deals")
-        .select("*")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false });
-
-      if (fetchError) {
-        throw fetchError;
-      }
-
-      const typedDeals: Deal[] = (dealsData || []).map((deal) => ({
-        id: deal.id,
-        deal_name: deal.deal_name,
-        company_name: deal.company_name,
-        amount: Number(deal.amount),
-        status: (deal.status || 'open') as Deal['status'],
-        health_score: deal.health_score || 50,
-        user_id: deal.user_id,
-        created_at: deal.created_at,
-        updated_at: deal.updated_at,
-        start_date: deal.start_date,
-        expected_close_date: deal.expected_close_date,
-        last_contacted: deal.last_contacted,
-        next_action: deal.next_action,
-        contact_email: deal.contact_email,
-        contact_first_name: deal.contact_first_name,
-        contact_last_name: deal.contact_last_name,
-        company_url: deal.company_url,
-        notes: typeof deal.notes === 'string' ? deal.notes : '',
-        custom_fields: typeof deal.custom_fields === 'object' ? deal.custom_fields : {},
-        last_note_at: deal.last_note_at,
-        notes_count: deal.notes_count
-      }));
-
-      setDeals(typedDeals);
-
-      // Check if free user has reached deal limit
-      if (userData?.subscription_status === 'free' && typedDeals.length >= FREE_DEAL_LIMIT) {
-        setShowUpgradeDialog(true);
-      }
-    } catch (err) {
-      console.error("Error fetching deals:", err);
-      setError(err instanceof Error ? err.message : "Failed to fetch deals");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCreateDeal = async () => {
-    if (userData?.subscription_status === 'free' && deals.length >= FREE_DEAL_LIMIT) {
-      setShowUpgradeDialog(true);
-      return false; // Prevent deal creation
-    }
-    return true; // Allow deal creation
-  };
+  const {
+    deals,
+    customFields,
+    loading,
+    error,
+    showCustomFields,
+    setShowCustomFields,
+    userData,
+    showUpgradeDialog,
+    setShowUpgradeDialog,
+    fetchUserData,
+    fetchCustomFields,
+    fetchDeals,
+    handleSignOut
+  } = useDashboard();
 
   useEffect(() => {
     fetchUserData();
@@ -162,9 +34,12 @@ const Dashboard = () => {
     }
   }, [userData]);
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate("/auth");
+  const handleCreateDeal = async () => {
+    if (userData?.subscription_status === 'free' && deals.length >= FREE_DEAL_LIMIT) {
+      setShowUpgradeDialog(true);
+      return false;
+    }
+    return true;
   };
 
   if (loading) {
@@ -180,7 +55,7 @@ const Dashboard = () => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-500 mb-4">{error}</p>
-          <Button onClick={fetchDeals}>Retry</Button>
+          <button onClick={fetchDeals}>Retry</button>
         </div>
       </div>
     );
@@ -188,57 +63,19 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Sales Dashboard</h1>
-          <div className="flex items-center gap-4">
-            <CreateDealForm 
-              onDealCreated={fetchDeals} 
-              customFields={customFields}
-              onBeforeCreate={handleCreateDeal}
-            />
-            <Button variant="outline" onClick={() => navigate("/deal-genius")}>
-              <Sparkles className="h-5 w-5 mr-2" />
-              AI Analysis
-            </Button>
-            <Button variant="ghost" onClick={() => navigate("/reports")}>
-              <BarChart2 className="h-5 w-5 mr-2" />
-              Reports
-            </Button>
-            <Button variant="ghost" onClick={() => navigate("/settings")}>
-              <SettingsIcon className="h-5 w-5 mr-2" />
-              Settings
-            </Button>
-            <Button variant="ghost" onClick={handleSignOut}>
-              <LogOut className="h-5 w-5 mr-2" />
-              Sign Out
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-4 flex items-center gap-2">
-          <Switch
-            id="custom-fields"
-            checked={showCustomFields}
-            onCheckedChange={setShowCustomFields}
-          />
-          <Label htmlFor="custom-fields">Show Custom Fields</Label>
-        </div>
-        {userData?.subscription_status === 'free' && (
-          <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
-            <p className="text-yellow-800">
-              Free plan: {deals.length}/{FREE_DEAL_LIMIT} deals used
-            </p>
-          </div>
-        )}
-        <DealsTable 
-          initialDeals={deals} 
-          customFields={customFields}
-          showCustomFields={showCustomFields}
-        />
-      </main>
+      <DashboardHeader
+        onDealCreated={fetchDeals}
+        customFields={customFields}
+        onBeforeCreate={handleCreateDeal}
+        onSignOut={handleSignOut}
+      />
+      <DashboardContent
+        deals={deals}
+        customFields={customFields}
+        showCustomFields={showCustomFields}
+        setShowCustomFields={setShowCustomFields}
+        userData={userData}
+      />
     </div>
   );
 };
