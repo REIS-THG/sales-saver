@@ -48,6 +48,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import type { User } from "@/types/types";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 const CustomFieldSchema = z.object({
   field_name: z.string().min(1, "Field name is required"),
@@ -618,9 +619,7 @@ const Settings = () => {
                         <TableCell>{field.field_name}</TableCell>
                         <TableCell className="capitalize">{field.field_type}</TableCell>
                         <TableCell>{field.is_required ? "Yes" : "No"}</TableCell>
-                        <TableCell>
-                          {new Date(field.created_at).toLocaleDateString()}
-                        </TableCell>
+                        <TableCell>{new Date(field.created_at).toLocaleDateString()}</TableCell>
                         <TableCell>
                           <ConfirmDialog
                             title="Delete Custom Field"

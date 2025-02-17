@@ -8,6 +8,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button, ButtonProps } from "@/components/ui/button";
 import { AlertTriangle } from "lucide-react";
@@ -38,9 +39,9 @@ export function ConfirmDialog({
   return (
     <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
       {triggerButton && (
-        <AlertDialog.Trigger asChild>
+        <AlertDialogTrigger asChild>
           {triggerButton}
-        </AlertDialog.Trigger>
+        </AlertDialogTrigger>
       )}
       <AlertDialogContent>
         <AlertDialogHeader>
