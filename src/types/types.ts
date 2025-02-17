@@ -128,3 +128,20 @@ export interface TimeRange {
 }
 
 export type VisualizationType = 'bar' | 'line' | 'pie' | 'table' | 'number' | 'area';
+
+export interface Insight {
+  id: string;
+  deal_id: string;
+  insight_type: 'opportunity' | 'risk' | 'action' | 'trend';
+  content: string;
+  confidence_score: number;
+  created_at: string;
+  sales_approach: 'consultative_selling' | 'solution_selling' | 'transactional_selling' | 'value_based_selling';
+  industry: string;
+  purpose_notes: string;
+  tone_analysis: Record<string, number>;
+  word_choice_analysis: Record<string, any>;
+  coaching_suggestion?: string;
+  communication_template?: string;
+  communication_channel?: 'f2f' | 'email' | 'social_media';
+}
