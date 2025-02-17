@@ -23,8 +23,15 @@ serve(async (req) => {
     const { priceId, userId, customerEmail } = await req.json()
     console.log('Request data:', { priceId, userId, customerEmail });
 
-    if (!priceId || !userId || !customerEmail) {
-      throw new Error('Missing required fields');
+    // Validate required fields
+    if (!priceId) {
+      throw new Error('Price ID is required');
+    }
+    if (!userId) {
+      throw new Error('User ID is required');
+    }
+    if (!customerEmail) {
+      throw new Error('Customer email is required');
     }
 
     const origin = req.headers.get('origin') || 'http://localhost:5173';

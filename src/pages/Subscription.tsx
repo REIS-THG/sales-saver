@@ -88,16 +88,32 @@ export default function Subscription() {
     if (planType === "pro") {
       try {
         const stripe = await getStripe();
+        const proPlan = plans.find(p => p.name.toLowerCase() === 'pro');
+        
+        if (!proPlan?.priceId) {
+          throw new Error('Pro plan price ID not found');
+        }
+
+        if (!user.user_id || !user.email) {
+          throw new Error('User information is missing');
+        }
+
+        console.log('Creating checkout session with:', {
+          priceId: proPlan.priceId,
+          userId: user.user_id,
+          customerEmail: user.email
+        });
 
         const { data, error } = await supabase.functions.invoke('create-checkout-session', {
           body: {
-            priceId: plans[1].priceId,
+            priceId: proPlan.priceId,
             userId: user.user_id,
             customerEmail: user.email
           }
         });
 
         if (error) {
+          console.error('Checkout session error:', error);
           throw error;
         }
 
