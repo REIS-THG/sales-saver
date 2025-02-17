@@ -1,4 +1,3 @@
-
 export interface StandardField {
   field_name: string;
   field: string;
@@ -38,15 +37,27 @@ export interface User {
 
 export interface Deal {
   id: string;
+  deal_name: string;
   name: string;
+  company_name: string;
+  amount: number;
   value: number;
-  status: 'open' | 'won' | 'lost';
+  status: 'open' | 'won' | 'lost' | 'stalled';
+  health_score: number;
   close_date?: string;
+  start_date?: string;
+  expected_close_date?: string;
   user_id: string;
   created_at?: string;
   updated_at?: string;
+  last_contacted?: string;
+  next_action?: string;
   customer_name?: string;
   customer_email?: string;
+  contact_email?: string;
+  contact_first_name?: string;
+  contact_last_name?: string;
+  company_url?: string;
   probability?: number;
   notes?: string[];
   custom_fields?: Record<string, any>;
@@ -87,6 +98,17 @@ export interface DealNote {
 }
 
 export interface DealInsight {
+  id: string;
+  deal_id: string;
+  insight_type: 'risk' | 'opportunity' | 'action_item';
+  content: string;
+  priority: 'low' | 'medium' | 'high';
+  created_at?: string;
+  updated_at?: string;
+  status: 'open' | 'acknowledged' | 'resolved';
+}
+
+export interface Insight {
   id: string;
   deal_id: string;
   insight_type: 'risk' | 'opportunity' | 'action_item';

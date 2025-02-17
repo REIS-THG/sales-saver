@@ -13,32 +13,85 @@ import {
   Line,
   Area,
   Pie,
+  Cell,
 } from "recharts";
+import { format, parseISO } from "date-fns";
 import { ReportPreviewProps } from "./types";
 
+const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+
 export const ReportPreview = ({ config, data }: ReportPreviewProps) => {
+  const formatXAxis = (tickItem: string) => {
+    if (!tickItem) return '';
+    try {
+      const date = parseISO(tickItem);
+      return format(date, 'MMM d');
+    } catch {
+      return tickItem;
+    }
+  };
+
+  const renderCustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white p-2 border rounded shadow">
+          <p className="text-sm font-medium">{formatXAxis(label)}</p>
+          {payload.map((entry: any, index: number) => (
+            <p key={index} className="text-sm" style={{ color: entry.color }}>
+              {`${entry.name}: ${typeof entry.value === 'number' ? entry.value.toLocaleString() : entry.value}`}
+            </p>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
+
   switch (config.visualization) {
     case 'bar':
       return (
         <ResponsiveContainer width="100%" height={400}>
-          <BarChart data={data}>
-            <XAxis dataKey="dimension" />
+          <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+            <XAxis 
+              dataKey="dimension" 
+              tickFormatter={formatXAxis}
+              angle={-45}
+              textAnchor="end"
+              height={70}
+            />
             <YAxis />
-            <Tooltip />
+            <Tooltip content={renderCustomTooltip} />
             <Legend />
-            <Bar dataKey="value" fill="#3b82f6" />
+            <Bar dataKey="value" fill="#3b82f6">
+              {data.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              ))}
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
       );
     case 'line':
       return (
         <ResponsiveContainer width="100%" height={400}>
-          <LineChart data={data}>
-            <XAxis dataKey="dimension" />
+          <LineChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+            <XAxis 
+              dataKey="dimension" 
+              tickFormatter={formatXAxis}
+              angle={-45}
+              textAnchor="end"
+              height={70}
+            />
             <YAxis />
-            <Tooltip />
+            <Tooltip content={renderCustomTooltip} />
             <Legend />
-            <Line type="monotone" dataKey="value" stroke="#3b82f6" />
+            <Line 
+              type="monotone" 
+              dataKey="value" 
+              stroke="#3b82f6" 
+              strokeWidth={2}
+              dot={{ r: 4 }}
+              activeDot={{ r: 6 }}
+            />
           </LineChart>
         </ResponsiveContainer>
       );
@@ -53,10 +106,13 @@ export const ReportPreview = ({ config, data }: ReportPreviewProps) => {
               cx="50%"
               cy="50%"
               outerRadius={150}
-              fill="#3b82f6"
-              label
-            />
-            <Tooltip />
+              label={(entry) => `${entry.dimension}: ${entry.value}`}
+            >
+              {data.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip content={renderCustomTooltip} />
             <Legend />
           </PieChart>
         </ResponsiveContainer>
@@ -74,8 +130,8 @@ export const ReportPreview = ({ config, data }: ReportPreviewProps) => {
             <tbody>
               {data.map((row, index) => (
                 <tr key={index}>
-                  <td className="border p-2">{row.dimension}</td>
-                  <td className="border p-2">{row.value}</td>
+                  <td className="border p-2">{formatXAxis(row.dimension)}</td>
+                  <td className="border p-2">{typeof row.value === 'number' ? row.value.toLocaleString() : row.value}</td>
                 </tr>
               ))}
             </tbody>
