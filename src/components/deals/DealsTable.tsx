@@ -150,14 +150,6 @@ export function DealsTable({ initialDeals, customFields, showCustomFields }: Dea
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <TableSearch value={globalFilter} onChange={setGlobalFilter} />
-        <Button 
-          variant="outline" 
-          onClick={() => navigate("/deal-genius")}
-          className="gap-2"
-        >
-          <Sparkles className="h-4 w-4" />
-          AI Analysis
-        </Button>
       </div>
 
       <div className="rounded-md border overflow-auto max-h-[calc(100vh-280px)]">
@@ -191,7 +183,6 @@ export function DealsTable({ initialDeals, customFields, showCustomFields }: Dea
                     key={row.original.id}
                     row={row}
                     onClick={() => setSelectedDeal(row.original)}
-                    onAnalyze={() => navigate(`/deal-genius?dealId=${row.original.id}`)}
                   />
                 ))}
               </SortableContext>
