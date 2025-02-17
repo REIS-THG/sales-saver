@@ -12,11 +12,24 @@ const supabase = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 )
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, stripe-signature',
+}
+
 serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders })
+  }
+
   const signature = req.headers.get('stripe-signature')
 
   if (!signature) {
-    return new Response('No signature', { status: 400 })
+    return new Response('No signature', { 
+      status: 400,
+      headers: corsHeaders
+    })
   }
 
   try {
@@ -32,7 +45,13 @@ serve(async (req) => {
       )
     } catch (err) {
       console.error(`Webhook signature verification failed: ${err.message}`)
-      return new Response(`Webhook signature verification failed: ${err.message}`, { status: 400 })
+      return new Response(
+        `Webhook signature verification failed: ${err.message}`, 
+        { 
+          status: 400,
+          headers: corsHeaders
+        }
+      )
     }
 
     console.log(`Event type: ${event.type}`)
@@ -48,6 +67,8 @@ serve(async (req) => {
           throw new Error('No user ID found in session metadata')
         }
 
+        console.log(`Processing completed checkout for user ${userId}`)
+
         // Update user subscription details
         const { error: updateError } = await supabase
           .from('users')
@@ -60,15 +81,19 @@ serve(async (req) => {
           .eq('user_id', userId)
 
         if (updateError) {
+          console.error('Error updating user subscription:', updateError)
           throw updateError
         }
 
+        console.log(`Successfully updated subscription for user ${userId}`)
         break
       }
 
       case 'customer.subscription.updated': {
         const subscription = event.data.object as Stripe.Subscription
         const customerId = subscription.customer as string
+
+        console.log(`Processing subscription update for customer ${customerId}`)
 
         // Get user with this stripe customer ID
         const { data: userData, error: userError } = await supabase
@@ -78,12 +103,15 @@ serve(async (req) => {
           .single()
 
         if (userError || !userData) {
+          console.error('Error finding user:', userError)
           throw new Error('No user found with this customer ID')
         }
 
         // Update subscription status based on the subscription object
         const status = subscription.status === 'active' ? 'pro' : 'free'
         const endDate = subscription.cancel_at_period_end ? new Date(subscription.current_period_end * 1000) : null
+
+        console.log(`Updating subscription status to ${status} for user ${userData.user_id}`)
 
         const { error: updateError } = await supabase
           .from('users')
@@ -94,15 +122,19 @@ serve(async (req) => {
           .eq('user_id', userData.user_id)
 
         if (updateError) {
+          console.error('Error updating subscription status:', updateError)
           throw updateError
         }
 
+        console.log(`Successfully updated subscription status for user ${userData.user_id}`)
         break
       }
 
       case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription
         const customerId = subscription.customer as string
+
+        console.log(`Processing subscription deletion for customer ${customerId}`)
 
         // Get user with this stripe customer ID
         const { data: userData, error: userError } = await supabase
@@ -112,8 +144,11 @@ serve(async (req) => {
           .single()
 
         if (userError || !userData) {
+          console.error('Error finding user:', userError)
           throw new Error('No user found with this customer ID')
         }
+
+        console.log(`Reverting to free plan for user ${userData.user_id}`)
 
         // Update user to free plan
         const { error: updateError } = await supabase
@@ -126,23 +161,31 @@ serve(async (req) => {
           .eq('user_id', userData.user_id)
 
         if (updateError) {
+          console.error('Error updating user to free plan:', updateError)
           throw updateError
         }
 
+        console.log(`Successfully reverted to free plan for user ${userData.user_id}`)
         break
       }
     }
 
-    return new Response(JSON.stringify({ received: true }), {
-      headers: { 'Content-Type': 'application/json' },
-      status: 200,
-    })
+    return new Response(
+      JSON.stringify({ received: true }), 
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      }
+    )
 
   } catch (error) {
-    console.error('Error:', error)
+    console.error('Error processing webhook:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
-      { status: 400 }
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400 
+      }
     )
   }
 })
