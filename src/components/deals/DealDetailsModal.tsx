@@ -61,17 +61,15 @@ const DealDetailsModal = ({ deal, onClose, onDealUpdated, customFields }: DealDe
 
   const analyzeNote = async (content: string) => {
     try {
-      const response = await fetch('/api/analyze-note', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('analyze-note', {
+        body: {
           noteContent: content,
           dealContext: `Deal: ${deal?.deal_name}, Company: ${deal?.company_name}, Amount: ${deal?.amount}, Current Status: ${deal?.status}`
-        }),
+        }
       });
 
-      if (!response.ok) throw new Error('Analysis failed');
-      return await response.json();
+      if (error) throw error;
+      return data;
     } catch (error) {
       console.error('Error analyzing note:', error);
       return null;
