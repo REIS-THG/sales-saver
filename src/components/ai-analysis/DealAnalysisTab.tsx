@@ -3,7 +3,7 @@ import { FileText, Mail, Mic, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Deal } from "@/types/types";
+import { Deal, Insight } from "@/types/types";
 
 interface DealAnalysisTabProps {
   deals: Deal[];
@@ -24,6 +24,8 @@ export function DealAnalysisTab({
   onAnalyze,
   onFileUpload,
 }: DealAnalysisTabProps) {
+  const selectedDealData = deals.find(deal => deal.id === selectedDeal);
+
   return (
     <div className="space-y-6">
       <div>
@@ -41,6 +43,56 @@ export function DealAnalysisTab({
           </SelectContent>
         </Select>
       </div>
+
+      {selectedDealData && (
+        <Card>
+          <CardHeader>
+            <CardTitle>{selectedDealData.deal_name}</CardTitle>
+            <CardDescription>
+              Company: {selectedDealData.company_name} | Value: ${selectedDealData.amount.toLocaleString()}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-medium mb-2">Deal Status</h4>
+                <div className="flex items-center gap-2">
+                  <span className={`px-2 py-1 rounded-full text-xs ${
+                    selectedDealData.status === 'won' ? 'bg-green-100 text-green-800' :
+                    selectedDealData.status === 'lost' ? 'bg-red-100 text-red-800' :
+                    selectedDealData.status === 'stalled' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-blue-100 text-blue-800'
+                  }`}>
+                    {selectedDealData.status.toUpperCase()}
+                  </span>
+                  <span className="text-sm text-gray-500">
+                    Health Score: {selectedDealData.health_score}%
+                  </span>
+                </div>
+              </div>
+              
+              {selectedDealData.contact_first_name && (
+                <div>
+                  <h4 className="font-medium mb-2">Contact Information</h4>
+                  <p className="text-sm text-gray-600">
+                    {selectedDealData.contact_first_name} {selectedDealData.contact_last_name}
+                    {selectedDealData.contact_email && (
+                      <span className="block text-gray-500">{selectedDealData.contact_email}</span>
+                    )}
+                  </p>
+                </div>
+              )}
+
+              {selectedDealData.notes && (
+                <div>
+                  <h4 className="font-medium mb-2">Notes</h4>
+                  <p className="text-sm text-gray-600">{selectedDealData.notes}</p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
