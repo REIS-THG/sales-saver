@@ -34,6 +34,7 @@ export function SortableTableRow({ row, onClick, onAnalyze }: SortableTableRowPr
     transform,
     transition,
     setNodeRef,
+    isDragging,
   } = useSortable({
     id: row.original.id,
   });
@@ -41,6 +42,12 @@ export function SortableTableRow({ row, onClick, onAnalyze }: SortableTableRowPr
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+    opacity: isDragging ? 0.5 : undefined,
+    backgroundColor: isDragging ? "var(--muted)" : undefined,
+    cursor: isDragging ? "grabbing" : "pointer",
+    position: isDragging ? "relative" : undefined,
+    zIndex: isDragging ? 1 : undefined,
+    boxShadow: isDragging ? "0 4px 12px rgba(0, 0, 0, 0.1)" : undefined,
   };
 
   const handleStatusChange = async (newStatus: string) => {
@@ -70,16 +77,22 @@ export function SortableTableRow({ row, onClick, onAnalyze }: SortableTableRowPr
     <TableRow
       ref={setNodeRef}
       style={style}
-      className="cursor-pointer hover:bg-gray-50"
+      className={`group transition-all duration-200 ease-in-out hover:bg-gray-50 ${
+        isDragging ? "animate-pulse" : ""
+      }`}
     >
       <TableCell>
         <div className="flex items-center gap-2">
           <span
             {...attributes}
             {...listeners}
-            className="cursor-grab hover:cursor-grabbing"
+            className={`cursor-grab hover:cursor-grabbing transition-colors duration-200 ${
+              isDragging ? "cursor-grabbing text-primary" : "text-gray-400"
+            }`}
           >
-            <GripVertical className="h-4 w-4 text-gray-400" />
+            <GripVertical className={`h-4 w-4 ${
+              isDragging ? "scale-110" : "group-hover:scale-105"
+            } transition-transform duration-200`} />
           </span>
           {flexRender(row.getVisibleCells()[0].column.columnDef.cell, row.getVisibleCells()[0].getContext())}
         </div>
