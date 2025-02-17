@@ -142,6 +142,7 @@ const AIAnalysis = () => {
                 deals={deals}
                 selectedDeal={selectedDeal}
                 onDealSelect={handleDealSelect}
+                insights={insights}
               />
             </TabsContent>
 
