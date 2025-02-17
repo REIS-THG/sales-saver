@@ -47,7 +47,8 @@ import type {
   ReportConfiguration, 
   ReportConfig, 
   CustomField,
-  Deal
+  Deal,
+  VisualizationType
 } from "@/types/types";
 
 const Reports = () => {
@@ -96,7 +97,14 @@ const Reports = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setReports(reportsData || []);
+
+      // Transform the data to match our ReportConfiguration type
+      const typedReports: ReportConfiguration[] = (reportsData || []).map(report => ({
+        ...report,
+        config: report.config as unknown as ReportConfig // Cast the JSON to our type
+      }));
+
+      setReports(typedReports);
     } catch (err) {
       console.error('Error fetching reports:', err);
       toast({
@@ -156,7 +164,15 @@ const Reports = () => {
         .eq("user_id", userId);
 
       if (error) throw error;
-      setDeals(dealsData || []);
+
+      // Transform the data to match our Deal type
+      const typedDeals: Deal[] = (dealsData || []).map(deal => ({
+        ...deal,
+        status: (deal.status || 'open') as 'open' | 'stalled' | 'won' | 'lost',
+        custom_fields: deal.custom_fields as Record<string, string | number | boolean> | null
+      }));
+
+      setDeals(typedDeals);
       setLoading(false);
     } catch (err) {
       console.error('Error fetching deals:', err);
@@ -179,28 +195,36 @@ const Reports = () => {
         return;
       }
 
-      const newReport: Partial<ReportConfiguration> = {
+      const initialConfig: ReportConfig = {
+        dimensions: [],
+        metrics: [],
+        filters: [],
+        visualization: 'bar'
+      };
+
+      const newReportData = {
         name: "New Report",
         description: "Custom report description",
         user_id: userId,
-        config: {
-          dimensions: [],
-          metrics: [],
-          filters: [],
-          visualization: 'bar'
-        }
+        config: initialConfig
       };
 
       const { data, error } = await supabase
         .from('report_configurations')
-        .insert(newReport)
+        .insert(newReportData)
         .select()
         .single();
 
       if (error) throw error;
 
-      setReports(prev => [data, ...prev]);
-      setSelectedReport(data);
+      // Transform the returned data to match our ReportConfiguration type
+      const newReport: ReportConfiguration = {
+        ...data,
+        config: data.config as unknown as ReportConfig
+      };
+
+      setReports(prev => [newReport, ...prev]);
+      setSelectedReport(newReport);
       
       toast({
         title: "Success",
