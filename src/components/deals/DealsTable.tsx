@@ -1,40 +1,14 @@
+
 import { useState, useEffect } from "react";
-import {
-  flexRender,
-  getCoreRowModel,
-  getSortedRowModel,
-  getFilteredRowModel,
-  type SortingState,
-  type ColumnFiltersState,
-  useReactTable,
-} from "@tanstack/react-table";
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from "@dnd-kit/core";
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
 import { type Deal, type CustomField } from "@/types/types";
-import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import DealDetailsModal from "./DealDetailsModal";
-import { SortableTableRow } from "./SortableTableRow";
-import { getColumns } from "./table/columns";
+import { TableContainer } from "./table/TableContainer";
 import { TableSearch } from "./table/TableSearch";
-import { Button } from "@/components/ui/button";
-import { Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import DealDetailsModal from "./DealDetailsModal";
+import { useDealsTable } from "@/hooks/use-deals-table";
 
 interface DealsTableProps {
   initialDeals: Deal[];
@@ -42,11 +16,12 @@ interface DealsTableProps {
   showCustomFields: boolean;
 }
 
-export function DealsTable({ initialDeals, customFields, showCustomFields }: DealsTableProps) {
+export function DealsTable({ 
+  initialDeals, 
+  customFields, 
+  showCustomFields 
+}: DealsTableProps) {
   const [deals, setDeals] = useState<Deal[]>([]);
-  const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [globalFilter, setGlobalFilter] = useState("");
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
   const [dealToDelete, setDealToDelete] = useState<Deal | null>(null);
   const navigate = useNavigate();
@@ -77,29 +52,12 @@ export function DealsTable({ initialDeals, customFields, showCustomFields }: Dea
     setDealToDelete(null);
   };
 
-  const columns = getColumns(customFields, showCustomFields, (deal: Deal) => {
-    setDealToDelete(deal);
-  });
-
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
+  const { table, globalFilter, setGlobalFilter } = useDealsTable(
+    deals,
+    customFields,
+    showCustomFields,
+    (deal: Deal) => setDealToDelete(deal)
   );
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    
-    if (active.id !== over?.id) {
-      setDeals((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id);
-        const newIndex = items.findIndex((item) => item.id === over?.id);
-        
-        return arrayMove(items, oldIndex, newIndex);
-      });
-    }
-  };
 
   useEffect(() => {
     const formattedDeals: Deal[] = initialDeals.map(deal => ({
@@ -128,68 +86,18 @@ export function DealsTable({ initialDeals, customFields, showCustomFields }: Dea
     setDeals(formattedDeals);
   }, [initialDeals]);
 
-  const table = useReactTable({
-    data: deals,
-    columns,
-    state: {
-      sorting,
-      columnFilters,
-      globalFilter,
-    },
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    onGlobalFilterChange: setGlobalFilter,
-    globalFilterFn: "includesString",
-    getFilteredRowModel: getFilteredRowModel(),
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    enableSorting: true,
-  });
-
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <TableSearch value={globalFilter} onChange={setGlobalFilter} />
       </div>
 
-      <div className="rounded-md border overflow-auto max-h-[calc(100vh-280px)]">
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <Table>
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id}>
-                      {flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              <SortableContext
-                items={deals.map((d) => d.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                {table.getRowModel().rows.map((row) => (
-                  <SortableTableRow
-                    key={row.original.id}
-                    row={row}
-                    onClick={() => setSelectedDeal(row.original)}
-                  />
-                ))}
-              </SortableContext>
-            </TableBody>
-          </Table>
-        </DndContext>
-      </div>
+      <TableContainer
+        table={table}
+        deals={deals}
+        onDealClick={(deal) => setSelectedDeal(deal)}
+        onDealsReorder={setDeals}
+      />
       
       <DealDetailsModal
         deal={selectedDeal}

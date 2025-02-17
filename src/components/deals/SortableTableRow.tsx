@@ -4,7 +4,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { Row } from "@tanstack/react-table";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { flexRender } from "@tanstack/react-table";
-import { GripVertical, Sparkles, Loader2, AlertCircle } from "lucide-react";
+import { GripVertical, Loader2, AlertCircle } from "lucide-react";
 import { type Deal } from "@/types/types";
 import {
   Select,
@@ -27,18 +27,13 @@ import { useState } from "react";
 interface SortableTableRowProps {
   row: Row<Deal>;
   onClick: () => void;
-  onAnalyze: () => void;
-  onPositionUpdate?: () => void;
 }
 
 export function SortableTableRow({ 
   row, 
-  onClick, 
-  onAnalyze,
-  onPositionUpdate 
+  onClick
 }: SortableTableRowProps) {
   const [isUpdating, setIsUpdating] = useState(false);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
   const { toast } = useToast();
   
@@ -55,17 +50,13 @@ export function SortableTableRow({
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition: isDragging 
-      ? undefined
-      : transition,
+    transition: isDragging ? undefined : transition,
     opacity: isDragging ? 0.8 : undefined,
     backgroundColor: isDragging ? "var(--muted)" : undefined,
     cursor: isDragging ? "grabbing" : "pointer",
     position: isDragging ? ("relative" as const) : undefined,
     zIndex: isDragging ? 1 : undefined,
-    boxShadow: isDragging 
-      ? "0 8px 24px rgba(0, 0, 0, 0.15)" 
-      : undefined,
+    boxShadow: isDragging ? "0 8px 24px rgba(0, 0, 0, 0.15)" : undefined,
   };
 
   const handleStatusChange = async (newStatus: string) => {
@@ -99,15 +90,6 @@ export function SortableTableRow({
     }
   };
 
-  const handleAnalyze = async () => {
-    setIsAnalyzing(true);
-    try {
-      await onAnalyze();
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
-
   return (
     <TableRow
       ref={setNodeRef}
@@ -115,7 +97,6 @@ export function SortableTableRow({
       className={`group transition-all duration-200 ease-in-out hover:bg-gray-50 
         ${isDragging ? "animate-pulse ring-2 ring-primary ring-offset-2 shadow-lg scale-[1.02]" : ""}
         ${isUpdating ? "opacity-80" : ""}`}
-      onDragEnd={onPositionUpdate}
     >
       <TableCell>
         <TooltipProvider>
@@ -193,34 +174,14 @@ export function SortableTableRow({
         </div>
       </TableCell>
       <TableCell onClick={(e) => e.stopPropagation()}>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleAnalyze}
-                disabled={isAnalyzing}
-                className="w-full flex items-center gap-2"
-              >
-                {isAnalyzing ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Analyzing...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="h-4 w-4" />
-                    Analyze
-                  </>
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Run AI analysis on this deal</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onClick()}
+          className="w-full flex items-center gap-2"
+        >
+          View Details
+        </Button>
       </TableCell>
     </TableRow>
   );
