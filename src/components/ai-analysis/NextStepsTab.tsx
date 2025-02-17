@@ -1,4 +1,3 @@
-
 import { Deal, Insight } from "@/types/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -7,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/lib/supabase";
 
 interface NextStepsTabProps {
   deals: Deal[];
@@ -29,18 +29,23 @@ export function NextStepsTab({ deals, selectedDeal, onDealSelect, insights = [] 
   const handleGenerateMessage = async () => {
     setIsGenerating(true);
     try {
-      // TODO: Replace with actual API call to generate message
-      const message = `Sample generated message based on:
-Communication type: ${communicationType}
-Formality: ${formality}%
-Persuasiveness: ${persuasiveness}%
-Urgency: ${urgency}%
+      const response = await supabase.functions.invoke('generate-message', {
+        body: {
+          dealId: selectedDeal,
+          communicationType,
+          toneSettings: {
+            formality: formality[0],
+            persuasiveness: persuasiveness[0],
+            urgency: urgency[0]
+          }
+        },
+      });
 
-Dear [Contact],
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
 
-Based on our analysis...`;
-      
-      setGeneratedMessage(message);
+      setGeneratedMessage(response.data.message);
     } catch (error) {
       console.error('Error generating message:', error);
     } finally {
