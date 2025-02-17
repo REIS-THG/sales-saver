@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -18,8 +17,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { FileUploader } from "@/components/deal-genius/FileUploader";
-import { ToneAnalysis } from "./deal-genius/ToneAnalysis";
-import { CommunicationChannel } from "./deal-genius/CommunicationChannel";
+import { ToneAnalysis } from "@/components/deal-genius/ToneAnalysis";
+import { CommunicationChannel } from "@/components/deal-genius/CommunicationChannel";
 
 const DealGenius = () => {
   const [searchParams] = useSearchParams();
