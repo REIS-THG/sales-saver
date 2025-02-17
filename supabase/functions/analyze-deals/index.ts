@@ -8,6 +8,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const validInsightTypes = ['risk', 'opportunity', 'action_item'] as const;
+type InsightType = typeof validInsightTypes[number];
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -48,6 +51,7 @@ serve(async (req) => {
             role: 'system',
             content: `You are an AI sales advisor that analyzes deal data and provides insights. 
             Generate insights in these specific categories: risk, opportunity, action_item.
+            You must use exactly these category names, no variations allowed.
             For each insight, provide a confidence score (0-100) based on the available data.
             Format response as JSON array with objects containing: 
             {
@@ -67,11 +71,24 @@ serve(async (req) => {
     const aiResponse = await response.json();
     const insights = JSON.parse(aiResponse.choices[0].message.content);
 
+    // Validate insights before insertion
+    const validatedInsights = insights.filter((insight: any) => {
+      const isValid = validInsightTypes.includes(insight.type);
+      if (!isValid) {
+        console.error(`Invalid insight type: ${insight.type}`);
+      }
+      return isValid;
+    });
+
+    if (validatedInsights.length === 0) {
+      throw new Error("No valid insights generated");
+    }
+
     // Store insights in database
     const { error: insertError } = await supabaseClient
       .from('deal_insights')
       .insert(
-        insights.map((insight: any) => ({
+        validatedInsights.map((insight: any) => ({
           deal_id: dealId,
           insight_type: insight.type,
           content: insight.content,
@@ -89,7 +106,7 @@ serve(async (req) => {
       throw insertError;
     }
 
-    return new Response(JSON.stringify({ success: true, insights }), {
+    return new Response(JSON.stringify({ success: true, insights: validatedInsights }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
