@@ -37,6 +37,19 @@ export interface ReportConfiguration {
   is_favorite?: boolean;
 }
 
+export interface ReportCardProps {
+  report: ReportConfiguration;
+  onEdit: (report: ReportConfiguration) => void;
+  onDelete: (reportId: string) => void;
+  onToggleFavorite: (reportId: string, currentStatus: boolean) => void;
+  editingReportId: string | null;
+  editingName: string;
+  onEditNameChange: (name: string) => void;
+  onSaveReportName: () => void;
+  onExportExcel: (report: ReportConfiguration) => Promise<void>;
+  onExportGoogleSheets: (report: ReportConfiguration) => Promise<void>;
+}
+
 export interface ReportConfigurationProps {
   report: ReportConfiguration;
   onClose: () => void;
