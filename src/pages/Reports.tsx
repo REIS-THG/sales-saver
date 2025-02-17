@@ -3,66 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  BarChart,
-  LineChart,
-  AreaChart,
-  PieChart,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Legend,
-  Bar,
-  Line,
-  Area,
-  Pie,
-} from "recharts";
-import { 
-  Settings, 
-  Plus, 
-  Save,
-  Trash2,
-  BarChart2,
-  PieChart as PieChartIcon,
-  LineChart as LineChartIcon,
-  Table,
-  Star,
-  StarOff,
-  Pencil,
-  ArrowLeft,
-  Download
-} from "lucide-react";
 import * as XLSX from 'xlsx';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import type { 
-  ReportConfiguration, 
-  ReportConfig, 
-  CustomField,
-  Deal,
-  VisualizationType
-} from "@/types/types";
-import { Input } from "@/components/ui/input";
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+import { Plus, BarChart2, PieChart, LineChart, Table } from "lucide-react";
+import type { ReportConfiguration, ReportConfig, CustomField, Deal, VisualizationType } from "@/types/types";
+import { ReportCard } from "@/components/reports/ReportCard";
+import { ReportConfiguration as ReportConfigComponent } from "@/components/reports/ReportConfiguration";
 
 interface StandardField {
   field_name: string;
@@ -99,8 +44,8 @@ const Reports = () => {
 
   const visualizationTypes: { value: VisualizationType; label: string; icon: JSX.Element }[] = [
     { value: 'bar', label: 'Bar Chart', icon: <BarChart2 className="h-4 w-4" /> },
-    { value: 'line', label: 'Line Chart', icon: <LineChartIcon className="h-4 w-4" /> },
-    { value: 'pie', label: 'Pie Chart', icon: <PieChartIcon className="h-4 w-4" /> },
+    { value: 'line', label: 'Line Chart', icon: <LineChart className="h-4 w-4" /> },
+    { value: 'pie', label: 'Pie Chart', icon: <PieChart className="h-4 w-4" /> },
     { value: 'table', label: 'Table', icon: <Table className="h-4 w-4" /> },
   ];
 
@@ -542,160 +487,8 @@ const Reports = () => {
     }
   };
 
-  const renderVisualization = (config: ReportConfig, data: any[]) => {
-    const { visualization } = config;
-    
-    switch (visualization) {
-      case 'bar':
-        return (
-          <ResponsiveContainer width="100%" height={400}>
-            <BarChart data={data}>
-              <XAxis dataKey="dimension" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="value" fill="#3b82f6" />
-            </BarChart>
-          </ResponsiveContainer>
-        );
-      case 'line':
-        return (
-          <ResponsiveContainer width="100%" height={400}>
-            <LineChart data={data}>
-              <XAxis dataKey="dimension" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Line type="monotone" dataKey="value" stroke="#3b82f6" />
-            </LineChart>
-          </ResponsiveContainer>
-        );
-      case 'pie':
-        return (
-          <ResponsiveContainer width="100%" height={400}>
-            <PieChart>
-              <Pie
-                data={data}
-                dataKey="value"
-                nameKey="dimension"
-                cx="50%"
-                cy="50%"
-                outerRadius={150}
-                fill="#3b82f6"
-                label
-              />
-              <Tooltip />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
-        );
-      case 'table':
-        return (
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr>
-                  <th className="border p-2">Dimension</th>
-                  <th className="border p-2">Value</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.map((row, index) => (
-                  <tr key={index}>
-                    <td className="border p-2">{row.dimension}</td>
-                    <td className="border p-2">{row.value}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        );
-      default:
-        return null;
-    }
-  };
-
-  const renderReportCard = (report: ReportConfiguration) => (
-    <Card key={report.id} className="cursor-pointer hover:shadow-lg transition-shadow">
-      <CardHeader>
-        <div className="flex justify-between items-start">
-          <div className="flex-1">
-            {editingReportId === report.id ? (
-              <div className="flex gap-2">
-                <Input
-                  value={editingName}
-                  onChange={(e) => setEditingName(e.target.value)}
-                  className="text-lg font-semibold"
-                />
-                <Button size="sm" onClick={saveReportName}>
-                  <Save className="h-4 w-4" />
-                </Button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <CardTitle>{report.name}</CardTitle>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => startEditingName(report)}
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
-            <CardDescription>{report.description}</CardDescription>
-          </div>
-          <div className="flex gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <Download className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => downloadExcel(report)}>
-                  Download Excel
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => downloadGoogleSheets(report)}>
-                  Open in Google Sheets
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => toggleFavorite(report.id, !!report.is_favorite)}
-            >
-              {report.is_favorite ? (
-                <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
-              ) : (
-                <StarOff className="h-4 w-4" />
-              )}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={(e) => {
-                e.stopPropagation();
-                deleteReport(report.id);
-              }}
-            >
-              <Trash2 className="h-4 w-4 text-red-500" />
-            </Button>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <Button 
-          variant="outline" 
-          className="w-full"
-          onClick={() => setSelectedReport(report)}
-        >
-          View Report
-        </Button>
-      </CardContent>
-    </Card>
-  );
+  const favoriteReports = reports.filter(report => report.is_favorite);
+  const otherReports = reports.filter(report => !report.is_favorite);
 
   if (loading) {
     return (
@@ -704,9 +497,6 @@ const Reports = () => {
       </div>
     );
   }
-
-  const favoriteReports = reports.filter(report => report.is_favorite);
-  const otherReports = reports.filter(report => !report.is_favorite);
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -734,7 +524,17 @@ const Reports = () => {
             <h2 className="text-xl font-semibold mb-4">Favorite Reports</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
               {favoriteReports.map((report) => (
-                renderReportCard(report)
+                <ReportCard
+                  key={report.id}
+                  report={report}
+                  onEdit={setSelectedReport}
+                  onDelete={deleteReport}
+                  onToggleFavorite={toggleFavorite}
+                  editingReportId={editingReportId}
+                  editingName={editingName}
+                  onEditNameChange={setEditingName}
+                  onSaveReportName={saveReportName}
+                />
               ))}
             </div>
           </>
@@ -743,247 +543,31 @@ const Reports = () => {
         <h2 className="text-xl font-semibold mb-4">All Reports</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {otherReports.map((report) => (
-            renderReportCard(report)
+            <ReportCard
+              key={report.id}
+              report={report}
+              onEdit={setSelectedReport}
+              onDelete={deleteReport}
+              onToggleFavorite={toggleFavorite}
+              editingReportId={editingReportId}
+              editingName={editingName}
+              onEditNameChange={setEditingName}
+              onSaveReportName={saveReportName}
+            />
           ))}
         </div>
 
         {selectedReport && (
           <div className="mt-8">
-            <Card>
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <div>
-                    <CardTitle>Report Configuration</CardTitle>
-                    <CardDescription>Customize your report visualization</CardDescription>
-                  </div>
-                  <Button
-                    variant="outline"
-                    onClick={() => setSelectedReport(null)}
-                  >
-                    Close
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <ResizablePanelGroup direction="horizontal" className="min-h-[600px] rounded-lg border">
-                  <ResizablePanel defaultSize={40}>
-                    <div className="h-full p-6">
-                      <div className="space-y-6">
-                        <div>
-                          <h3 className="text-lg font-semibold mb-4">Data Configuration</h3>
-                          <div className="space-y-6">
-                            <div>
-                              <label className="block text-sm font-medium mb-2">
-                                Dimensions
-                              </label>
-                              <Select
-                                onValueChange={(value) => {
-                                  const allFields = [...standardFields, ...customFields.map(cf => ({
-                                    field: cf.field_name,
-                                    field_name: cf.field_name,
-                                    field_type: cf.field_type
-                                  }))];
-                                  const field = allFields.find(f => f.field === value);
-                                  if (field) {
-                                    const newDimension = {
-                                      field: value,
-                                      type: 'standard' as const,
-                                      label: field.field_name
-                                    };
-                                    updateReport(selectedReport.id, {
-                                      ...selectedReport,
-                                      config: {
-                                        ...selectedReport.config,
-                                        dimensions: [...selectedReport.config.dimensions, newDimension]
-                                      }
-                                    });
-                                  }
-                                }}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Add dimension" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {[...standardFields, ...customFields.map(cf => ({
-                                    field: cf.field_name,
-                                    field_name: cf.field_name,
-                                    field_type: cf.field_type
-                                  }))]
-                                    .map((field) => (
-                                      <SelectItem key={field.field} value={field.field}>
-                                        {field.field_name}
-                                      </SelectItem>
-                                    ))}
-                                </SelectContent>
-                              </Select>
-                              <div className="mt-2 space-y-2">
-                                {selectedReport.config.dimensions.map((dim, index) => (
-                                  <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
-                                    <span>{dim.label}</span>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => {
-                                        const newDimensions = selectedReport.config.dimensions.filter((_, i) => i !== index);
-                                        updateReport(selectedReport.id, {
-                                          ...selectedReport,
-                                          config: {
-                                            ...selectedReport.config,
-                                            dimensions: newDimensions
-                                          }
-                                        });
-                                      }}
-                                    >
-                                      <Trash2 className="h-4 w-4 text-red-500" />
-                                    </Button>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-
-                            <div>
-                              <label className="block text-sm font-medium mb-2">
-                                Metrics
-                              </label>
-                              <Select
-                                onValueChange={(value) => {
-                                  const allFields = [...standardFields, ...customFields.map(cf => ({
-                                    field: cf.field_name,
-                                    field_name: cf.field_name,
-                                    field_type: cf.field_type
-                                  }))];
-                                  const field = allFields.find(f => f.field === value);
-                                  if (field) {
-                                    const newMetric = {
-                                      field: value,
-                                      aggregation: 'sum' as const,
-                                      label: `Sum of ${field.field_name}`
-                                    };
-                                    updateReport(selectedReport.id, {
-                                      ...selectedReport,
-                                      config: {
-                                        ...selectedReport.config,
-                                        metrics: [...selectedReport.config.metrics, newMetric]
-                                      }
-                                    });
-                                  }
-                                }}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Add metric" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {[...standardFields, ...customFields.map(cf => ({
-                                    field: cf.field_name,
-                                    field_name: cf.field_name,
-                                    field_type: cf.field_type
-                                  }))]
-                                    .filter(field => field.field_type === 'number')
-                                    .map((field) => (
-                                      <SelectItem key={field.field} value={field.field}>
-                                        {field.field_name}
-                                      </SelectItem>
-                                    ))}
-                                </SelectContent>
-                              </Select>
-                              <div className="mt-2 space-y-2">
-                                {selectedReport.config.metrics.map((metric, index) => (
-                                  <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
-                                    <div className="flex items-center gap-2">
-                                      <span>{metric.label}</span>
-                                      <Select
-                                        value={metric.aggregation}
-                                        onValueChange={(value) => {
-                                          const newMetrics = selectedReport.config.metrics.map((m, i) => 
-                                            i === index ? { ...m, aggregation: value as any } : m
-                                          );
-                                          updateReport(selectedReport.id, {
-                                            ...selectedReport,
-                                            config: {
-                                              ...selectedReport.config,
-                                              metrics: newMetrics
-                                            }
-                                          });
-                                        }}
-                                      >
-                                        <SelectTrigger className="h-7 w-24">
-                                          <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          {aggregations.map((agg) => (
-                                            <SelectItem key={agg.value} value={agg.value}>
-                                              {agg.label}
-                                            </SelectItem>
-                                          ))}
-                                        </SelectContent>
-                                      </Select>
-                                    </div>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => {
-                                        const newMetrics = selectedReport.config.metrics.filter((_, i) => i !== index);
-                                        updateReport(selectedReport.id, {
-                                          ...selectedReport,
-                                          config: {
-                                            ...selectedReport.config,
-                                            metrics: newMetrics
-                                          }
-                                        });
-                                      }}
-                                    >
-                                      <Trash2 className="h-4 w-4 text-red-500" />
-                                    </Button>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-
-                            <div>
-                              <label className="block text-sm font-medium mb-2">
-                                Visualization Type
-                              </label>
-                              <div className="grid grid-cols-2 gap-2">
-                                {visualizationTypes.map((type) => (
-                                  <Button
-                                    key={type.value}
-                                    variant={selectedReport.config.visualization === type.value ? "default" : "outline"}
-                                    onClick={() => {
-                                      updateReport(selectedReport.id, {
-                                        ...selectedReport,
-                                        config: {
-                                          ...selectedReport.config,
-                                          visualization: type.value
-                                        }
-                                      });
-                                    }}
-                                    className="flex items-center justify-start gap-2"
-                                  >
-                                    {type.icon}
-                                    <span>{type.label}</span>
-                                  </Button>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </ResizablePanel>
-                  
-                  <ResizableHandle withHandle />
-                  
-                  <ResizablePanel defaultSize={60}>
-                    <div className="h-full p-6">
-                      <h3 className="text-lg font-semibold mb-4">Preview</h3>
-                      <div className="bg-white rounded-lg border p-4 h-[500px]">
-                        {renderVisualization(selectedReport.config, [])}
-                      </div>
-                    </div>
-                  </ResizablePanel>
-                </ResizablePanelGroup>
-              </CardContent>
-            </Card>
+            <ReportConfigComponent
+              report={selectedReport}
+              onClose={() => setSelectedReport(null)}
+              onUpdate={updateReport}
+              standardFields={standardFields}
+              customFields={customFields}
+              aggregations={aggregations}
+              visualizationTypes={visualizationTypes}
+            />
           </div>
         )}
       </div>
