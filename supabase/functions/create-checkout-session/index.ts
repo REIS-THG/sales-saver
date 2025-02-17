@@ -12,12 +12,24 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
+    console.log('Received request to create checkout session');
+    
     const { priceId, userId, customerEmail } = await req.json()
+    console.log('Request data:', { priceId, userId, customerEmail });
+
+    if (!priceId || !userId || !customerEmail) {
+      throw new Error('Missing required fields');
+    }
+
+    if (!Deno.env.get('STRIPE_SECRET_KEY')) {
+      throw new Error('Stripe secret key is not configured');
+    }
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -37,6 +49,8 @@ serve(async (req) => {
       },
     })
 
+    console.log('Checkout session created:', session.id);
+
     return new Response(
       JSON.stringify({ sessionId: session.id }),
       {
@@ -45,6 +59,7 @@ serve(async (req) => {
       },
     )
   } catch (error) {
+    console.error('Error creating checkout session:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       {
