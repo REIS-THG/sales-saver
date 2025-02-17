@@ -16,12 +16,12 @@ export const ReportConfiguration = ({
   aggregations,
   visualizationTypes,
 }: ReportConfigurationProps) => {
-  const mapFieldToOption = (field: StandardField | CustomField) => {
-    const fieldType = field.field_type as "text" | "number" | "boolean" | "date";
+  const mapFieldToOption = (field: StandardField | CustomField): StandardField => {
+    const fieldType = 'field_type' in field ? field.field_type : 'text';
     return {
-      field: 'field' in field ? field.field : field.field_name,
       field_name: field.field_name,
-      field_type: fieldType
+      field: 'field' in field ? field.field : field.field_name,
+      field_type: fieldType as "text" | "number" | "boolean" | "date"
     };
   };
 

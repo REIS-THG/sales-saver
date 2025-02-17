@@ -2,14 +2,14 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { Insight } from "@/types/types";
+import { Deal, Insight } from "@/types/types";
 import { DealSelector } from "./DealSelector";
 import { AnalysisParameters } from "./AnalysisParameters";
 import { ToneAnalysis } from "./ToneAnalysis";
 import { CommunicationChannel } from "./CommunicationChannel";
 
 interface AnalysisFormProps {
-  deals: Array<{ id: string; deal_name: string; company_name: string }>;
+  deals: Deal[];
   selectedDeal: string | null;
   onDealChange: (dealId: string) => void;
   isAnalyzing: boolean;

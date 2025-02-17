@@ -70,6 +70,16 @@ const Reports = () => {
 
       if (error) throw error;
 
+      const billingAddress = typeof data.billing_address === 'object' && data.billing_address
+        ? {
+            street: data.billing_address.street || '',
+            city: data.billing_address.city || '',
+            state: data.billing_address.state || '',
+            country: data.billing_address.country || '',
+            postal_code: data.billing_address.postal_code || ''
+          }
+        : {};
+
       setUserData({
         ...data,
         id: data.id,
@@ -85,7 +95,7 @@ const Reports = () => {
         subscription_status: data.subscription_status as 'free' | 'pro' | 'enterprise',
         subscription_end_date: data.subscription_end_date,
         successful_deals_count: data.successful_deals_count || 0,
-        billing_address: typeof data.billing_address === 'object' ? data.billing_address : {},
+        billing_address: billingAddress,
         created_at: data.created_at,
         updated_at: data.updated_at
       });

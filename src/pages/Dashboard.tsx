@@ -123,7 +123,7 @@ const Dashboard = () => {
         contact_first_name: deal.contact_first_name,
         contact_last_name: deal.contact_last_name,
         company_url: deal.company_url,
-        notes: typeof deal.notes === 'string' ? deal.notes : Array.isArray(deal.notes) ? deal.notes.join('\n') : '',
+        notes: typeof deal.notes === 'string' ? deal.notes : '',
         custom_fields: typeof deal.custom_fields === 'object' ? deal.custom_fields : {},
         last_note_at: deal.last_note_at,
         notes_count: deal.notes_count
@@ -138,11 +138,6 @@ const Dashboard = () => {
     } catch (err) {
       console.error("Error fetching deals:", err);
       setError(err instanceof Error ? err.message : "Failed to fetch deals");
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to fetch deals. Please try again.",
-      });
     } finally {
       setLoading(false);
     }
