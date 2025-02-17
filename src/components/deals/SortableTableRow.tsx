@@ -4,7 +4,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { Row } from "@tanstack/react-table";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { flexRender } from "@tanstack/react-table";
-import { GripVertical, Sparkles } from "lucide-react";
+import { GripVertical, Sparkles, Loader2 } from "lucide-react";
 import { type Deal } from "@/types/types";
 import {
   Select,
@@ -90,21 +90,30 @@ export function SortableTableRow({ row, onClick, onAnalyze }: SortableTableRowPr
         </TableCell>
       ))}
       <TableCell onClick={(e) => e.stopPropagation()}>
-        <Select
-          value={row.original.status}
-          onValueChange={handleStatusChange}
-          disabled={isUpdating}
-        >
-          <SelectTrigger className="w-[130px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="open">Open</SelectItem>
-            <SelectItem value="won">Won</SelectItem>
-            <SelectItem value="lost">Lost</SelectItem>
-            <SelectItem value="stalled">Stalled</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2">
+          <Select
+            value={row.original.status}
+            onValueChange={handleStatusChange}
+            disabled={isUpdating}
+          >
+            <SelectTrigger className="w-[130px]">
+              {isUpdating ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Updating...</span>
+                </div>
+              ) : (
+                <SelectValue />
+              )}
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="open">Open</SelectItem>
+              <SelectItem value="won">Won</SelectItem>
+              <SelectItem value="lost">Lost</SelectItem>
+              <SelectItem value="stalled">Stalled</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </TableCell>
       <TableCell onClick={(e) => e.stopPropagation()}>
         <Button

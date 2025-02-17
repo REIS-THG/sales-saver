@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { type Deal, type DealNote, type CustomField } from "@/types/types";
 import {
@@ -20,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { Spinner } from "@/components/ui/spinner";
+import { Loader2 } from "lucide-react";
 
 interface DealDetailsModalProps {
   deal: Deal | null;
@@ -33,6 +33,7 @@ const DealDetailsModal = ({ deal, onClose, onDealUpdated, customFields }: DealDe
   const [newNote, setNewNote] = useState("");
   const [status, setStatus] = useState(deal?.status || "open");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isStatusUpdating, setIsStatusUpdating] = useState(false);
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -144,7 +145,7 @@ const DealDetailsModal = ({ deal, onClose, onDealUpdated, customFields }: DealDe
   const handleStatusChange = async (newStatus: string) => {
     if (!deal) return;
 
-    setIsLoading(true);
+    setIsStatusUpdating(true);
     const { error } = await supabase
       .from("deals")
       .update({ status: newStatus })
@@ -165,7 +166,7 @@ const DealDetailsModal = ({ deal, onClose, onDealUpdated, customFields }: DealDe
         description: "Status updated successfully.",
       });
     }
-    setIsLoading(false);
+    setIsStatusUpdating(false);
   };
 
   if (!deal) return null;
@@ -187,9 +188,16 @@ const DealDetailsModal = ({ deal, onClose, onDealUpdated, customFields }: DealDe
                   {deal?.health_score}%
                 </span>
               </div>
-              <Select value={status} onValueChange={handleStatusChange}>
+              <Select value={status} onValueChange={handleStatusChange} disabled={isStatusUpdating}>
                 <SelectTrigger className="w-[120px]">
-                  <SelectValue />
+                  {isStatusUpdating ? (
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Updating...</span>
+                    </div>
+                  ) : (
+                    <SelectValue />
+                  )}
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="open">Open</SelectItem>
