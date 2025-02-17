@@ -101,11 +101,18 @@ export function AccountSettings({ userData }: AccountSettingsProps) {
                 <span className="capitalize">{userData?.subscription_status || 'free'}</span>
                 <div className="space-x-2">
                   {userData?.subscription_status === 'pro' && (
-                    <a href="https://billing.stripe.com/p/login/3cseWi90FfLW98I9AA" target="_blank" rel="noopener noreferrer">
-                      <Button variant="outline">
-                        Manage Billing
-                      </Button>
-                    </a>
+                    <>
+                      <a href="https://billing.stripe.com/p/login/3cseWi90FfLW98I9AA" target="_blank" rel="noopener noreferrer">
+                        <Button variant="outline">
+                          Update Payment Info
+                        </Button>
+                      </a>
+                      <a href="https://billing.stripe.com/p/login/3cseWi90FfLW98I9AA" target="_blank" rel="noopener noreferrer">
+                        <Button variant="outline">
+                          Manage Billing
+                        </Button>
+                      </a>
+                    </>
                   )}
                   {userData?.subscription_status === 'free' && (
                     <Link to="/subscription">
