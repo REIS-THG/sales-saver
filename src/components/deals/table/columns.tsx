@@ -13,7 +13,7 @@ const baseColumns = [
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="p-0 hover:bg-transparent"
+          className="p-0 hover:bg-transparent whitespace-nowrap"
         >
           Deal Name
           <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -21,6 +21,7 @@ const baseColumns = [
       );
     },
     cell: (info) => info.getValue(),
+    sortingFn: "alphanumeric"
   }),
   columnHelper.accessor("company_name", {
     header: ({ column }) => {
@@ -28,7 +29,7 @@ const baseColumns = [
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="p-0 hover:bg-transparent"
+          className="p-0 hover:bg-transparent whitespace-nowrap"
         >
           Company
           <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -36,6 +37,7 @@ const baseColumns = [
       );
     },
     cell: (info) => info.getValue(),
+    sortingFn: "alphanumeric"
   }),
   columnHelper.accessor("amount", {
     header: ({ column }) => {
@@ -43,7 +45,7 @@ const baseColumns = [
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="p-0 hover:bg-transparent"
+          className="p-0 hover:bg-transparent whitespace-nowrap"
         >
           Amount
           <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -54,6 +56,7 @@ const baseColumns = [
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`,
+    sortingFn: "numeric"
   }),
   columnHelper.accessor("status", {
     header: ({ column }) => {
@@ -61,7 +64,7 @@ const baseColumns = [
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="p-0 hover:bg-transparent"
+          className="p-0 hover:bg-transparent whitespace-nowrap"
         >
           Status
           <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -89,6 +92,7 @@ const baseColumns = [
         </div>
       );
     },
+    sortingFn: "alphanumeric"
   }),
   columnHelper.accessor("health_score", {
     header: ({ column }) => {
@@ -96,7 +100,7 @@ const baseColumns = [
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="p-0 hover:bg-transparent"
+          className="p-0 hover:bg-transparent whitespace-nowrap"
         >
           Health Score
           <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -124,6 +128,7 @@ const baseColumns = [
         </div>
       );
     },
+    sortingFn: "numeric"
   }),
 ];
 
@@ -140,7 +145,7 @@ export const getColumns = (customFields: CustomField[], showCustomFields: boolea
             <Button
               variant="ghost"
               onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-              className="p-0 hover:bg-transparent"
+              className="p-0 hover:bg-transparent whitespace-nowrap"
             >
               {field.field_name}
               <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -154,6 +159,23 @@ export const getColumns = (customFields: CustomField[], showCustomFields: boolea
           }
           return value?.toString() || "-";
         },
+        sortingFn: (rowA, rowB, columnId) => {
+          const a = rowA.getValue(columnId);
+          const b = rowB.getValue(columnId);
+          
+          if (typeof a === "boolean" && typeof b === "boolean") {
+            return a === b ? 0 : a ? 1 : -1;
+          }
+          
+          if (typeof a === "number" && typeof b === "number") {
+            return a - b;
+          }
+          
+          if (a == null) return 1;
+          if (b == null) return -1;
+          
+          return String(a).localeCompare(String(b));
+        }
       }
     )
   );

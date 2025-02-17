@@ -28,12 +28,11 @@ import { type Deal, type CustomField } from "@/types/types";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import DealDetailsModal from "./DealDetailsModal";
 import { SortableTableRow } from "./SortableTableRow";
-import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
 import { getColumns } from "./table/columns";
 import { TableSearch } from "./table/TableSearch";
 import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface DealsTableProps {
   initialDeals: Deal[];
@@ -113,6 +112,7 @@ export function DealsTable({ initialDeals, customFields, showCustomFields }: Dea
     getFilteredRowModel: getFilteredRowModel(),
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    enableSorting: true,
   });
 
   return (
