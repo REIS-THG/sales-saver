@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { CustomField, Deal } from "@/types/types";
-import { ArrowUpDown, Trash2 } from "lucide-react";
+import { ArrowUpDown, Trash2, Activity } from "lucide-react";
 
 export const getColumns = (
   customFields: CustomField[], 
@@ -44,6 +44,40 @@ export const getColumns = (
         );
       },
       cell: ({ row }) => formatCurrency(row.original.amount),
+    },
+    {
+      accessorKey: "health_score",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Deal Health
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => {
+        const score = row.original.health_score;
+        let color;
+        if (score >= 70) {
+          color = "bg-green-100 text-green-800";
+        } else if (score >= 40) {
+          color = "bg-yellow-100 text-yellow-800";
+        } else {
+          color = "bg-red-100 text-red-800";
+        }
+        
+        return (
+          <div className="flex items-center gap-2">
+            <Activity className="h-4 w-4" />
+            <Badge className={color}>
+              {score}%
+            </Badge>
+          </div>
+        );
+      },
     },
     {
       accessorKey: "expected_close_date",
