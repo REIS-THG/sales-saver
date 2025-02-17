@@ -40,7 +40,10 @@ import {
   BarChart2,
   PieChart as PieChartIcon,
   LineChart as LineChartIcon,
-  Table
+  Table,
+  Star,
+  StarOff,
+  Pencil
 } from "lucide-react";
 import type { 
   ReportConfiguration, 
@@ -49,6 +52,7 @@ import type {
   Deal,
   VisualizationType
 } from "@/types/types";
+import { Input } from "@/components/ui/input";
 
 interface StandardField {
   field_name: string;
@@ -62,6 +66,8 @@ const Reports = () => {
   const [customFields, setCustomFields] = useState<CustomField[]>([]);
   const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingReportId, setEditingReportId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState("");
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -308,6 +314,84 @@ const Reports = () => {
     }
   };
 
+  const toggleFavorite = async (reportId: string, currentStatus: boolean) => {
+    try {
+      const { data, error } = await supabase
+        .from('report_configurations')
+        .update({ is_favorite: !currentStatus })
+        .eq('id', reportId)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const updatedReport: ReportConfiguration = {
+        ...data,
+        config: data.config as unknown as ReportConfig
+      };
+
+      setReports(prev => prev.map(report => 
+        report.id === reportId ? updatedReport : report
+      ));
+
+      toast({
+        title: "Success",
+        description: `Report ${!currentStatus ? 'added to' : 'removed from'} favorites`,
+      });
+    } catch (err) {
+      console.error('Error toggling favorite:', err);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update favorite status",
+      });
+    }
+  };
+
+  const startEditingName = (report: ReportConfiguration) => {
+    setEditingReportId(report.id);
+    setEditingName(report.name);
+  };
+
+  const saveReportName = async () => {
+    if (!editingReportId) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('report_configurations')
+        .update({ name: editingName })
+        .eq('id', editingReportId)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const updatedReport: ReportConfiguration = {
+        ...data,
+        config: data.config as unknown as ReportConfig
+      };
+
+      setReports(prev => prev.map(report => 
+        report.id === editingReportId ? updatedReport : report
+      ));
+
+      setEditingReportId(null);
+      setEditingName("");
+
+      toast({
+        title: "Success",
+        description: "Report name updated successfully",
+      });
+    } catch (err) {
+      console.error('Error updating report name:', err);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update report name",
+      });
+    }
+  };
+
   const renderVisualization = (config: ReportConfig, data: any[]) => {
     const { visualization } = config;
     
@@ -389,6 +473,9 @@ const Reports = () => {
     );
   }
 
+  const favoriteReports = reports.filter(report => report.is_favorite);
+  const otherReports = reports.filter(report => !report.is_favorite);
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
@@ -400,25 +487,135 @@ const Reports = () => {
           </Button>
         </div>
 
+        {favoriteReports.length > 0 && (
+          <>
+            <h2 className="text-xl font-semibold mb-4">Favorite Reports</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+              {favoriteReports.map((report) => (
+                <Card key={report.id} className="cursor-pointer hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        {editingReportId === report.id ? (
+                          <div className="flex gap-2">
+                            <Input
+                              value={editingName}
+                              onChange={(e) => setEditingName(e.target.value)}
+                              className="text-lg font-semibold"
+                            />
+                            <Button size="sm" onClick={saveReportName}>
+                              <Save className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <CardTitle>{report.name}</CardTitle>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => startEditingName(report)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        )}
+                        <CardDescription>{report.description}</CardDescription>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => toggleFavorite(report.id, !!report.is_favorite)}
+                        >
+                          {report.is_favorite ? (
+                            <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
+                          ) : (
+                            <StarOff className="h-4 w-4" />
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteReport(report.id);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => setSelectedReport(report)}
+                    >
+                      View Report
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </>
+        )}
+
+        <h2 className="text-xl font-semibold mb-4">All Reports</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {reports.map((report) => (
+          {otherReports.map((report) => (
             <Card key={report.id} className="cursor-pointer hover:shadow-lg transition-shadow">
               <CardHeader>
                 <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle>{report.name}</CardTitle>
+                  <div className="flex-1">
+                    {editingReportId === report.id ? (
+                      <div className="flex gap-2">
+                        <Input
+                          value={editingName}
+                          onChange={(e) => setEditingName(e.target.value)}
+                          className="text-lg font-semibold"
+                        />
+                        <Button size="sm" onClick={saveReportName}>
+                          <Save className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <CardTitle>{report.name}</CardTitle>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => startEditingName(report)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
                     <CardDescription>{report.description}</CardDescription>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      deleteReport(report.id);
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4 text-red-500" />
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => toggleFavorite(report.id, !!report.is_favorite)}
+                    >
+                      {report.is_favorite ? (
+                        <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
+                      ) : (
+                        <StarOff className="h-4 w-4" />
+                      )}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteReport(report.id);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4 text-red-500" />
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>

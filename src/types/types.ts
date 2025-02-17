@@ -92,6 +92,7 @@ export interface ReportConfiguration {
   config: ReportConfig;
   created_at?: string;
   updated_at?: string;
+  is_favorite?: boolean;
 }
 
 export interface ReportConfig {
