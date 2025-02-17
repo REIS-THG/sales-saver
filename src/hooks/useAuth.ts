@@ -49,6 +49,27 @@ export function useAuth() {
       // Ensure role is either 'sales_rep' or 'manager'
       const role = data.role === 'manager' ? 'manager' : 'sales_rep';
       
+      // Ensure subscription_status is a valid value
+      const subscription_status = ['free', 'pro', 'enterprise'].includes(data.subscription_status) 
+        ? data.subscription_status as 'free' | 'pro' | 'enterprise'
+        : 'free';
+
+      // Ensure custom_views is an array
+      const custom_views = Array.isArray(data.custom_views) 
+        ? data.custom_views as Record<string, any>[]
+        : [];
+
+      // Ensure billing_address is a valid object
+      const billing_address = typeof data.billing_address === 'object' && data.billing_address
+        ? {
+            street: data.billing_address.street as string || undefined,
+            city: data.billing_address.city as string || undefined,
+            state: data.billing_address.state as string || undefined,
+            country: data.billing_address.country as string || undefined,
+            postal_code: data.billing_address.postal_code as string || undefined
+          }
+        : {};
+
       // Create a properly typed User object
       const userData: User = {
         id: data.id,
@@ -59,12 +80,12 @@ export function useAuth() {
         updated_at: data.updated_at,
         theme: data.theme,
         default_deal_view: data.default_deal_view,
-        custom_views: data.custom_views || [],
+        custom_views: custom_views,
         email: data.email,
-        subscription_status: data.subscription_status || 'free',
+        subscription_status: subscription_status,
         subscription_end_date: data.subscription_end_date,
-        successful_deals_count: data.successful_deals_count || 0,
-        billing_address: data.billing_address || {}
+        successful_deals_count: Number(data.successful_deals_count) || 0,
+        billing_address: billing_address
       };
 
       setUser(userData);
