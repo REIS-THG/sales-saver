@@ -21,7 +21,11 @@ const baseColumns = [
       );
     },
     cell: (info) => info.getValue(),
-    sortingFn: "alphanumeric"
+    sortingFn: (rowA, rowB, columnId) => {
+      const a = rowA.getValue(columnId);
+      const b = rowB.getValue(columnId);
+      return String(a).localeCompare(String(b));
+    }
   }),
   columnHelper.accessor("company_name", {
     header: ({ column }) => {
@@ -37,7 +41,11 @@ const baseColumns = [
       );
     },
     cell: (info) => info.getValue(),
-    sortingFn: "alphanumeric"
+    sortingFn: (rowA, rowB, columnId) => {
+      const a = rowA.getValue(columnId);
+      const b = rowB.getValue(columnId);
+      return String(a).localeCompare(String(b));
+    }
   }),
   columnHelper.accessor("amount", {
     header: ({ column }) => {
@@ -56,7 +64,11 @@ const baseColumns = [
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`,
-    sortingFn: "numeric"
+    sortingFn: (rowA, rowB, columnId) => {
+      const a = Number(rowA.getValue(columnId));
+      const b = Number(rowB.getValue(columnId));
+      return a - b;
+    }
   }),
   columnHelper.accessor("status", {
     header: ({ column }) => {
@@ -92,7 +104,11 @@ const baseColumns = [
         </div>
       );
     },
-    sortingFn: "alphanumeric"
+    sortingFn: (rowA, rowB, columnId) => {
+      const a = rowA.getValue(columnId);
+      const b = rowB.getValue(columnId);
+      return String(a).localeCompare(String(b));
+    }
   }),
   columnHelper.accessor("health_score", {
     header: ({ column }) => {
@@ -128,7 +144,11 @@ const baseColumns = [
         </div>
       );
     },
-    sortingFn: "numeric"
+    sortingFn: (rowA, rowB, columnId) => {
+      const a = Number(rowA.getValue(columnId));
+      const b = Number(rowB.getValue(columnId));
+      return a - b;
+    }
   }),
 ];
 
