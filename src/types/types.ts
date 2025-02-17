@@ -21,7 +21,7 @@ export interface User {
   updated_at?: string;
   theme?: string;
   default_deal_view?: string;
-  custom_views?: Record<string, any>[];
+  custom_views: Record<string, any>[];
   email?: string;
   subscription_status?: 'free' | 'pro' | 'enterprise';
   subscription_end_date?: string;
@@ -38,10 +38,8 @@ export interface User {
 export interface Deal {
   id: string;
   deal_name: string;
-  name: string;
   company_name: string;
   amount: number;
-  value: number;
   status: 'open' | 'won' | 'lost' | 'stalled';
   health_score: number;
   close_date?: string;
@@ -61,6 +59,8 @@ export interface Deal {
   probability?: number;
   notes?: string[];
   custom_fields?: Record<string, any>;
+  name?: string;
+  value?: number;
 }
 
 export interface BulkImport {
@@ -114,7 +114,15 @@ export interface Insight {
   insight_type: 'risk' | 'opportunity' | 'action_item';
   content: string;
   priority: 'low' | 'medium' | 'high';
+  status: 'open' | 'acknowledged' | 'resolved';
   created_at?: string;
   updated_at?: string;
-  status: 'open' | 'acknowledged' | 'resolved';
+  confidence_score?: number;
+  coaching_suggestion?: string;
+  communication_template?: string;
+  sales_approach?: 'consultative_selling' | 'solution_selling' | 'transactional_selling' | 'value_based_selling';
+  communication_channel?: 'f2f' | 'email' | 'social_media';
+  industry?: string;
+  word_choice_analysis?: Record<string, any>;
+  source_data?: Record<string, any>;
 }

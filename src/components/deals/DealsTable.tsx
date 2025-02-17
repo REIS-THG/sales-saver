@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import {
   flexRender,
@@ -104,7 +103,12 @@ export function DealsTable({ initialDeals, customFields, showCustomFields }: Dea
   });
 
   useEffect(() => {
-    setDeals(initialDeals);
+    setDeals(initialDeals.map(deal => ({
+      ...deal,
+      name: deal.deal_name, // Map deal_name to name for compatibility
+      value: deal.amount, // Map amount to value for compatibility
+      custom_fields: deal.custom_fields as Record<string, any> || {},
+    })));
   }, [initialDeals]);
 
   useEffect(() => {

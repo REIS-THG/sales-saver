@@ -65,13 +65,12 @@ const DealGenius = () => {
       return;
     }
 
-    const typedDeals = data.map(deal => ({
+    setDeals(data.map(deal => ({
       ...deal,
-      status: (deal.status || 'open') as Deal['status'],
-      custom_fields: deal.custom_fields as Record<string, string | number | boolean> || {},
-    }));
-
-    setDeals(typedDeals);
+      name: deal.deal_name,
+      value: deal.amount,
+      custom_fields: deal.custom_fields as Record<string, any> || {},
+    })));
   };
 
   const fetchInsights = async (dealId: string) => {
@@ -89,7 +88,11 @@ const DealGenius = () => {
         description: "Failed to fetch insights",
       });
     } else if (data) {
-      setInsights(data as Insight[]);
+      setInsights(data.map(insight => ({
+        ...insight,
+        priority: insight.priority || 'medium',
+        status: insight.status || 'open'
+      } as Insight)));
     }
     setIsLoading(false);
   };

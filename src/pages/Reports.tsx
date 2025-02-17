@@ -73,7 +73,9 @@ const Reports = () => {
       setUserData({
         ...data,
         role: data.role as 'sales_rep' | 'manager',
-        subscription_status: data.subscription_status as 'free' | 'pro' | 'enterprise'
+        subscription_status: data.subscription_status as 'free' | 'pro' | 'enterprise',
+        custom_views: Array.isArray(data.custom_views) ? data.custom_views : [],
+        successful_deals_count: data.successful_deals_count || 0
       });
     } catch (err) {
       console.error("Error fetching user data:", err);
