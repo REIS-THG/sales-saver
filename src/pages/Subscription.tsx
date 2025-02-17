@@ -8,8 +8,10 @@ import { useToast } from "@/components/ui/use-toast";
 import { SubscriptionPlanCard, type Plan } from "@/components/subscription/SubscriptionPlanCard";
 import { subscriptionPlans } from "@/components/subscription/plans-data";
 
-// Initialize Stripe
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+// Initialize Stripe with a check for the publishable key
+const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY 
+  ? loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
+  : Promise.reject(new Error('Stripe publishable key is not set'));
 
 export default function Subscription() {
   const { user, loading } = useAuth();
@@ -42,9 +44,13 @@ export default function Subscription() {
 
     if (planType === "pro") {
       try {
-        const stripe = await stripePromise;
+        // Check if Stripe is properly initialized
+        const stripe = await stripePromise.catch(() => {
+          throw new Error('Stripe failed to initialize. Please check your configuration.');
+        });
+
         if (!stripe) {
-          throw new Error("Stripe failed to initialize");
+          throw new Error('Stripe failed to initialize');
         }
 
         const { data: { sessionId }, error } = await supabase.functions.invoke('create-checkout-session', {
@@ -73,7 +79,7 @@ export default function Subscription() {
         toast({
           variant: "destructive",
           title: "Error",
-          description: "Failed to start checkout process. Please try again later."
+          description: error instanceof Error ? error.message : "Failed to start checkout process. Please try again later."
         });
       }
     }
