@@ -70,15 +70,14 @@ const Reports = () => {
 
       if (error) throw error;
 
-      const billingAddress = typeof data.billing_address === 'object' && data.billing_address
-        ? {
-            street: data.billing_address.street || '',
-            city: data.billing_address.city || '',
-            state: data.billing_address.state || '',
-            country: data.billing_address.country || '',
-            postal_code: data.billing_address.postal_code || ''
-          }
-        : {};
+      const billingAddressData = data.billing_address as Record<string, string> | null;
+      const billingAddress = {
+        street: billingAddressData?.street || '',
+        city: billingAddressData?.city || '',
+        state: billingAddressData?.state || '',
+        country: billingAddressData?.country || '',
+        postal_code: billingAddressData?.postal_code || ''
+      };
 
       setUserData({
         ...data,

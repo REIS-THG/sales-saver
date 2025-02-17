@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -17,11 +18,26 @@ export const ReportConfiguration = ({
   visualizationTypes,
 }: ReportConfigurationProps) => {
   const mapFieldToOption = (field: StandardField | CustomField): StandardField => {
-    const fieldType = 'field_type' in field ? field.field_type : 'text';
+    let fieldType: "text" | "number" | "boolean" | "date";
+    
+    if ('field_type' in field) {
+      switch (field.field_type) {
+        case 'number':
+        case 'boolean':
+        case 'date':
+          fieldType = field.field_type;
+          break;
+        default:
+          fieldType = 'text';
+      }
+    } else {
+      fieldType = 'text';
+    }
+
     return {
       field_name: field.field_name,
       field: 'field' in field ? field.field : field.field_name,
-      field_type: fieldType as "text" | "number" | "boolean" | "date"
+      field_type: fieldType
     };
   };
 
