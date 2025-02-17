@@ -41,8 +41,8 @@ export function DashboardHeader({
             />
           )}
           <Button 
-            variant={isActive('/deal-genius') ? 'default' : 'outline'} 
-            onClick={() => navigate("/deal-genius")}
+            variant={isActive('/ai-analysis') ? 'default' : 'outline'} 
+            onClick={() => navigate("/ai-analysis")}
           >
             <Sparkles className="h-5 w-5 mr-2" />
             AI Analysis

@@ -6,7 +6,7 @@ import Settings from "@/pages/Settings";
 import Reports from "@/pages/Reports";
 import Index from "@/pages/Index";
 import NotFound from "@/pages/NotFound";
-import DealGenius from "@/pages/DealGenius";
+import AIAnalysis from "@/pages/AIAnalysis";
 import Subscription from "@/pages/Subscription";
 import { Toaster } from "@/components/ui/toaster";
 
@@ -70,7 +70,7 @@ function App() {
         <Route path="/auth" element={<Auth />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/reports" element={<Reports />} />
-        <Route path="/deal-genius" element={<DealGenius />} />
+        <Route path="/ai-analysis" element={<AIAnalysis />} />
         <Route path="/subscription" element={<Subscription />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

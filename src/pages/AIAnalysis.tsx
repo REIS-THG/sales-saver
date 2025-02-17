@@ -3,16 +3,16 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { useDealGenius } from "@/hooks/use-deal-genius";
+import { useAIAnalysis } from "@/hooks/use-ai-analysis";
 import { useNavigate } from "react-router-dom";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { DealAnalysisTab } from "@/components/deal-genius/DealAnalysisTab";
-import { NextStepsTab } from "@/components/deal-genius/NextStepsTab";
-import { AnalysisHistoryTab } from "@/components/deal-genius/AnalysisHistoryTab";
+import { DealAnalysisTab } from "@/components/ai-analysis/DealAnalysisTab";
+import { NextStepsTab } from "@/components/ai-analysis/NextStepsTab";
+import { AnalysisHistoryTab } from "@/components/ai-analysis/AnalysisHistoryTab";
 
-const DealGenius = () => {
+const AIAnalysis = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const {
@@ -29,7 +29,7 @@ const DealGenius = () => {
     fetchInsights,
     analyzeDeal,
     handleFileUpload,
-  } = useDealGenius();
+  } = useAIAnalysis();
 
   const [activeTab, setActiveTab] = useState<string>("analysis");
 
@@ -43,25 +43,6 @@ const DealGenius = () => {
   }, [searchParams]);
 
   const isAnalysisLimited = subscriptionTier === 'free' && analysisCount >= 1;
-
-  const handleDealSelect = (dealId: string) => {
-    setSelectedDeal(dealId);
-    fetchInsights(dealId);
-  };
-
-  const handleAnalyze = (dealId: string) => {
-    analyzeDeal(dealId, {
-      salesApproach: 'consultative_selling',
-      industry: '',
-      purposeNotes: '',
-      toneAnalysis: {
-        formality: 50,
-        persuasiveness: 50,
-        urgency: 50,
-      },
-      communicationChannel: 'email',
-    });
-  };
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -158,4 +139,4 @@ const DealGenius = () => {
   );
 };
 
-export default DealGenius;
+export default AIAnalysis;
