@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import {
   flexRender,
@@ -39,58 +38,98 @@ const columnHelper = createColumnHelper<Deal>();
 
 const columns = [
   columnHelper.accessor("deal_name", {
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="p-0 hover:bg-transparent"
-      >
-        Deal Name
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
+    header: ({ column }) => {
+      return (
+        <div>
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="p-0 hover:bg-transparent"
+          >
+            Deal Name
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+          <Input
+            placeholder="Filter..."
+            value={(column.getFilterValue() as string) ?? ""}
+            onChange={(e) => column.setFilterValue(e.target.value)}
+            className="h-8 w-full mt-2"
+          />
+        </div>
+      );
+    },
     cell: (info) => info.getValue(),
   }),
   columnHelper.accessor("company_name", {
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="p-0 hover:bg-transparent"
-      >
-        Company
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
+    header: ({ column }) => {
+      return (
+        <div>
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="p-0 hover:bg-transparent"
+          >
+            Company
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+          <Input
+            placeholder="Filter..."
+            value={(column.getFilterValue() as string) ?? ""}
+            onChange={(e) => column.setFilterValue(e.target.value)}
+            className="h-8 w-full mt-2"
+          />
+        </div>
+      );
+    },
     cell: (info) => info.getValue(),
   }),
   columnHelper.accessor("amount", {
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="p-0 hover:bg-transparent"
-      >
-        Amount
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
+    header: ({ column }) => {
+      return (
+        <div>
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="p-0 hover:bg-transparent"
+          >
+            Amount
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+          <Input
+            placeholder="Filter..."
+            value={(column.getFilterValue() as string) ?? ""}
+            onChange={(e) => column.setFilterValue(e.target.value)}
+            className="h-8 w-full mt-2"
+          />
+        </div>
+      );
+    },
     cell: (info) => `$${Number(info.getValue()).toLocaleString(undefined, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`,
   }),
   columnHelper.accessor("status", {
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="p-0 hover:bg-transparent"
-      >
-        Status
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
+    header: ({ column }) => {
+      return (
+        <div>
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="p-0 hover:bg-transparent"
+          >
+            Status
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+          <Input
+            placeholder="Filter..."
+            value={(column.getFilterValue() as string) ?? ""}
+            onChange={(e) => column.setFilterValue(e.target.value)}
+            className="h-8 w-full mt-2"
+          />
+        </div>
+      );
+    },
     cell: (info) => {
       const status = info.getValue();
       const getStatusIcon = () => {
@@ -114,16 +153,27 @@ const columns = [
     },
   }),
   columnHelper.accessor("health_score", {
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="p-0 hover:bg-transparent"
-      >
-        Health Score
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
+    header: ({ column }) => {
+      return (
+        <div>
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="p-0 hover:bg-transparent"
+          >
+            Health Score
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+          <Input
+            placeholder="Filter..."
+            value={(column.getFilterValue() as string) ?? ""}
+            onChange={(e) => column.setFilterValue(e.target.value)}
+            className="h-8 w-full mt-2"
+            type="number"
+          />
+        </div>
+      );
+    },
     cell: (info) => {
       const score = info.getValue();
       const getProgressColor = (score: number) => {
@@ -163,6 +213,7 @@ export function DealsTable({ initialDeals }: DealsTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
+  const [globalFilter, setGlobalFilter] = useState("");
   const navigate = useNavigate();
 
   const sensors = useSensors(
@@ -217,9 +268,12 @@ export function DealsTable({ initialDeals }: DealsTableProps) {
     state: {
       sorting,
       columnFilters,
+      globalFilter,
     },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
+    onGlobalFilterChange: setGlobalFilter,
+    globalFilterFn: "includesString",
     getFilteredRowModel: getFilteredRowModel(),
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -260,27 +314,14 @@ export function DealsTable({ initialDeals }: DealsTableProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-4">
-        <div className="flex-1">
-          <Input
-            placeholder="Filter deal names..."
-            value={(table.getColumn("deal_name")?.getFilterValue() as string) ?? ""}
-            onChange={(event) =>
-              table.getColumn("deal_name")?.setFilterValue(event.target.value)
-            }
-            className="max-w-sm"
-          />
-        </div>
-        <div className="flex-1">
-          <Input
-            placeholder="Filter companies..."
-            value={(table.getColumn("company_name")?.getFilterValue() as string) ?? ""}
-            onChange={(event) =>
-              table.getColumn("company_name")?.setFilterValue(event.target.value)
-            }
-            className="max-w-sm"
-          />
-        </div>
+      <div className="flex items-center space-x-2">
+        <Search className="h-4 w-4 text-gray-500" />
+        <Input
+          placeholder="Search all columns..."
+          value={globalFilter ?? ""}
+          onChange={(event) => setGlobalFilter(event.target.value)}
+          className="max-w-sm"
+        />
       </div>
 
       <div className="rounded-md border">
