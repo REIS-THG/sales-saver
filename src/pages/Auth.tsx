@@ -4,13 +4,16 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
+import { Loader } from "lucide-react";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
@@ -34,14 +37,16 @@ const Auth = () => {
           description: "Check your email for the password reset link.",
         });
         
-        // Switch back to sign in mode after sending reset link
         setIsForgotPassword(false);
       } else if (isSignUp) {
         const { error: signUpError } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback`
+            emailRedirectTo: `${window.location.origin}/auth/callback`,
+            data: {
+              remember_me: rememberMe
+            }
           }
         });
         
@@ -53,16 +58,20 @@ const Auth = () => {
         }
         
         toast({
-          title: "Account created!",
+          title: "Welcome to Sales Saver!",
           description: "Please check your email to confirm your account. You can also try signing in directly.",
         });
         
-        // Switch to sign in mode after successful registration
         setIsSignUp(false);
       } else {
         const { error: signInError } = await supabase.auth.signInWithPassword({
           email,
           password,
+          options: {
+            data: {
+              remember_me: rememberMe
+            }
+          }
         });
         
         if (signInError) {
@@ -115,18 +124,18 @@ const Auth = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>
+          <CardTitle className="text-2xl text-center">
             {isForgotPassword 
               ? "Reset Password"
               : isSignUp 
-                ? "Create Account" 
+                ? "Welcome to Sales Saver" 
                 : "Welcome Back"}
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-center">
             {isForgotPassword
               ? "Enter your email to receive a password reset link"
               : isSignUp
-                ? "Sign up to start managing your sales pipeline"
+                ? "Create an account to start managing your sales pipeline"
                 : "Sign in to access your dashboard"}
           </CardDescription>
         </CardHeader>
@@ -135,8 +144,9 @@ const Auth = () => {
             <Button
               type="button"
               variant="outline"
-              className="w-full"
+              className="w-full relative"
               onClick={handleGoogleSignIn}
+              disabled={loading}
             >
               <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512">
                 <path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"></path>
@@ -170,6 +180,7 @@ const Auth = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                disabled={loading}
               />
             </div>
             {!isForgotPassword && (
@@ -185,19 +196,37 @@ const Auth = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   minLength={6}
+                  disabled={loading}
                 />
                 <p className="text-xs text-muted-foreground">
                   Password must be at least 6 characters long
                 </p>
               </div>
             )}
-            <Button type="submit" className="w-full" disabled={loading}>
+            {!isForgotPassword && (
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="remember" 
+                  checked={rememberMe} 
+                  onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                  disabled={loading}
+                />
+                <label
+                  htmlFor="remember"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Remember me
+                </label>
+              </div>
+            )}
+            <Button type="submit" className="w-full relative" disabled={loading}>
+              {loading && <Loader className="mr-2 h-4 w-4 animate-spin" />}
               {loading 
-                ? "Loading..." 
+                ? "Please wait..." 
                 : isForgotPassword
                   ? "Send Reset Link"
                   : isSignUp 
-                    ? "Sign Up" 
+                    ? "Create Account" 
                     : "Sign In"}
             </Button>
           </form>
@@ -208,6 +237,7 @@ const Auth = () => {
             variant="ghost"
             className="w-full"
             onClick={switchMode}
+            disabled={loading}
           >
             {isSignUp
               ? "Already have an account? Sign In"
@@ -222,6 +252,7 @@ const Auth = () => {
                 setIsForgotPassword(true);
                 setPassword("");
               }}
+              disabled={loading}
             >
               Forgot your password?
             </Button>
@@ -235,6 +266,7 @@ const Auth = () => {
                 setIsForgotPassword(false);
                 setEmail("");
               }}
+              disabled={loading}
             >
               Back to Sign In
             </Button>
