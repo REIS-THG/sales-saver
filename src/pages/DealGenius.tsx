@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, FileText, Mail, Mic, ListChecks, Sparkles } from "lucide-react";
+import { ArrowLeft, FileText, Mail, Mic, ListChecks, Sparkles, Copy } from "lucide-react";
 import { AnalysisForm } from "@/components/deal-genius/AnalysisForm";
 import { InsightsList } from "@/components/deal-genius/InsightsList";
 import { useDealGenius } from "@/hooks/use-deal-genius";
@@ -21,10 +21,20 @@ import { FileUploader } from "@/components/deal-genius/FileUploader";
 import { ToneAnalysis } from "@/components/deal-genius/ToneAnalysis";
 import { CommunicationChannel } from "@/components/deal-genius/CommunicationChannel";
 import { DealSelector } from "@/components/deal-genius/DealSelector";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 const DealGenius = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const {
     deals,
     selectedDeal,
@@ -46,7 +56,8 @@ const DealGenius = () => {
   const [persuasiveness, setPersuasiveness] = useState(50);
   const [urgency, setUrgency] = useState(50);
   const [selectedChannel, setSelectedChannel] = useState<'f2f' | 'email' | 'social_media'>('email');
-  const [isGeneratingNextSteps, setIsGeneratingNextSteps] = useState(false);
+  const [isGeneratingDraft, setIsGeneratingDraft] = useState(false);
+  const [draftContent, setDraftContent] = useState<string>("");
 
   useEffect(() => {
     fetchDeals();
@@ -57,13 +68,40 @@ const DealGenius = () => {
     }
   }, [searchParams]);
 
-  const isAnalysisLimited = subscriptionTier === 'free' && analysisCount >= 1;
-
-  const handleCreateNextSteps = async () => {
-    setIsGeneratingNextSteps(true);
-    // Add your next steps generation logic here
-    setTimeout(() => setIsGeneratingNextSteps(false), 2000);
+  const handleCopyDraft = () => {
+    navigator.clipboard.writeText(draftContent);
+    toast({
+      title: "Copied to clipboard",
+      description: "The draft has been copied to your clipboard.",
+    });
   };
+
+  const handleCreateDraft = async () => {
+    setIsGeneratingDraft(true);
+    setDraftContent("");
+    
+    // Simulate AI generating a draft based on settings
+    // In a real implementation, this would call your AI service
+    setTimeout(() => {
+      const draft = `Dear [Contact],
+
+I hope this ${selectedChannel === 'email' ? 'email' : 'message'} finds you well.
+
+[AI-generated content based on:
+- Formality: ${formality}%
+- Persuasiveness: ${persuasiveness}%
+- Urgency: ${urgency}%
+- Channel: ${selectedChannel}]
+
+Best regards,
+[Your name]`;
+      
+      setDraftContent(draft);
+      setIsGeneratingDraft(false);
+    }, 2000);
+  };
+
+  const isAnalysisLimited = subscriptionTier === 'free' && analysisCount >= 1;
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -208,7 +246,7 @@ const DealGenius = () => {
                 <CardHeader>
                   <CardTitle>Next Steps</CardTitle>
                   <CardDescription>
-                    Customize how you want your next steps to be presented
+                    Generate communication drafts based on your preferences
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -249,30 +287,77 @@ const DealGenius = () => {
 
                   <Button 
                     className="w-full mt-6"
-                    onClick={handleCreateNextSteps}
-                    disabled={isGeneratingNextSteps || !selectedDeal}
+                    onClick={handleCreateDraft}
+                    disabled={isGeneratingDraft || !selectedDeal}
                   >
                     <ListChecks className="w-4 h-4 mr-2" />
-                    {isGeneratingNextSteps ? 'Creating Next Steps...' : 'Create Next Steps'}
+                    {isGeneratingDraft ? 'Generating Draft...' : 'Generate Communication Draft'}
                   </Button>
+
+                  {draftContent && (
+                    <div className="mt-6">
+                      <div className="relative">
+                        <pre className="p-4 bg-gray-50 rounded-lg whitespace-pre-wrap text-sm">
+                          {draftContent}
+                        </pre>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="absolute top-2 right-2"
+                          onClick={handleCopyDraft}
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
-
-              <div className="mt-6">
-                <InsightsList 
-                  insights={insights} 
-                  isLoading={isLoading}
-                  showConfidence={false}
-                />
-              </div>
             </TabsContent>
 
             <TabsContent value="history" className="p-6">
-              <InsightsList 
-                insights={insights} 
-                isLoading={isLoading}
-                showConfidence={false}
-              />
+              <Card>
+                <CardHeader>
+                  <CardTitle>Analysis History</CardTitle>
+                  <CardDescription>
+                    Previous deal analysis results and insights
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Deal</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Confidence</TableHead>
+                        <TableHead>Content</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {insights.map((insight) => (
+                        <TableRow key={insight.id}>
+                          <TableCell>
+                            {new Date(insight.created_at).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>
+                            {deals.find(d => d.id === insight.deal_id)?.deal_name || 'Unknown'}
+                          </TableCell>
+                          <TableCell className="capitalize">
+                            {insight.insight_type.replace(/_/g, ' ')}
+                          </TableCell>
+                          <TableCell>
+                            {insight.confidence_score ? `${insight.confidence_score}%` : 'N/A'}
+                          </TableCell>
+                          <TableCell className="max-w-md truncate">
+                            {insight.content}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
             </TabsContent>
           </Tabs>
         </div>
