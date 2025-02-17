@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -43,6 +42,25 @@ const AIAnalysis = () => {
   }, [searchParams]);
 
   const isAnalysisLimited = subscriptionTier === 'free' && analysisCount >= 1;
+
+  const handleDealSelect = (dealId: string) => {
+    setSelectedDeal(dealId);
+    fetchInsights(dealId);
+  };
+
+  const handleAnalyze = async (dealId: string) => {
+    await analyzeDeal(dealId, {
+      salesApproach: 'consultative',
+      industry: 'technology',
+      purposeNotes: '',
+      toneAnalysis: {
+        formality: 0.7,
+        persuasiveness: 0.8,
+        urgency: 0.5,
+      },
+      communicationChannel: 'email',
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">

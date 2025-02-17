@@ -1,11 +1,10 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Deal, Insight } from "@/types/types";
 
-export function useDealGenius() {
+export function useAIAnalysis() {
   const [deals, setDeals] = useState<Deal[]>([]);
   const [selectedDeal, setSelectedDeal] = useState<string | null>(null);
   const [insights, setInsights] = useState<Insight[]>([]);
