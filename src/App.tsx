@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,6 +11,7 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 import Settings from "./pages/Settings";
+import DealGenius from "./pages/DealGenius";
 
 const queryClient = new QueryClient();
 
@@ -64,6 +66,16 @@ const App = () => {
               element={
                 isAuthenticated ? (
                   <Settings />
+                ) : (
+                  <Navigate to="/auth" replace />
+                )
+              }
+            />
+            <Route
+              path="/deal-genius"
+              element={
+                isAuthenticated ? (
+                  <DealGenius />
                 ) : (
                   <Navigate to="/auth" replace />
                 )

@@ -81,6 +81,50 @@ export type Database = {
         }
         Relationships: []
       }
+      deal_insights: {
+        Row: {
+          confidence_score: number | null
+          content: string
+          created_at: string | null
+          deal_id: string | null
+          id: string
+          insight_type: string
+          is_processed: boolean | null
+          source_data: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          confidence_score?: number | null
+          content: string
+          created_at?: string | null
+          deal_id?: string | null
+          id?: string
+          insight_type: string
+          is_processed?: boolean | null
+          source_data?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          confidence_score?: number | null
+          content?: string
+          created_at?: string | null
+          deal_id?: string | null
+          id?: string
+          insight_type?: string
+          is_processed?: boolean | null
+          source_data?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_insights_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deal_notes: {
         Row: {
           ai_analysis: Json | null
