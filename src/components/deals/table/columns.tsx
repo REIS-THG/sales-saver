@@ -1,5 +1,5 @@
 
-import { createColumnHelper } from "@tanstack/react-table";
+import { createColumnHelper, sortingFns } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { ArrowUpDown, CheckCircle2, AlertCircle, Clock, Ban } from "lucide-react";
 import { type Deal, type CustomField } from "@/types/types";
@@ -21,11 +21,7 @@ const baseColumns = [
       );
     },
     cell: (info) => info.getValue(),
-    sortingFn: (rowA, rowB, columnId) => {
-      const a = rowA.getValue(columnId);
-      const b = rowB.getValue(columnId);
-      return String(a).localeCompare(String(b));
-    }
+    sortingFn: sortingFns.alphanumeric
   }),
   columnHelper.accessor("company_name", {
     header: ({ column }) => {
@@ -41,11 +37,7 @@ const baseColumns = [
       );
     },
     cell: (info) => info.getValue(),
-    sortingFn: (rowA, rowB, columnId) => {
-      const a = rowA.getValue(columnId);
-      const b = rowB.getValue(columnId);
-      return String(a).localeCompare(String(b));
-    }
+    sortingFn: sortingFns.alphanumeric
   }),
   columnHelper.accessor("amount", {
     header: ({ column }) => {
@@ -64,11 +56,7 @@ const baseColumns = [
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`,
-    sortingFn: (rowA, rowB, columnId) => {
-      const a = Number(rowA.getValue(columnId));
-      const b = Number(rowB.getValue(columnId));
-      return a - b;
-    }
+    sortingFn: sortingFns.basic
   }),
   columnHelper.accessor("status", {
     header: ({ column }) => {
@@ -104,11 +92,7 @@ const baseColumns = [
         </div>
       );
     },
-    sortingFn: (rowA, rowB, columnId) => {
-      const a = rowA.getValue(columnId);
-      const b = rowB.getValue(columnId);
-      return String(a).localeCompare(String(b));
-    }
+    sortingFn: sortingFns.alphanumeric
   }),
   columnHelper.accessor("health_score", {
     header: ({ column }) => {
@@ -144,11 +128,7 @@ const baseColumns = [
         </div>
       );
     },
-    sortingFn: (rowA, rowB, columnId) => {
-      const a = Number(rowA.getValue(columnId));
-      const b = Number(rowB.getValue(columnId));
-      return a - b;
-    }
+    sortingFn: sortingFns.basic
   }),
 ];
 
@@ -183,16 +163,17 @@ export const getColumns = (customFields: CustomField[], showCustomFields: boolea
           const a = rowA.getValue(columnId);
           const b = rowB.getValue(columnId);
           
+          if (a === b) return 0;
+          if (a == null) return 1;
+          if (b == null) return -1;
+          
           if (typeof a === "boolean" && typeof b === "boolean") {
-            return a === b ? 0 : a ? 1 : -1;
+            return a === b ? 0 : a ? -1 : 1;
           }
           
           if (typeof a === "number" && typeof b === "number") {
             return a - b;
           }
-          
-          if (a == null) return 1;
-          if (b == null) return -1;
           
           return String(a).localeCompare(String(b));
         }
