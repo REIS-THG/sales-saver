@@ -6,6 +6,10 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Spinner } from "@/components/ui/spinner";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Slider } from "@/components/ui/slider";
+import { ArrowLeft } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -22,6 +26,14 @@ interface Insight {
   content: string;
   confidence_score: number;
   created_at: string;
+  sales_approach: 'consultative_selling' | 'solution_selling' | 'transactional_selling' | 'value_based_selling';
+  industry: string;
+  purpose_notes: string;
+  tone_analysis: Record<string, number>;
+  word_choice_analysis: Record<string, any>;
+  coaching_suggestion?: string;
+  communication_template?: string;
+  communication_channel?: 'f2f' | 'email' | 'social_media';
 }
 
 const DealGenius = () => {
@@ -33,6 +45,17 @@ const DealGenius = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // New state for analysis parameters
+  const [salesApproach, setSalesApproach] = useState<Insight['sales_approach']>('consultative_selling');
+  const [industry, setIndustry] = useState('');
+  const [purposeNotes, setPurposeNotes] = useState('');
+  const [selectedChannel, setSelectedChannel] = useState<'f2f' | 'email' | 'social_media'>('email');
+
+  // Tone analysis parameters
+  const [formality, setFormality] = useState(50);
+  const [persuasiveness, setPersuasiveness] = useState(50);
+  const [urgency, setUrgency] = useState(50);
 
   useEffect(() => {
     fetchDeals();
@@ -65,7 +88,6 @@ const DealGenius = () => {
       return;
     }
 
-    // Type cast the data to match the Deal interface
     const typedDeals = data.map(deal => ({
       ...deal,
       status: (deal.status || 'open') as Deal['status'],
@@ -90,12 +112,7 @@ const DealGenius = () => {
         description: "Failed to fetch insights",
       });
     } else if (data) {
-      // Type cast the insight_type to ensure it matches the Insight interface
-      const typedInsights = data.map(insight => ({
-        ...insight,
-        insight_type: insight.insight_type as 'opportunity' | 'risk' | 'action' | 'trend'
-      }));
-      setInsights(typedInsights);
+      setInsights(data as Insight[]);
     }
     setIsLoading(false);
   };
@@ -105,13 +122,24 @@ const DealGenius = () => {
 
     setIsAnalyzing(true);
     try {
-      const response = await fetch("/api/analyze-deals", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dealId: selectedDeal }),
+      const response = await supabase.functions.invoke("analyze-deals", {
+        body: {
+          dealId: selectedDeal,
+          analysisParams: {
+            salesApproach,
+            industry,
+            purposeNotes,
+            toneAnalysis: {
+              formality,
+              persuasiveness,
+              urgency,
+            },
+            communicationChannel: selectedChannel,
+          },
+        },
       });
 
-      if (!response.ok) throw new Error("Analysis failed");
+      if (response.error) throw new Error("Analysis failed");
 
       await fetchInsights(selectedDeal);
       toast({
@@ -153,34 +181,124 @@ const DealGenius = () => {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Deal Genius</h1>
-          <Button variant="ghost" onClick={() => navigate("/dashboard")}>
-            Back to Dashboard
-          </Button>
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/dashboard")}
+              className="hover:bg-gray-100"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <h1 className="text-2xl font-bold text-gray-900">Deal Genius</h1>
+          </div>
         </div>
 
         <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex gap-4 mb-6">
-            <Select value={selectedDeal || ''} onValueChange={handleDealChange}>
-              <SelectTrigger className="w-[300px]">
-                <SelectValue placeholder="Select a deal to analyze" />
-              </SelectTrigger>
-              <SelectContent>
-                {deals.map((deal) => (
-                  <SelectItem key={deal.id} value={deal.id}>
-                    {deal.deal_name} - {deal.company_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button 
-              onClick={analyzeDeal} 
-              disabled={!selectedDeal || isAnalyzing}
-              className="flex items-center gap-2"
-            >
-              {isAnalyzing && <Spinner size="sm" />}
-              Analyze Deal
-            </Button>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div>
+              <Select value={selectedDeal || ''} onValueChange={handleDealChange}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a deal to analyze" />
+                </SelectTrigger>
+                <SelectContent>
+                  {deals.map((deal) => (
+                    <SelectItem key={deal.id} value={deal.id}>
+                      {deal.deal_name} - {deal.company_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Select value={salesApproach} onValueChange={(value: Insight['sales_approach']) => setSalesApproach(value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select sales approach" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="consultative_selling">Consultative Selling</SelectItem>
+                  <SelectItem value="solution_selling">Solution Selling</SelectItem>
+                  <SelectItem value="transactional_selling">Transactional Selling</SelectItem>
+                  <SelectItem value="value_based_selling">Value-based Selling</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Input
+                placeholder="Industry"
+                value={industry}
+                onChange={(e) => setIndustry(e.target.value)}
+                className="w-full"
+              />
+            </div>
+
+            <div>
+              <Textarea
+                placeholder="Purpose and Notes"
+                value={purposeNotes}
+                onChange={(e) => setPurposeNotes(e.target.value)}
+                className="w-full"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <h3 className="text-lg font-medium mb-4">Tone Analysis</h3>
+              <div className="space-y-6">
+                <div>
+                  <label className="text-sm font-medium">Formality</label>
+                  <Slider
+                    value={[formality]}
+                    onValueChange={(value) => setFormality(value[0])}
+                    max={100}
+                    step={1}
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Persuasiveness</label>
+                  <Slider
+                    value={[persuasiveness]}
+                    onValueChange={(value) => setPersuasiveness(value[0])}
+                    max={100}
+                    step={1}
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Urgency</label>
+                  <Slider
+                    value={[urgency]}
+                    onValueChange={(value) => setUrgency(value[0])}
+                    max={100}
+                    step={1}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <Select value={selectedChannel} onValueChange={(value: 'f2f' | 'email' | 'social_media') => setSelectedChannel(value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select communication channel" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="f2f">Face to Face</SelectItem>
+                  <SelectItem value="email">Email</SelectItem>
+                  <SelectItem value="social_media">Social Media</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="md:col-span-2">
+              <Button 
+                onClick={analyzeDeal} 
+                disabled={!selectedDeal || isAnalyzing}
+                className="w-full flex items-center justify-center gap-2"
+              >
+                {isAnalyzing && <Spinner size="sm" />}
+                Analyze Deal
+              </Button>
+            </div>
           </div>
 
           {isLoading ? (
@@ -200,7 +318,19 @@ const DealGenius = () => {
                       Confidence: {insight.confidence_score}%
                     </span>
                   </div>
-                  <p className="text-gray-700">{insight.content}</p>
+                  <p className="text-gray-700 mb-4">{insight.content}</p>
+                  {insight.coaching_suggestion && insight.confidence_score >= 70 && (
+                    <div className="mt-2 p-2 bg-blue-50 rounded">
+                      <h4 className="font-medium text-blue-700">Next Steps:</h4>
+                      <p className="text-blue-600">{insight.coaching_suggestion}</p>
+                    </div>
+                  )}
+                  {insight.communication_template && (
+                    <div className="mt-2 p-2 bg-green-50 rounded">
+                      <h4 className="font-medium text-green-700">Communication Template:</h4>
+                      <p className="text-green-600">{insight.communication_template}</p>
+                    </div>
+                  )}
                 </Card>
               ))}
             </div>

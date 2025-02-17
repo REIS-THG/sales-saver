@@ -83,37 +83,73 @@ export type Database = {
       }
       deal_insights: {
         Row: {
+          coaching_suggestion: string | null
+          communication_channel:
+            | Database["public"]["Enums"]["communication_channel_type"]
+            | null
+          communication_template: string | null
           confidence_score: number | null
           content: string
           created_at: string | null
           deal_id: string | null
           id: string
+          industry: string | null
           insight_type: string
           is_processed: boolean | null
+          purpose_notes: string | null
+          sales_approach:
+            | Database["public"]["Enums"]["sales_approach_type"]
+            | null
           source_data: Json | null
+          tone_analysis: Json | null
           updated_at: string | null
+          word_choice_analysis: Json | null
         }
         Insert: {
+          coaching_suggestion?: string | null
+          communication_channel?:
+            | Database["public"]["Enums"]["communication_channel_type"]
+            | null
+          communication_template?: string | null
           confidence_score?: number | null
           content: string
           created_at?: string | null
           deal_id?: string | null
           id?: string
+          industry?: string | null
           insight_type: string
           is_processed?: boolean | null
+          purpose_notes?: string | null
+          sales_approach?:
+            | Database["public"]["Enums"]["sales_approach_type"]
+            | null
           source_data?: Json | null
+          tone_analysis?: Json | null
           updated_at?: string | null
+          word_choice_analysis?: Json | null
         }
         Update: {
+          coaching_suggestion?: string | null
+          communication_channel?:
+            | Database["public"]["Enums"]["communication_channel_type"]
+            | null
+          communication_template?: string | null
           confidence_score?: number | null
           content?: string
           created_at?: string | null
           deal_id?: string | null
           id?: string
+          industry?: string | null
           insight_type?: string
           is_processed?: boolean | null
+          purpose_notes?: string | null
+          sales_approach?:
+            | Database["public"]["Enums"]["sales_approach_type"]
+            | null
           source_data?: Json | null
+          tone_analysis?: Json | null
           updated_at?: string | null
+          word_choice_analysis?: Json | null
         }
         Relationships: [
           {
@@ -408,7 +444,12 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      communication_channel_type: "f2f" | "email" | "social_media"
+      sales_approach_type:
+        | "consultative_selling"
+        | "solution_selling"
+        | "transactional_selling"
+        | "value_based_selling"
     }
     CompositeTypes: {
       [_ in never]: never
