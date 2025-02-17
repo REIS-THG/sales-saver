@@ -50,6 +50,12 @@ import type {
   VisualizationType
 } from "@/types/types";
 
+interface StandardField {
+  field_name: string;
+  field: string;
+  field_type: "text" | "number" | "boolean" | "date";
+}
+
 const Reports = () => {
   const [reports, setReports] = useState<ReportConfiguration[]>([]);
   const [selectedReport, setSelectedReport] = useState<ReportConfiguration | null>(null);
@@ -59,20 +65,20 @@ const Reports = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const standardFields = [
-    { field: 'amount', label: 'Deal Amount', type: 'number' },
-    { field: 'status', label: 'Deal Status', type: 'text' },
-    { field: 'health_score', label: 'Health Score', type: 'number' },
-    { field: 'created_at', label: 'Creation Date', type: 'date' },
-    { field: 'company_name', label: 'Company', type: 'text' },
+  const standardFields: StandardField[] = [
+    { field: 'amount', field_name: 'Deal Amount', field_type: 'number' },
+    { field: 'status', field_name: 'Deal Status', field_type: 'text' },
+    { field: 'health_score', field_name: 'Health Score', field_type: 'number' },
+    { field: 'created_at', field_name: 'Creation Date', field_type: 'date' },
+    { field: 'company_name', field_name: 'Company', field_type: 'text' },
   ];
 
   const aggregations = [
-    { value: 'sum', label: 'Sum' },
-    { value: 'avg', label: 'Average' },
-    { value: 'count', label: 'Count' },
-    { value: 'min', label: 'Minimum' },
-    { value: 'max', label: 'Maximum' },
+    { value: 'sum' as const, label: 'Sum' },
+    { value: 'avg' as const, label: 'Average' },
+    { value: 'count' as const, label: 'Count' },
+    { value: 'min' as const, label: 'Minimum' },
+    { value: 'max' as const, label: 'Maximum' },
   ];
 
   const visualizationTypes: { value: VisualizationType; label: string; icon: JSX.Element }[] = [
@@ -456,12 +462,17 @@ const Reports = () => {
                         <h3 className="text-sm font-medium mb-2">Dimensions</h3>
                         <Select
                           onValueChange={(value) => {
-                            const field = [...standardFields, ...customFields].find(f => f.field === value);
+                            const allFields = [...standardFields, ...customFields.map(cf => ({
+                              field: cf.field_name,
+                              field_name: cf.field_name,
+                              field_type: cf.field_type
+                            }))];
+                            const field = allFields.find(f => f.field === value);
                             if (field) {
                               const newDimension = {
                                 field: value,
-                                type: 'standard',
-                                label: field.field_name || field.label
+                                type: 'standard' as const,
+                                label: field.field_name
                               };
                               updateReport(selectedReport.id, {
                                 ...selectedReport,
@@ -477,9 +488,13 @@ const Reports = () => {
                             <SelectValue placeholder="Add dimension" />
                           </SelectTrigger>
                           <SelectContent>
-                            {[...standardFields, ...customFields].map((field) => (
+                            {[...standardFields, ...customFields.map(cf => ({
+                              field: cf.field_name,
+                              field_name: cf.field_name,
+                              field_type: cf.field_type
+                            }))].map((field) => (
                               <SelectItem key={field.field} value={field.field}>
-                                {field.field_name || field.label}
+                                {field.field_name}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -514,12 +529,17 @@ const Reports = () => {
                         <div className="flex gap-2">
                           <Select
                             onValueChange={(value) => {
-                              const field = [...standardFields, ...customFields].find(f => f.field === value);
+                              const allFields = [...standardFields, ...customFields.map(cf => ({
+                                field: cf.field_name,
+                                field_name: cf.field_name,
+                                field_type: cf.field_type
+                              }))];
+                              const field = allFields.find(f => f.field === value);
                               if (field) {
                                 const newMetric = {
                                   field: value,
-                                  aggregation: 'sum',
-                                  label: `Sum of ${field.field_name || field.label}`
+                                  aggregation: 'sum' as const,
+                                  label: `Sum of ${field.field_name}`
                                 };
                                 updateReport(selectedReport.id, {
                                   ...selectedReport,
@@ -535,11 +555,15 @@ const Reports = () => {
                               <SelectValue placeholder="Add metric" />
                             </SelectTrigger>
                             <SelectContent>
-                              {[...standardFields, ...customFields]
-                                .filter(field => field.type === 'number')
+                              {[...standardFields, ...customFields.map(cf => ({
+                                field: cf.field_name,
+                                field_name: cf.field_name,
+                                field_type: cf.field_type
+                              }))]
+                                .filter(field => field.field_type === 'number')
                                 .map((field) => (
                                   <SelectItem key={field.field} value={field.field}>
-                                    {field.field_name || field.label}
+                                    {field.field_name}
                                   </SelectItem>
                               ))}
                             </SelectContent>
