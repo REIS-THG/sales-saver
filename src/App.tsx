@@ -7,6 +7,7 @@ import Reports from "@/pages/Reports";
 import Index from "@/pages/Index";
 import NotFound from "@/pages/NotFound";
 import DealGenius from "@/pages/DealGenius";
+import Subscription from "@/pages/Subscription";
 import { Toaster } from "@/components/ui/toaster";
 
 const Breadcrumbs = () => {
@@ -70,6 +71,7 @@ function App() {
         <Route path="/settings" element={<Settings />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/deal-genius" element={<DealGenius />} />
+        <Route path="/subscription" element={<Subscription />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <Toaster />
