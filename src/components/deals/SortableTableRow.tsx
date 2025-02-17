@@ -26,6 +26,7 @@ interface SortableTableRowProps {
 
 export function SortableTableRow({ row, onClick, onAnalyze }: SortableTableRowProps) {
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const { toast } = useToast();
   
   const {
@@ -41,13 +42,17 @@ export function SortableTableRow({ row, onClick, onAnalyze }: SortableTableRowPr
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : undefined,
+    transition: isDragging 
+      ? "transform 200ms cubic-bezier(0.2, 0, 0, 1)" 
+      : transition,
+    opacity: isDragging ? 0.8 : undefined,
     backgroundColor: isDragging ? "var(--muted)" : undefined,
     cursor: isDragging ? "grabbing" : "pointer",
     position: isDragging ? ("relative" as const) : undefined,
     zIndex: isDragging ? 1 : undefined,
-    boxShadow: isDragging ? "0 4px 12px rgba(0, 0, 0, 0.1)" : undefined,
+    boxShadow: isDragging 
+      ? "0 8px 24px rgba(0, 0, 0, 0.15)" 
+      : undefined,
   };
 
   const handleStatusChange = async (newStatus: string) => {
@@ -73,12 +78,21 @@ export function SortableTableRow({ row, onClick, onAnalyze }: SortableTableRowPr
     setIsUpdating(false);
   };
 
+  const handleAnalyze = async () => {
+    setIsAnalyzing(true);
+    try {
+      await onAnalyze();
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   return (
     <TableRow
       ref={setNodeRef}
       style={style}
       className={`group transition-all duration-200 ease-in-out hover:bg-gray-50 ${
-        isDragging ? "animate-pulse" : ""
+        isDragging ? "animate-pulse ring-2 ring-primary ring-offset-2" : ""
       }`}
     >
       <TableCell>
@@ -87,7 +101,7 @@ export function SortableTableRow({ row, onClick, onAnalyze }: SortableTableRowPr
             {...attributes}
             {...listeners}
             className={`cursor-grab hover:cursor-grabbing transition-colors duration-200 ${
-              isDragging ? "cursor-grabbing text-primary" : "text-gray-400"
+              isDragging ? "cursor-grabbing text-primary scale-110" : "text-gray-400"
             }`}
           >
             <GripVertical className={`h-4 w-4 ${
@@ -132,11 +146,21 @@ export function SortableTableRow({ row, onClick, onAnalyze }: SortableTableRowPr
         <Button
           variant="ghost"
           size="sm"
-          onClick={onAnalyze}
+          onClick={handleAnalyze}
+          disabled={isAnalyzing}
           className="w-full flex items-center gap-2"
         >
-          <Sparkles className="h-4 w-4" />
-          Analyze
+          {isAnalyzing ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Analyzing...
+            </>
+          ) : (
+            <>
+              <Sparkles className="h-4 w-4" />
+              Analyze
+            </>
+          )}
         </Button>
       </TableCell>
     </TableRow>
