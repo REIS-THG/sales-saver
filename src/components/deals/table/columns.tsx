@@ -1,185 +1,111 @@
 
-import { createColumnHelper, sortingFns } from "@tanstack/react-table";
+import { ColumnDef } from "@tanstack/react-table";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowUpDown, CheckCircle2, AlertCircle, Clock, Ban } from "lucide-react";
-import { type Deal, type CustomField } from "@/types/types";
+import { formatCurrency, formatDate } from "@/lib/utils";
+import { CustomField, Deal } from "@/types/types";
+import { ArrowUpDown, Trash2 } from "lucide-react";
 
-const columnHelper = createColumnHelper<Deal>();
-
-const baseColumns = [
-  columnHelper.accessor("deal_name", {
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="p-0 hover:bg-transparent whitespace-nowrap"
-        >
-          Deal Name
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
+export const getColumns = (
+  customFields: CustomField[], 
+  showCustomFields: boolean,
+  onDelete: (deal: Deal) => void
+): ColumnDef<Deal>[] => {
+  const baseColumns: ColumnDef<Deal>[] = [
+    {
+      accessorKey: "deal_name",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Deal Name
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
     },
-    cell: (info) => info.getValue(),
-    sortingFn: sortingFns.alphanumeric
-  }),
-  columnHelper.accessor("company_name", {
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="p-0 hover:bg-transparent whitespace-nowrap"
-        >
-          Company
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
+    {
+      accessorKey: "company_name",
+      header: "Company",
     },
-    cell: (info) => info.getValue(),
-    sortingFn: sortingFns.alphanumeric
-  }),
-  columnHelper.accessor("amount", {
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="p-0 hover:bg-transparent whitespace-nowrap"
-        >
-          Amount
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
+    {
+      accessorKey: "amount",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Amount
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => formatCurrency(row.original.amount),
     },
-    cell: (info) => `$${Number(info.getValue()).toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`,
-    sortingFn: sortingFns.basic
-  }),
-  columnHelper.accessor("status", {
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="p-0 hover:bg-transparent whitespace-nowrap"
-        >
-          Status
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
+    {
+      accessorKey: "expected_close_date",
+      header: "Expected Close",
+      cell: ({ row }) => formatDate(row.original.expected_close_date),
     },
-    cell: (info) => {
-      const status = info.getValue();
-      const getStatusIcon = () => {
-        switch (status) {
-          case "won":
-            return <CheckCircle2 className="text-green-500" />;
-          case "lost":
-            return <Ban className="text-red-500" />;
-          case "stalled":
-            return <AlertCircle className="text-yellow-500" />;
-          default:
-            return <Clock className="text-blue-500" />;
-        }
-      };
-      return (
-        <div className="flex items-center gap-2">
-          {getStatusIcon()}
-          <span className="capitalize">{status}</span>
-        </div>
-      );
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => {
+        const status = row.original.status;
+        const colors = {
+          open: "bg-blue-100 text-blue-800",
+          won: "bg-green-100 text-green-800",
+          lost: "bg-red-100 text-red-800",
+          stalled: "bg-yellow-100 text-yellow-800",
+        };
+        
+        return (
+          <Badge className={colors[status] || colors.open}>
+            {status.charAt(0).toUpperCase() + status.slice(1)}
+          </Badge>
+        );
+      },
     },
-    sortingFn: sortingFns.alphanumeric
-  }),
-  columnHelper.accessor("health_score", {
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="p-0 hover:bg-transparent whitespace-nowrap"
-        >
-          Health Score
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: (info) => {
-      const score = info.getValue();
-      const getProgressColor = (score: number) => {
-        if (score >= 70) return "bg-green-500";
-        if (score >= 40) return "bg-yellow-500";
-        return "bg-red-500";
-      };
-      return (
-        <div className="flex items-center gap-2">
-          <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-            <div
-              className={`h-full ${getProgressColor(score)} transition-all`}
-              style={{ width: `${score}%` }}
-            />
-          </div>
-          <span className="text-sm font-medium min-w-[3rem] text-right">
-            {score}%
-          </span>
-        </div>
-      );
-    },
-    sortingFn: sortingFns.basic
-  }),
-];
-
-export const getColumns = (customFields: CustomField[], showCustomFields: boolean) => {
-  if (!showCustomFields) return baseColumns;
-
-  const customColumns = customFields.map((field) => 
-    columnHelper.accessor(
-      row => row.custom_fields?.[field.field_name] as string | number | boolean,
-      {
-        id: field.field_name,
-        header: ({ column }) => {
-          return (
+    // Action column
+    {
+      id: "actions",
+      cell: ({ row }) => {
+        const deal = row.original;
+        return (
+          <div className="flex justify-end">
             <Button
               variant="ghost"
-              onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-              className="p-0 hover:bg-transparent whitespace-nowrap"
+              size="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(deal);
+              }}
             >
-              {field.field_name}
-              <ArrowUpDown className="ml-2 h-4 w-4" />
+              <Trash2 className="h-4 w-4 text-red-500" />
             </Button>
-          );
-        },
-        cell: (info) => {
-          const value = info.getValue();
-          if (typeof value === "boolean") {
-            return value ? "Yes" : "No";
-          }
-          return value?.toString() || "-";
-        },
-        sortingFn: (rowA, rowB, columnId) => {
-          const a = rowA.getValue(columnId);
-          const b = rowB.getValue(columnId);
-          
-          if (a === b) return 0;
-          if (a == null) return 1;
-          if (b == null) return -1;
-          
-          if (typeof a === "boolean" && typeof b === "boolean") {
-            return a === b ? 0 : a ? -1 : 1;
-          }
-          
-          if (typeof a === "number" && typeof b === "number") {
-            return a - b;
-          }
-          
-          return String(a).localeCompare(String(b));
-        }
-      }
-    )
-  );
+          </div>
+        );
+      },
+    },
+  ];
 
-  return [...baseColumns, ...customColumns];
+  if (showCustomFields) {
+    const customColumns = customFields.map((field) => ({
+      accessorKey: `custom_fields.${field.field_name}`,
+      header: field.field_name,
+      cell: ({ row }) => {
+        const value = row.original.custom_fields?.[field.field_name];
+        if (field.field_type === "boolean") {
+          return value ? "Yes" : "No";
+        }
+        return value || "-";
+      },
+    }));
+    return [...baseColumns.slice(0, -1), ...customColumns, baseColumns[baseColumns.length - 1]];
+  }
+
+  return baseColumns;
 };

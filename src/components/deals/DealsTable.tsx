@@ -33,6 +33,9 @@ import { TableSearch } from "./table/TableSearch";
 import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface DealsTableProps {
   initialDeals: Deal[];
@@ -46,9 +49,38 @@ export function DealsTable({ initialDeals, customFields, showCustomFields }: Dea
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
+  const [dealToDelete, setDealToDelete] = useState<Deal | null>(null);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
-  const columns = getColumns(customFields, showCustomFields);
+  const handleDeleteConfirm = async () => {
+    if (!dealToDelete) return;
+
+    const { error } = await supabase
+      .from("deals")
+      .delete()
+      .eq("id", dealToDelete.id);
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete deal. Please try again.",
+      });
+      console.error("Error deleting deal:", error);
+    } else {
+      toast({
+        title: "Success",
+        description: "Deal deleted successfully.",
+      });
+      setDeals(deals.filter(deal => deal.id !== dealToDelete.id));
+    }
+    setDealToDelete(null);
+  };
+
+  const columns = getColumns(customFields, showCustomFields, (deal: Deal) => {
+    setDealToDelete(deal);
+  });
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -173,6 +205,15 @@ export function DealsTable({ initialDeals, customFields, showCustomFields }: Dea
         deal={selectedDeal}
         onClose={() => setSelectedDeal(null)}
         customFields={customFields}
+      />
+
+      <ConfirmDialog
+        title="Delete Deal"
+        description={`Are you sure you want to delete the deal "${dealToDelete?.deal_name}"? This action cannot be undone and will permanently remove all associated data.`}
+        onConfirm={handleDeleteConfirm}
+        triggerButton={null}
+        open={!!dealToDelete}
+        onOpenChange={(open) => !open && setDealToDelete(null)}
       />
     </div>
   );
