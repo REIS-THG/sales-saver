@@ -4,7 +4,7 @@ import { arrayMove, SortableContext, verticalListSortingStrategy } from "@dnd-ki
 import { Table, TableBody, TableHeader, TableRow, TableHead } from "@/components/ui/table";
 import { flexRender } from "@tanstack/react-table";
 import { type Deal } from "@/types/types";
-import { SortableTableRow } from "./SortableTableRow";
+import { SortableTableRow } from "@/components/deals/SortableTableRow";
 import { useDragSensors } from "@/hooks/use-drag-sensors";
 
 interface TableContainerProps {
