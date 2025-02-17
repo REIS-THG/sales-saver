@@ -140,30 +140,6 @@ const DealGenius = () => {
                   />
                 </div>
 
-                <div className="mt-6">
-                  <label className="text-sm font-medium mb-2 block">
-                    Tone
-                  </label>
-                  <ToneAnalysis
-                    formality={formality}
-                    setFormality={setFormality}
-                    persuasiveness={persuasiveness}
-                    setPersuasiveness={setPersuasiveness}
-                    urgency={urgency}
-                    setUrgency={setUrgency}
-                  />
-                </div>
-                
-                <div className="mt-6">
-                  <label className="text-sm font-medium mb-2 block">
-                    Communication Channel
-                  </label>
-                  <CommunicationChannel
-                    selectedChannel={selectedChannel}
-                    setSelectedChannel={setSelectedChannel}
-                  />
-                </div>
-
                 <Card className="mt-6">
                   <CardHeader>
                     <CardTitle>Supporting Documents</CardTitle>
