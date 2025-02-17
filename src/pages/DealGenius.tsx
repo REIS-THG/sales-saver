@@ -18,6 +18,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { FileUploader } from "@/components/deal-genius/FileUploader";
+import { ToneAnalysis } from "./deal-genius/ToneAnalysis";
+import { CommunicationChannel } from "./deal-genius/CommunicationChannel";
 
 const DealGenius = () => {
   const [searchParams] = useSearchParams();
@@ -39,6 +41,10 @@ const DealGenius = () => {
   } = useDealGenius();
 
   const [activeTab, setActiveTab] = useState<string>("analysis");
+  const [formality, setFormality] = useState(50);
+  const [persuasiveness, setPersuasiveness] = useState(50);
+  const [urgency, setUrgency] = useState(50);
+  const [selectedChannel, setSelectedChannel] = useState<'f2f' | 'email' | 'social_media'>('email');
 
   useEffect(() => {
     fetchDeals();
@@ -106,7 +112,7 @@ const DealGenius = () => {
             <div className="p-6">
               <TabsList className="w-full justify-start">
                 <TabsTrigger value="analysis">Deal Analysis</TabsTrigger>
-                <TabsTrigger value="documents">Documents & Transcripts</TabsTrigger>
+                <TabsTrigger value="output">Analysis Output</TabsTrigger>
                 <TabsTrigger value="history">Analysis History</TabsTrigger>
               </TabsList>
             </div>
@@ -114,61 +120,107 @@ const DealGenius = () => {
             <Separator />
 
             <TabsContent value="analysis" className="p-6">
-              <AnalysisForm
-                deals={deals}
-                selectedDeal={selectedDeal}
-                onDealChange={(dealId) => {
-                  setSelectedDeal(dealId);
-                  fetchInsights(dealId);
-                }}
-                isAnalyzing={isAnalyzing}
-                isLoading={isLoading}
-                isLimited={isAnalysisLimited}
-                onAnalyze={(params) => {
-                  if (selectedDeal) {
-                    analyzeDeal(selectedDeal, params);
-                  }
-                }}
-              />
+              <div className="space-y-6">
+                <AnalysisForm
+                  deals={deals}
+                  selectedDeal={selectedDeal}
+                  onDealChange={(dealId) => {
+                    setSelectedDeal(dealId);
+                    fetchInsights(dealId);
+                  }}
+                  isAnalyzing={isAnalyzing}
+                  isLoading={isLoading}
+                  isLimited={isAnalysisLimited}
+                  onAnalyze={(params) => {
+                    if (selectedDeal) {
+                      analyzeDeal(selectedDeal, {
+                        ...params,
+                        toneAnalysis: {
+                          formality,
+                          persuasiveness,
+                          urgency,
+                        },
+                        communicationChannel: selectedChannel,
+                      });
+                    }
+                  }}
+                />
+
+                <Card className="mt-6">
+                  <CardHeader>
+                    <CardTitle>Supporting Documents</CardTitle>
+                    <CardDescription>
+                      Upload supporting materials for better analysis
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <FileUploader
+                        icon={<FileText className="h-6 w-6" />}
+                        title="Call Transcripts"
+                        description="Upload call recordings or transcripts"
+                        accept=".txt,.doc,.docx,.pdf"
+                        onUpload={(file) => handleFileUpload(file, 'transcript')}
+                        isDisabled={isAnalysisLimited}
+                      />
+                      <FileUploader
+                        icon={<Mail className="h-6 w-6" />}
+                        title="Email Threads"
+                        description="Upload email correspondence"
+                        accept=".eml,.msg,.txt"
+                        onUpload={(file) => handleFileUpload(file, 'email')}
+                        isDisabled={isAnalysisLimited}
+                      />
+                      <FileUploader
+                        icon={<Mic className="h-6 w-6" />}
+                        title="Voice Recordings"
+                        description="Upload voice notes or calls"
+                        accept=".mp3,.wav,.m4a"
+                        onUpload={(file) => handleFileUpload(file, 'voice')}
+                        isDisabled={isAnalysisLimited}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </TabsContent>
 
-            <TabsContent value="documents" className="p-6">
+            <TabsContent value="output" className="p-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Upload Documents</CardTitle>
+                  <CardTitle>Communication Settings</CardTitle>
                   <CardDescription>
-                    Upload call transcripts, emails, or other documents for analysis
+                    Customize how you want to communicate the next steps
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <FileUploader
-                      icon={<FileText className="h-6 w-6" />}
-                      title="Call Transcripts"
-                      description="Upload call recordings or transcripts"
-                      accept=".txt,.doc,.docx,.pdf"
-                      onUpload={(file) => handleFileUpload(file, 'transcript')}
-                      isDisabled={isAnalysisLimited}
-                    />
-                    <FileUploader
-                      icon={<Mail className="h-6 w-6" />}
-                      title="Email Threads"
-                      description="Upload email correspondence"
-                      accept=".eml,.msg,.txt"
-                      onUpload={(file) => handleFileUpload(file, 'email')}
-                      isDisabled={isAnalysisLimited}
-                    />
-                    <FileUploader
-                      icon={<Mic className="h-6 w-6" />}
-                      title="Voice Recordings"
-                      description="Upload voice notes or calls"
-                      accept=".mp3,.wav,.m4a"
-                      onUpload={(file) => handleFileUpload(file, 'voice')}
-                      isDisabled={isAnalysisLimited}
+                  <ToneAnalysis
+                    formality={formality}
+                    setFormality={setFormality}
+                    persuasiveness={persuasiveness}
+                    setPersuasiveness={setPersuasiveness}
+                    urgency={urgency}
+                    setUrgency={setUrgency}
+                  />
+                  <div className="mt-6">
+                    <label className="text-sm font-medium mb-2 block">
+                      Communication Channel
+                    </label>
+                    <CommunicationChannel
+                      selectedChannel={selectedChannel}
+                      setSelectedChannel={setSelectedChannel}
                     />
                   </div>
                 </CardContent>
               </Card>
+
+              <div className="mt-6">
+                <InsightsList 
+                  insights={insights} 
+                  isLoading={isLoading}
+                  showConfidence={false}
+                />
+              </div>
             </TabsContent>
 
             <TabsContent value="history" className="p-6">
