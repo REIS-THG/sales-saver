@@ -111,23 +111,17 @@ export const columns = [
         return "bg-red-500";
       };
       return (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            info.row.original.onHealthScoreClick?.(info.row.original.id);
-          }}
-          className="w-full relative group"
-        >
-          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+        <div className="flex items-center gap-2">
+          <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
             <div
               className={`h-full ${getProgressColor(score)} transition-all`}
               style={{ width: `${score}%` }}
             />
           </div>
-          <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+          <span className="text-sm font-medium min-w-[3rem] text-right">
             {score}%
           </span>
-        </button>
+        </div>
       );
     },
   }),
