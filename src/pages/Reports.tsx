@@ -432,6 +432,18 @@ const Reports = () => {
 
   const downloadExcel = async (report: ReportConfiguration) => {
     try {
+      const { data: authData } = await supabase.auth.getUser();
+      const userId = authData.user?.id;
+      
+      if (!userId) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "You must be logged in to download reports",
+        });
+        return;
+      }
+
       const data = generateReportData(report);
       const ws = XLSX.utils.json_to_sheet(data);
       const wb = XLSX.utils.book_new();
@@ -440,7 +452,7 @@ const Reports = () => {
       const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
       const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       
-      const fileName = `${supabase.auth.user()?.id}/${report.name}_${Date.now()}.xlsx`;
+      const fileName = `${userId}/${report.name}_${Date.now()}.xlsx`;
       const { error: uploadError } = await supabase.storage
         .from('report_exports')
         .upload(fileName, blob);
@@ -474,6 +486,18 @@ const Reports = () => {
 
   const downloadGoogleSheets = async (report: ReportConfiguration) => {
     try {
+      const { data: authData } = await supabase.auth.getUser();
+      const userId = authData.user?.id;
+      
+      if (!userId) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "You must be logged in to download reports",
+        });
+        return;
+      }
+
       const data = generateReportData(report);
       
       const headers = Object.keys(data[0] || {});
@@ -489,7 +513,7 @@ const Reports = () => {
 
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       
-      const fileName = `${supabase.auth.user()?.id}/${report.name}_${Date.now()}.csv`;
+      const fileName = `${userId}/${report.name}_${Date.now()}.csv`;
       const { error: uploadError } = await supabase.storage
         .from('report_exports')
         .upload(fileName, blob);
