@@ -47,9 +47,14 @@ serve(async (req) => {
           {
             role: 'system',
             content: `You are an AI sales advisor that analyzes deal data and provides insights. 
-            Generate 4 types of insights: opportunities, risks, actions, and trends.
+            Generate insights in these specific categories: risk, opportunity, action_item.
             For each insight, provide a confidence score (0-100) based on the available data.
-            Format response as JSON array with objects containing: type, content, confidence_score`
+            Format response as JSON array with objects containing: 
+            {
+              "type": "risk" | "opportunity" | "action_item",
+              "content": string,
+              "confidence_score": number
+            }`
           },
           {
             role: 'user',
@@ -72,16 +77,23 @@ serve(async (req) => {
           content: insight.content,
           confidence_score: insight.confidence_score,
           source_data: deal,
-          is_processed: false
+          is_processed: false,
+          sales_approach: 'consultative_selling',
+          communication_channel: 'email',
+          purpose_notes: 'AI-generated insight'
         }))
       );
 
-    if (insertError) throw insertError;
+    if (insertError) {
+      console.error("Insert error:", insertError);
+      throw insertError;
+    }
 
     return new Response(JSON.stringify({ success: true, insights }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
+    console.error("Error in analyze-deals function:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
