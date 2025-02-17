@@ -1,3 +1,4 @@
+
 export interface User {
   id: string;
   user_id: string;
@@ -52,6 +53,7 @@ export interface Deal {
   notes_count?: number;
   last_note_at?: string;
   notes?: string;
+  onHealthScoreClick?: (dealId: string) => void;
 }
 
 export interface FollowUp {

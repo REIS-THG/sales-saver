@@ -181,12 +181,22 @@ const Settings = () => {
       return;
     }
 
+    const billingAddress = typeof userDataResult.billing_address === 'object' 
+      ? userDataResult.billing_address as { 
+          street?: string;
+          city?: string;
+          state?: string;
+          country?: string;
+          postal_code?: string;
+        }
+      : {};
+
     const userData: User = {
       ...userDataResult,
       role: userDataResult.role as 'sales_rep' | 'manager',
-      custom_views: userDataResult.custom_views as Record<string, any>[] || [],
-      billing_address: userDataResult.billing_address || {},
-      subscription_status: userDataResult.subscription_status as 'free' | 'pro' | 'enterprise' || 'free'
+      custom_views: Array.isArray(userDataResult.custom_views) ? userDataResult.custom_views : [],
+      billing_address: billingAddress,
+      subscription_status: (userDataResult.subscription_status as 'free' | 'pro' | 'enterprise') || 'free'
     };
 
     setUserData(userData);
