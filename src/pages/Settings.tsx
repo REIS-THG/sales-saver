@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
+import { CreditCard } from "lucide-react";
 
 export default function Settings() {
   const { user, loading } = useAuth();
@@ -51,11 +52,24 @@ export default function Settings() {
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Settings</h1>
         <Link to="/subscription">
-          <Button variant="outline">
+          <Button variant="outline" className="gap-2">
+            <CreditCard className="h-4 w-4" />
             Manage Subscription
           </Button>
         </Link>
       </div>
+      
+      {user.subscription_status === 'free' && (
+        <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-100 rounded-lg p-4 mb-8 flex items-center justify-between">
+          <div>
+            <h3 className="font-semibold text-purple-900">You're on the Free Plan</h3>
+            <p className="text-sm text-purple-700">Upgrade to Pro to unlock all features</p>
+          </div>
+          <Link to="/subscription">
+            <Button>Upgrade to Pro</Button>
+          </Link>
+        </div>
+      )}
       
       <Tabs defaultValue="account" className="space-y-8">
         <TabsList>
