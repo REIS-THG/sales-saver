@@ -4,7 +4,9 @@ import {
   flexRender,
   getCoreRowModel,
   getSortedRowModel,
+  getFilteredRowModel,
   SortingState,
+  ColumnFiltersState,
   useReactTable,
   createColumnHelper,
 } from "@tanstack/react-table";
@@ -27,30 +29,68 @@ import { type Deal } from "@/types/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import DealDetailsModal from "./DealDetailsModal";
 import { SortableTableRow } from "./SortableTableRow";
-import { CheckCircle2, AlertCircle, Clock, Ban } from "lucide-react";
+import { CheckCircle2, AlertCircle, Clock, Ban, ArrowUpDown, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 const columnHelper = createColumnHelper<Deal>();
 
 const columns = [
   columnHelper.accessor("deal_name", {
-    header: "Deal Name",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        className="p-0 hover:bg-transparent"
+      >
+        Deal Name
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
     cell: (info) => info.getValue(),
   }),
   columnHelper.accessor("company_name", {
-    header: "Company",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        className="p-0 hover:bg-transparent"
+      >
+        Company
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
     cell: (info) => info.getValue(),
   }),
   columnHelper.accessor("amount", {
-    header: "Amount",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        className="p-0 hover:bg-transparent"
+      >
+        Amount
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
     cell: (info) => `$${Number(info.getValue()).toLocaleString(undefined, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`,
   }),
   columnHelper.accessor("status", {
-    header: "Status",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        className="p-0 hover:bg-transparent"
+      >
+        Status
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
     cell: (info) => {
       const status = info.getValue();
       const getStatusIcon = () => {
@@ -74,13 +114,22 @@ const columns = [
     },
   }),
   columnHelper.accessor("health_score", {
-    header: "Health Score",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        className="p-0 hover:bg-transparent"
+      >
+        Health Score
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
     cell: (info) => {
       const score = info.getValue();
-      const getHealthScoreColor = (score: number) => {
-        if (score >= 70) return "bg-green-100 text-green-800";
-        if (score >= 40) return "bg-yellow-100 text-yellow-800";
-        return "bg-red-100 text-red-800";
+      const getProgressColor = (score: number) => {
+        if (score >= 70) return "bg-green-500";
+        if (score >= 40) return "bg-yellow-500";
+        return "bg-red-500";
       };
       return (
         <button
@@ -88,11 +137,17 @@ const columns = [
             e.stopPropagation();
             info.row.original.onHealthScoreClick?.(info.row.original.id);
           }}
-          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getHealthScoreColor(
-            score
-          )} hover:opacity-80 transition-opacity cursor-pointer`}
+          className="w-full relative group"
         >
-          {score}%
+          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div
+              className={`h-full ${getProgressColor(score)} transition-all`}
+              style={{ width: `${score}%` }}
+            />
+          </div>
+          <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+            {score}%
+          </span>
         </button>
       );
     },
@@ -106,6 +161,7 @@ interface DealsTableProps {
 export function DealsTable({ initialDeals }: DealsTableProps) {
   const [deals, setDeals] = useState<Deal[]>(initialDeals);
   const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
   const navigate = useNavigate();
 
@@ -120,7 +176,6 @@ export function DealsTable({ initialDeals }: DealsTableProps) {
     navigate(`/deal-genius?dealId=${dealId}`);
   };
 
-  // Add onHealthScoreClick to each deal
   const dealsWithHandler = deals.map(deal => ({
     ...deal,
     onHealthScoreClick: handleHealthScoreClick
@@ -131,8 +186,11 @@ export function DealsTable({ initialDeals }: DealsTableProps) {
     columns,
     state: {
       sorting,
+      columnFilters,
     },
     onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    getFilteredRowModel: getFilteredRowModel(),
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
   });
@@ -170,81 +228,70 @@ export function DealsTable({ initialDeals }: DealsTableProps) {
     };
   }, []);
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    
-    if (over && active.id !== over.id) {
-      setDeals((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id);
-        const newIndex = items.findIndex((item) => item.id === over.id);
-        return arrayMove(items, oldIndex, newIndex);
-      });
-    }
-  };
-
-  const handleDealUpdated = () => {
-    const fetchDeals = async () => {
-      const { data: authData } = await supabase.auth.getUser();
-      const userId = authData.user?.id;
-
-      if (!userId) return;
-
-      const { data: dealsData, error: fetchError } = await supabase
-        .from("deals")
-        .select("*")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false });
-
-      if (fetchError) {
-        console.error("Error fetching deals:", fetchError);
-        return;
-      }
-
-      setDeals(dealsData as Deal[]);
-    };
-
-    fetchDeals();
-  };
-
   return (
-    <div className="rounded-md border">
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {flexRender(
-                      header.column.columnDef.header,
-                      header.getContext()
-                    )}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            <SortableContext
-              items={deals.map((d) => d.id)}
-              strategy={verticalListSortingStrategy}
-            >
-              {table.getRowModel().rows.map((row) => (
-                <SortableTableRow
-                  key={row.original.id}
-                  row={row}
-                  onClick={() => setSelectedDeal(row.original)}
-                  onDealUpdated={handleDealUpdated}
-                />
+    <div className="space-y-4">
+      <div className="flex gap-4">
+        <div className="flex-1">
+          <Input
+            placeholder="Filter deal names..."
+            value={(table.getColumn("deal_name")?.getFilterValue() as string) ?? ""}
+            onChange={(event) =>
+              table.getColumn("deal_name")?.setFilterValue(event.target.value)
+            }
+            className="max-w-sm"
+          />
+        </div>
+        <div className="flex-1">
+          <Input
+            placeholder="Filter companies..."
+            value={(table.getColumn("company_name")?.getFilterValue() as string) ?? ""}
+            onChange={(event) =>
+              table.getColumn("company_name")?.setFilterValue(event.target.value)
+            }
+            className="max-w-sm"
+          />
+        </div>
+      </div>
+
+      <div className="rounded-md border">
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead key={header.id}>
+                      {flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
+                    </TableHead>
+                  ))}
+                </TableRow>
               ))}
-            </SortableContext>
-          </TableBody>
-        </Table>
-      </DndContext>
+            </TableHeader>
+            <TableBody>
+              <SortableContext
+                items={deals.map((d) => d.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                {table.getRowModel().rows.map((row) => (
+                  <SortableTableRow
+                    key={row.original.id}
+                    row={row}
+                    onClick={() => setSelectedDeal(row.original)}
+                    onDealUpdated={handleDealUpdated}
+                  />
+                ))}
+              </SortableContext>
+            </TableBody>
+          </Table>
+        </DndContext>
+      </div>
       
       <DealDetailsModal
         deal={selectedDeal}
