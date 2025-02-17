@@ -11,10 +11,14 @@ export function useDealGenius() {
   const [insights, setInsights] = useState<Insight[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const fetchDeals = async () => {
+    setIsLoading(true);
+    setError(null);
+
     const { data: authData } = await supabase.auth.getUser();
     if (!authData.user) {
       navigate("/auth");
@@ -28,6 +32,7 @@ export function useDealGenius() {
       .order("created_at", { ascending: false });
 
     if (error) {
+      setError("Failed to fetch deals");
       toast({
         variant: "destructive",
         title: "Error",
@@ -61,10 +66,13 @@ export function useDealGenius() {
     }));
 
     setDeals(typedDeals);
+    setIsLoading(false);
   };
 
   const fetchInsights = async (dealId: string) => {
     setIsLoading(true);
+    setError(null);
+
     const { data, error } = await supabase
       .from("deal_insights")
       .select("*")
@@ -72,6 +80,7 @@ export function useDealGenius() {
       .order("created_at", { ascending: false });
 
     if (error) {
+      setError("Failed to fetch insights");
       toast({
         variant: "destructive",
         title: "Error",
@@ -108,6 +117,8 @@ export function useDealGenius() {
     }
   ) => {
     setIsAnalyzing(true);
+    setError(null);
+    
     try {
       const response = await supabase.functions.invoke("analyze-deals", {
         body: {
@@ -116,7 +127,9 @@ export function useDealGenius() {
         },
       });
 
-      if (response.error) throw new Error("Analysis failed");
+      if (response.error) {
+        throw new Error(response.error.message || "Analysis failed");
+      }
 
       await fetchInsights(dealId);
       toast({
@@ -124,10 +137,12 @@ export function useDealGenius() {
         description: "Deal analysis completed",
       });
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to analyze deal";
+      setError(errorMessage);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to analyze deal",
+        description: errorMessage,
       });
     } finally {
       setIsAnalyzing(false);
@@ -141,6 +156,7 @@ export function useDealGenius() {
     insights,
     isLoading,
     isAnalyzing,
+    error,
     fetchDeals,
     fetchInsights,
     analyzeDeal,

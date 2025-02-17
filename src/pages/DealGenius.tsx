@@ -7,6 +7,7 @@ import { AnalysisForm } from "@/components/deal-genius/AnalysisForm";
 import { InsightsList } from "@/components/deal-genius/InsightsList";
 import { useDealGenius } from "@/hooks/use-deal-genius";
 import { useNavigate } from "react-router-dom";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const DealGenius = () => {
   const [searchParams] = useSearchParams();
@@ -18,6 +19,7 @@ const DealGenius = () => {
     insights,
     isLoading,
     isAnalyzing,
+    error,
     fetchDeals,
     fetchInsights,
     analyzeDeal,
@@ -50,6 +52,12 @@ const DealGenius = () => {
         </div>
 
         <div className="bg-white rounded-lg shadow p-6">
+          {error && (
+            <Alert variant="destructive" className="mb-6">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
           <AnalysisForm
             deals={deals}
             selectedDeal={selectedDeal}
