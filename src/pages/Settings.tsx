@@ -181,7 +181,12 @@ const Settings = () => {
       return;
     }
 
-    setUserData(userDataResult);
+    const userData = {
+      ...userDataResult,
+      role: userDataResult.role as 'sales_rep' | 'manager'
+    };
+
+    setUserData(userData);
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
