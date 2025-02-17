@@ -318,7 +318,10 @@ const Reports = () => {
     try {
       const { data, error } = await supabase
         .from('report_configurations')
-        .update({ is_favorite: !currentStatus })
+        .update({ 
+          is_favorite: !currentStatus,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', reportId)
         .select()
         .single();
@@ -327,7 +330,8 @@ const Reports = () => {
 
       const updatedReport: ReportConfiguration = {
         ...data,
-        config: data.config as unknown as ReportConfig
+        config: data.config as unknown as ReportConfig,
+        is_favorite: !currentStatus
       };
 
       setReports(prev => prev.map(report => 
@@ -689,11 +693,12 @@ const Reports = () => {
                               field: cf.field_name,
                               field_name: cf.field_name,
                               field_type: cf.field_type
-                            }))].map((field) => (
-                              <SelectItem key={field.field} value={field.field}>
-                                {field.field_name}
-                              </SelectItem>
-                            ))}
+                            }))]
+                              .map((field) => (
+                                <SelectItem key={field.field} value={field.field}>
+                                  {field.field_name}
+                                </SelectItem>
+                              ))}
                           </SelectContent>
                         </Select>
                         <div className="mt-2 space-y-2">
