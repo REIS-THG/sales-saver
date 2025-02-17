@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -20,6 +19,7 @@ import {
 import { FileUploader } from "@/components/deal-genius/FileUploader";
 import { ToneAnalysis } from "@/components/deal-genius/ToneAnalysis";
 import { CommunicationChannel } from "@/components/deal-genius/CommunicationChannel";
+import { DealSelector } from "@/components/deal-genius/DealSelector";
 
 const DealGenius = () => {
   const [searchParams] = useSearchParams();
@@ -201,6 +201,20 @@ const DealGenius = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">
+                      Select Deal
+                    </label>
+                    <DealSelector
+                      deals={deals}
+                      selectedDeal={selectedDeal}
+                      onDealChange={(dealId) => {
+                        setSelectedDeal(dealId);
+                        fetchInsights(dealId);
+                      }}
+                    />
+                  </div>
+
                   <div className="mt-6">
                     <label className="text-sm font-medium mb-2 block">
                       Tone
@@ -226,7 +240,7 @@ const DealGenius = () => {
                   <Button 
                     className="w-full mt-6"
                     onClick={handleCreateNextSteps}
-                    disabled={isGeneratingNextSteps}
+                    disabled={isGeneratingNextSteps || !selectedDeal}
                   >
                     <ListChecks className="w-4 h-4 mr-2" />
                     {isGeneratingNextSteps ? 'Creating Next Steps...' : 'Create Next Steps'}
