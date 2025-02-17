@@ -191,10 +191,19 @@ const Settings = () => {
         }
       : {};
 
+    const customViews = Array.isArray(userDataResult.custom_views) 
+      ? userDataResult.custom_views.map(view => {
+          if (typeof view === 'object' && view !== null) {
+            return view as Record<string, any>;
+          }
+          return {} as Record<string, any>;
+        })
+      : [];
+
     const userData: User = {
       ...userDataResult,
       role: userDataResult.role as 'sales_rep' | 'manager',
-      custom_views: Array.isArray(userDataResult.custom_views) ? userDataResult.custom_views : [],
+      custom_views: customViews,
       billing_address: billingAddress,
       subscription_status: (userDataResult.subscription_status as 'free' | 'pro' | 'enterprise') || 'free'
     };
