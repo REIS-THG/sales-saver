@@ -1,7 +1,6 @@
 
 import { createColumnHelper } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { ArrowUpDown, CheckCircle2, AlertCircle, Clock, Ban } from "lucide-react";
 import { type Deal } from "@/types/types";
 
@@ -11,22 +10,14 @@ export const columns = [
   columnHelper.accessor("deal_name", {
     header: ({ column }) => {
       return (
-        <div>
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            className="p-0 hover:bg-transparent"
-          >
-            Deal Name
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
-          <Input
-            placeholder="Filter..."
-            value={(column.getFilterValue() as string) ?? ""}
-            onChange={(e) => column.setFilterValue(e.target.value)}
-            className="h-8 w-full mt-2"
-          />
-        </div>
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="p-0 hover:bg-transparent"
+        >
+          Deal Name
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
       );
     },
     cell: (info) => info.getValue(),
@@ -34,22 +25,14 @@ export const columns = [
   columnHelper.accessor("company_name", {
     header: ({ column }) => {
       return (
-        <div>
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            className="p-0 hover:bg-transparent"
-          >
-            Company
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
-          <Input
-            placeholder="Filter..."
-            value={(column.getFilterValue() as string) ?? ""}
-            onChange={(e) => column.setFilterValue(e.target.value)}
-            className="h-8 w-full mt-2"
-          />
-        </div>
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="p-0 hover:bg-transparent"
+        >
+          Company
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
       );
     },
     cell: (info) => info.getValue(),
@@ -57,22 +40,14 @@ export const columns = [
   columnHelper.accessor("amount", {
     header: ({ column }) => {
       return (
-        <div>
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            className="p-0 hover:bg-transparent"
-          >
-            Amount
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
-          <Input
-            placeholder="Filter..."
-            value={(column.getFilterValue() as string) ?? ""}
-            onChange={(e) => column.setFilterValue(e.target.value)}
-            className="h-8 w-full mt-2"
-          />
-        </div>
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="p-0 hover:bg-transparent"
+        >
+          Amount
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
       );
     },
     cell: (info) => `$${Number(info.getValue()).toLocaleString(undefined, {
@@ -83,22 +58,14 @@ export const columns = [
   columnHelper.accessor("status", {
     header: ({ column }) => {
       return (
-        <div>
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            className="p-0 hover:bg-transparent"
-          >
-            Status
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
-          <Input
-            placeholder="Filter..."
-            value={(column.getFilterValue() as string) ?? ""}
-            onChange={(e) => column.setFilterValue(e.target.value)}
-            className="h-8 w-full mt-2"
-          />
-        </div>
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="p-0 hover:bg-transparent"
+        >
+          Status
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
       );
     },
     cell: (info) => {
@@ -126,23 +93,14 @@ export const columns = [
   columnHelper.accessor("health_score", {
     header: ({ column }) => {
       return (
-        <div>
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            className="p-0 hover:bg-transparent"
-          >
-            Health Score
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
-          <Input
-            placeholder="Filter..."
-            value={(column.getFilterValue() as string) ?? ""}
-            onChange={(e) => column.setFilterValue(e.target.value)}
-            className="h-8 w-full mt-2"
-            type="number"
-          />
-        </div>
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="p-0 hover:bg-transparent"
+        >
+          Health Score
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
       );
     },
     cell: (info) => {
