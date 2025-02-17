@@ -68,55 +68,6 @@ export default function Subscription() {
       return;
     }
 
-    if (planType === "pro") {
-      // The buy button will handle the pro subscription
-      const buyButton = document.createElement('stripe-buy-button');
-      buyButton.setAttribute('buy-button-id', 'buy_btn_1QtdHaDaihWQpHM6vSaLMfRh');
-      buyButton.setAttribute('publishable-key', 'pk_live_51Qtb8WDaihWQpHM6zckr56vWVg2BeBX6sFXA9FgOrmbdN3H5HY3GBMiO3DaO5rYOuCDsOjUrQAQV9xdbtvh3VSXR005zCbf5Dz');
-      
-      // Create a modal to display the buy button
-      const modal = document.createElement('div');
-      modal.style.position = 'fixed';
-      modal.style.top = '50%';
-      modal.style.left = '50%';
-      modal.style.transform = 'translate(-50%, -50%)';
-      modal.style.backgroundColor = 'white';
-      modal.style.padding = '20px';
-      modal.style.borderRadius = '8px';
-      modal.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.1)';
-      modal.style.zIndex = '1000';
-
-      // Add close button
-      const closeButton = document.createElement('button');
-      closeButton.textContent = '×';
-      closeButton.style.position = 'absolute';
-      closeButton.style.right = '10px';
-      closeButton.style.top = '10px';
-      closeButton.style.border = 'none';
-      closeButton.style.background = 'none';
-      closeButton.style.fontSize = '24px';
-      closeButton.style.cursor = 'pointer';
-      closeButton.onclick = () => {
-        document.body.removeChild(modal);
-        document.body.removeChild(overlay);
-      };
-
-      // Add overlay
-      const overlay = document.createElement('div');
-      overlay.style.position = 'fixed';
-      overlay.style.top = '0';
-      overlay.style.left = '0';
-      overlay.style.right = '0';
-      overlay.style.bottom = '0';
-      overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
-      overlay.style.zIndex = '999';
-
-      modal.appendChild(closeButton);
-      modal.appendChild(buyButton);
-      document.body.appendChild(overlay);
-      document.body.appendChild(modal);
-    }
-
     if (planType === "free") {
       toast({
         title: "Success",
