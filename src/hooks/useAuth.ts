@@ -12,8 +12,10 @@ export function useAuth() {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
+        console.log('Session found:', session);
         fetchUserData(session.user.id);
       } else {
+        console.log('No session found');
         setLoading(false);
       }
     });
@@ -23,8 +25,10 @@ export function useAuth() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
+        console.log('Auth state changed - session found:', session);
         fetchUserData(session.user.id);
       } else {
+        console.log('Auth state changed - no session');
         setUser(null);
         setLoading(false);
       }
@@ -34,6 +38,7 @@ export function useAuth() {
   }, []);
 
   const fetchUserData = async (userId: string) => {
+    console.log('Fetching user data for:', userId);
     const { data, error } = await supabase
       .from('users')
       .select('*')
@@ -47,6 +52,7 @@ export function useAuth() {
     }
 
     if (data) {
+      console.log('Raw user data:', data);
       // Ensure role is either 'sales_rep' or 'manager'
       const role = data.role === 'manager' ? 'manager' : 'sales_rep';
       
@@ -90,6 +96,7 @@ export function useAuth() {
         billing_address: billing_address
       };
 
+      console.log('Processed user data:', userData);
       setUser(userData);
     }
     setLoading(false);
