@@ -8,7 +8,14 @@ import { useState } from "react";
 import { Deal, Insight } from "@/types/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle, RefreshCw } from "lucide-react";
+import { AlertTriangle, RefreshCw, Loader2 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Progress } from "@/components/ui/progress";
 
 interface AnalysisFormProps {
   deals: Deal[];
@@ -45,6 +52,23 @@ export function AnalysisForm({
   const [persuasiveness, setPersuasiveness] = useState(50);
   const [urgency, setUrgency] = useState(50);
   const [error, setError] = useState<string | null>(null);
+  const [progress, setProgress] = useState(0);
+
+  // Simulated progress during analysis
+  const startProgress = () => {
+    setProgress(0);
+    const interval = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 90) {
+          clearInterval(interval);
+          return prev;
+        }
+        return prev + 10;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  };
 
   const handleAnalyze = async () => {
     if (!selectedDeal) {
@@ -58,6 +82,8 @@ export function AnalysisForm({
     }
 
     setError(null);
+    const stopProgress = startProgress();
+
     try {
       await onAnalyze({
         salesApproach,
@@ -70,8 +96,11 @@ export function AnalysisForm({
         },
         communicationChannel: selectedChannel,
       });
+      setProgress(100);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to analyze deal. Please try again.");
+    } finally {
+      stopProgress();
     }
   };
 
@@ -101,17 +130,35 @@ export function AnalysisForm({
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription className="flex items-center justify-between">
             <span>{error}</span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRetry}
-              className="ml-4"
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Retry
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRetry}
+                    className="ml-4"
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Retry Analysis
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Try analyzing the deal again</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </AlertDescription>
         </Alert>
+      )}
+
+      {isAnalyzing && (
+        <div className="mb-4 space-y-2">
+          <Progress value={progress} className="w-full" />
+          <p className="text-sm text-muted-foreground text-center">
+            Analyzing deal... {progress}%
+          </p>
+        </div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -149,13 +196,32 @@ export function AnalysisForm({
         </div>
 
         <div className="md:col-span-2">
-          <Button 
-            onClick={handleAnalyze} 
-            disabled={!selectedDeal || isAnalyzing}
-            className="w-full flex items-center justify-center gap-2"
-          >
-            {isAnalyzing ? "Analyzing..." : "Analyze Deal"}
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  onClick={handleAnalyze} 
+                  disabled={!selectedDeal || isAnalyzing}
+                  className="w-full flex items-center justify-center gap-2"
+                >
+                  {isAnalyzing ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Analyzing Deal...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4" />
+                      Analyze Deal
+                    </>
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Run AI analysis on the selected deal</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
     </div>

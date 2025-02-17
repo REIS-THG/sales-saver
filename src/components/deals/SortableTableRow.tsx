@@ -4,7 +4,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { Row } from "@tanstack/react-table";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { flexRender } from "@tanstack/react-table";
-import { GripVertical, Sparkles, Loader2 } from "lucide-react";
+import { GripVertical, Sparkles, Loader2, AlertCircle } from "lucide-react";
 import { type Deal } from "@/types/types";
 import {
   Select,
@@ -16,17 +16,30 @@ import {
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useState } from "react";
 
 interface SortableTableRowProps {
   row: Row<Deal>;
   onClick: () => void;
   onAnalyze: () => void;
+  onPositionUpdate?: () => void;
 }
 
-export function SortableTableRow({ row, onClick, onAnalyze }: SortableTableRowProps) {
+export function SortableTableRow({ 
+  row, 
+  onClick, 
+  onAnalyze,
+  onPositionUpdate 
+}: SortableTableRowProps) {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [updateError, setUpdateError] = useState<string | null>(null);
   const { toast } = useToast();
   
   const {
@@ -43,7 +56,7 @@ export function SortableTableRow({ row, onClick, onAnalyze }: SortableTableRowPr
   const style = {
     transform: CSS.Transform.toString(transform),
     transition: isDragging 
-      ? "transform 200ms cubic-bezier(0.2, 0, 0, 1)" 
+      ? undefined
       : transition,
     opacity: isDragging ? 0.8 : undefined,
     backgroundColor: isDragging ? "var(--muted)" : undefined,
@@ -57,18 +70,20 @@ export function SortableTableRow({ row, onClick, onAnalyze }: SortableTableRowPr
 
   const handleStatusChange = async (newStatus: string) => {
     setIsUpdating(true);
+    setUpdateError(null);
+
     const { error } = await supabase
       .from("deals")
       .update({ status: newStatus })
       .eq("id", row.original.id);
 
     if (error) {
+      setUpdateError("Failed to update status");
       toast({
         variant: "destructive",
         title: "Error",
         description: "Failed to update status. Please try again.",
       });
-      console.error("Error updating status:", error);
     } else {
       toast({
         title: "Success",
@@ -76,6 +91,12 @@ export function SortableTableRow({ row, onClick, onAnalyze }: SortableTableRowPr
       });
     }
     setIsUpdating(false);
+  };
+
+  const handleRetry = () => {
+    if (updateError) {
+      handleStatusChange(row.original.status);
+    }
   };
 
   const handleAnalyze = async () => {
@@ -91,25 +112,35 @@ export function SortableTableRow({ row, onClick, onAnalyze }: SortableTableRowPr
     <TableRow
       ref={setNodeRef}
       style={style}
-      className={`group transition-all duration-200 ease-in-out hover:bg-gray-50 ${
-        isDragging ? "animate-pulse ring-2 ring-primary ring-offset-2" : ""
-      }`}
+      className={`group transition-all duration-200 ease-in-out hover:bg-gray-50 
+        ${isDragging ? "animate-pulse ring-2 ring-primary ring-offset-2 shadow-lg scale-[1.02]" : ""}
+        ${isUpdating ? "opacity-80" : ""}`}
+      onDragEnd={onPositionUpdate}
     >
       <TableCell>
-        <div className="flex items-center gap-2">
-          <span
-            {...attributes}
-            {...listeners}
-            className={`cursor-grab hover:cursor-grabbing transition-colors duration-200 ${
-              isDragging ? "cursor-grabbing text-primary scale-110" : "text-gray-400"
-            }`}
-          >
-            <GripVertical className={`h-4 w-4 ${
-              isDragging ? "scale-110" : "group-hover:scale-105"
-            } transition-transform duration-200`} />
-          </span>
-          {flexRender(row.getVisibleCells()[0].column.columnDef.cell, row.getVisibleCells()[0].getContext())}
-        </div>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center gap-2">
+                <span
+                  {...attributes}
+                  {...listeners}
+                  className={`cursor-grab active:cursor-grabbing transition-colors duration-200 ${
+                    isDragging ? "cursor-grabbing text-primary scale-110" : "text-gray-400"
+                  }`}
+                >
+                  <GripVertical className={`h-4 w-4 ${
+                    isDragging ? "scale-110" : "group-hover:scale-105"
+                  } transition-transform duration-200`} />
+                </span>
+                {flexRender(row.getVisibleCells()[0].column.columnDef.cell, row.getVisibleCells()[0].getContext())}
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Drag to reorder deals</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </TableCell>
       {row.getVisibleCells().slice(1, -2).map((cell) => (
         <TableCell key={cell.id} onClick={onClick}>
@@ -118,6 +149,25 @@ export function SortableTableRow({ row, onClick, onAnalyze }: SortableTableRowPr
       ))}
       <TableCell onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-2">
+          {updateError ? (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleRetry}
+                    className="text-destructive hover:text-destructive/90"
+                  >
+                    <AlertCircle className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Click to retry updating status</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ) : null}
           <Select
             value={row.original.status}
             onValueChange={handleStatusChange}
@@ -143,25 +193,34 @@ export function SortableTableRow({ row, onClick, onAnalyze }: SortableTableRowPr
         </div>
       </TableCell>
       <TableCell onClick={(e) => e.stopPropagation()}>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleAnalyze}
-          disabled={isAnalyzing}
-          className="w-full flex items-center gap-2"
-        >
-          {isAnalyzing ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Analyzing...
-            </>
-          ) : (
-            <>
-              <Sparkles className="h-4 w-4" />
-              Analyze
-            </>
-          )}
-        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleAnalyze}
+                disabled={isAnalyzing}
+                className="w-full flex items-center gap-2"
+              >
+                {isAnalyzing ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Analyzing...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4" />
+                    Analyze
+                  </>
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Run AI analysis on this deal</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </TableCell>
     </TableRow>
   );
