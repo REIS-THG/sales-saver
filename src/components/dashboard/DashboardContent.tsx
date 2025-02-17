@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/tooltip";
 import { Settings2 } from "lucide-react";
 import type { Deal, CustomField, User } from "@/types/types";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 interface DashboardContentProps {
   deals: Deal[];
@@ -35,6 +37,29 @@ export function DashboardContent({
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Deal Dashboard</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400">Manage and track your deals</p>
       </div>
+
+      {userData?.subscription_status === 'free' && (
+        <Card className="mb-6 p-4 bg-gradient-to-r from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 border-amber-200 dark:border-amber-800">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <p className="text-amber-800 dark:text-amber-200 font-medium">
+                Free plan: {deals.length}/{FREE_DEAL_LIMIT} deals used
+              </p>
+              <p className="text-sm text-amber-700/80 dark:text-amber-300/80">
+                Upgrade to Pro for unlimited deals and advanced features
+              </p>
+            </div>
+            <Link to="/subscription">
+              <Button 
+                variant="default"
+                className="bg-amber-600 hover:bg-amber-700 dark:bg-amber-700 dark:hover:bg-amber-600 text-white shadow-sm"
+              >
+                Upgrade to Pro
+              </Button>
+            </Link>
+          </div>
+        </Card>
+      )}
 
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -66,26 +91,6 @@ export function DashboardContent({
           )}
         </div>
       </div>
-
-      {userData?.subscription_status === 'free' && (
-        <Card className="mb-4 p-4 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800">
-          <div className="flex items-center justify-between">
-            <p className="text-amber-800 dark:text-amber-200">
-              Free plan: {deals.length}/{FREE_DEAL_LIMIT} deals used
-            </p>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger>
-                  <Settings2 className="h-4 w-4 text-amber-800 dark:text-amber-200 cursor-help" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Upgrade to Pro for unlimited deals</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-        </Card>
-      )}
       
       <DealsTable 
         initialDeals={deals} 
