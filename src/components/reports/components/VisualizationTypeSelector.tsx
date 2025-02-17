@@ -1,11 +1,11 @@
 
 import { Button } from "@/components/ui/button";
-import type { ReportConfiguration } from "../types";
+import type { ReportConfiguration, ReportVisualization } from "../types";
 
 interface VisualizationTypeSelectorProps {
   report: ReportConfiguration;
   visualizationTypes: {
-    value: "bar" | "line" | "pie" | "table";
+    value: ReportVisualization;
     label: string;
     icon: JSX.Element;
   }[];

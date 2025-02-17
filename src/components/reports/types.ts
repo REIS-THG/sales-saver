@@ -37,25 +37,12 @@ export interface ReportConfiguration {
   is_favorite?: boolean;
 }
 
-export interface ReportCardProps {
-  report: ReportConfiguration;
-  onEdit: (report: ReportConfiguration) => void;
-  onDelete: (reportId: string) => void;
-  onToggleFavorite: (reportId: string, currentStatus: boolean) => void;
-  editingReportId: string | null;
-  editingName: string;
-  onEditNameChange: (name: string) => void;
-  onSaveReportName: () => void;
-  onExportExcel: (report: ReportConfiguration) => Promise<void>;
-  onExportGoogleSheets: (report: ReportConfiguration) => Promise<void>;
-}
-
 export interface ReportConfigurationProps {
   report: ReportConfiguration;
   onClose: () => void;
   onUpdate: (reportId: string, updates: Partial<ReportConfiguration>) => void;
-  standardFields: { field_name: string; field: string; field_type: string; }[];
-  customFields: { id: string; field_name: string; field_type: string; is_required: boolean; user_id?: string; }[];
+  standardFields: { field_name: string; field: string; field_type: "text" | "number" | "boolean" | "date"; }[];
+  customFields: { id: string; field_name: string; field_type: "text" | "number" | "boolean" | "date"; is_required: boolean; user_id?: string; }[];
   aggregations: { value: 'sum' | 'avg' | 'count' | 'min' | 'max'; label: string; }[];
   visualizationTypes: { value: ReportVisualization; label: string; icon: JSX.Element; }[];
 }

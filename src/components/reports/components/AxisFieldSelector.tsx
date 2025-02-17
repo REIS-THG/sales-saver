@@ -2,14 +2,23 @@
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Trash2 } from "lucide-react";
-import type { StandardField, CustomField } from "@/types/types";
 import type { ReportConfiguration, ReportDimension, ReportMetric } from "../types";
 
 interface AxisFieldSelectorProps {
   type: "dimension" | "metric";
   report: ReportConfiguration;
-  standardFields: StandardField[];
-  customFields: CustomField[];
+  standardFields: { 
+    field_name: string; 
+    field: string; 
+    field_type: "text" | "number" | "boolean" | "date"; 
+  }[];
+  customFields: { 
+    id: string; 
+    field_name: string; 
+    field_type: "text" | "number" | "boolean" | "date"; 
+    is_required: boolean; 
+    user_id?: string; 
+  }[];
   aggregations?: { value: 'sum' | 'avg' | 'count' | 'min' | 'max'; label: string; }[];
   onUpdate: (reportId: string, updates: Partial<ReportConfiguration>) => void;
 }
@@ -22,27 +31,11 @@ export const AxisFieldSelector = ({
   aggregations,
   onUpdate,
 }: AxisFieldSelectorProps) => {
-  const mapFieldToOption = (field: StandardField | CustomField): StandardField => {
-    let fieldType: "text" | "number" | "boolean" | "date";
-    
-    if ('id' in field) {
-      switch (field.field_type) {
-        case 'number':
-        case 'boolean':
-        case 'date':
-          fieldType = field.field_type;
-          break;
-        default:
-          fieldType = 'text';
-      }
-    } else {
-      fieldType = field.field_type;
-    }
-
+  const mapFieldToOption = (field: AxisFieldSelectorProps["standardFields"][0] | AxisFieldSelectorProps["customFields"][0]) => {
     return {
       field_name: field.field_name,
       field: 'field' in field ? field.field : field.field_name,
-      field_type: fieldType
+      field_type: field.field_type
     };
   };
 
