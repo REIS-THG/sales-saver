@@ -1,6 +1,4 @@
 
-import type { StandardField, CustomField } from "@/types/types";
-
 export interface ReportDimension {
   field: string;
   type: 'standard' | 'custom';
@@ -56,8 +54,8 @@ export interface ReportConfigurationProps {
   report: ReportConfiguration;
   onClose: () => void;
   onUpdate: (reportId: string, updates: Partial<ReportConfiguration>) => void;
-  standardFields: StandardField[];
-  customFields: CustomField[];
+  standardFields: { field_name: string; field: string; field_type: string; }[];
+  customFields: { id: string; field_name: string; field_type: string; is_required: boolean; user_id?: string; }[];
   aggregations: { value: 'sum' | 'avg' | 'count' | 'min' | 'max'; label: string; }[];
   visualizationTypes: { value: ReportVisualization; label: string; icon: JSX.Element; }[];
 }

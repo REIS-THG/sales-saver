@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,7 +8,7 @@ import { Plus, BarChart2, PieChart, LineChart, Table, ArrowLeft } from "lucide-r
 import type { CustomField, Deal } from "@/types/types";
 import { ReportCard } from "@/components/reports/ReportCard";
 import { ReportConfiguration as ReportConfigComponent } from "@/components/reports/ReportConfiguration";
-import type { ReportConfiguration, ReportVisualization } from "@/components/reports/types";
+import type { ReportConfiguration, ReportConfig, ReportVisualization } from "@/components/reports/types";
 
 interface StandardField {
   field_name: string;
@@ -66,13 +65,27 @@ const Reports = () => {
 
       if (error) throw error;
 
-      const typedReports: ReportConfiguration[] = (reportsData || []).map(report => ({
-        ...report,
-        config: {
-          ...report.config,
-          visualization: report.config.visualization as ReportVisualization
-        }
-      }));
+      const typedReports: ReportConfiguration[] = (reportsData || []).map(report => {
+        const config = typeof report.config === 'string' 
+          ? JSON.parse(report.config) 
+          : report.config;
+
+        return {
+          id: report.id,
+          user_id: report.user_id,
+          name: report.name,
+          description: report.description || undefined,
+          config: {
+            dimensions: config.dimensions || [],
+            metrics: config.metrics || [],
+            filters: config.filters || [],
+            visualization: (config.visualization || 'bar') as ReportVisualization
+          },
+          created_at: report.created_at,
+          updated_at: report.updated_at,
+          is_favorite: report.is_favorite
+        };
+      });
 
       setReports(typedReports);
     } catch (err) {
@@ -82,6 +95,8 @@ const Reports = () => {
         title: "Error",
         description: "Failed to fetch reports",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -164,11 +179,11 @@ const Reports = () => {
         return;
       }
 
-      const initialConfig = {
+      const initialConfig: ReportConfig = {
         dimensions: [],
         metrics: [],
         filters: [],
-        visualization: 'bar' as ReportVisualization
+        visualization: 'bar'
       };
 
       const newReportData = {
@@ -186,12 +201,24 @@ const Reports = () => {
 
       if (error) throw error;
 
+      const config = typeof data.config === 'string' 
+        ? JSON.parse(data.config) 
+        : data.config;
+
       const newReport: ReportConfiguration = {
-        ...data,
+        id: data.id,
+        user_id: data.user_id,
+        name: data.name,
+        description: data.description || undefined,
         config: {
-          ...data.config,
-          visualization: data.config.visualization as ReportVisualization
-        }
+          dimensions: config.dimensions || [],
+          metrics: config.metrics || [],
+          filters: config.filters || [],
+          visualization: (config.visualization || 'bar') as ReportVisualization
+        },
+        created_at: data.created_at,
+        updated_at: data.updated_at,
+        is_favorite: data.is_favorite
       };
 
       setReports(prev => [newReport, ...prev]);

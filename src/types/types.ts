@@ -74,13 +74,17 @@ export interface Engagement {
   created_at?: string;
 }
 
+export interface StandardField {
+  field_name: string;
+  field: string;
+  field_type: "text" | "number" | "boolean" | "date";
+}
+
 export interface CustomField {
   id: string;
   field_name: string;
   field_type: "text" | "number" | "boolean" | "date";
   is_required: boolean;
-  created_at?: string;
-  updated_at?: string;
   user_id?: string;
 }
 
