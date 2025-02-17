@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -134,6 +133,7 @@ const AIAnalysis = () => {
                 onDealSelect={handleDealSelect}
                 onAnalyze={handleAnalyze}
                 onFileUpload={handleFileUpload}
+                insights={insights}
               />
             </TabsContent>
 
