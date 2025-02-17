@@ -16,6 +16,12 @@ export const ReportConfiguration = ({
   aggregations,
   visualizationTypes,
 }: ReportConfigurationProps) => {
+  const mapFieldToOption = (field: StandardField | CustomField) => ({
+    field: 'field' in field ? field.field : field.field_name,
+    field_name: field.field_name,
+    field_type: field.field_type
+  });
+
   return (
     <Card>
       <CardHeader>
@@ -34,7 +40,7 @@ export const ReportConfiguration = ({
           <ResizablePanel defaultSize={40}>
             <div className="h-full p-6">
               <div className="space-y-6">
-                {/* Visualization Type Section - Moved to top */}
+                {/* Visualization Type Section */}
                 <div>
                   <h3 className="text-lg font-semibold mb-4">Visualization Type</h3>
                   <div className="grid grid-cols-2 gap-2">
@@ -60,16 +66,12 @@ export const ReportConfiguration = ({
                   </div>
                 </div>
 
-                {/* X Axis (formerly Dimensions) */}
+                {/* X Axis Section */}
                 <div>
                   <label className="block text-sm font-medium mb-2">X Axis (Categories)</label>
                   <Select
                     onValueChange={(value) => {
-                      const allFields = [...standardFields, ...customFields.map(cf => ({
-                        field: cf.field_name,
-                        field_name: cf.field_name,
-                        field_type: cf.field_type
-                      }))];
+                      const allFields = [...standardFields, ...customFields].map(mapFieldToOption);
                       const field = allFields.find(f => f.field === value);
                       if (field) {
                         const newDimension = {
@@ -91,11 +93,14 @@ export const ReportConfiguration = ({
                       <SelectValue placeholder="Add X axis category" />
                     </SelectTrigger>
                     <SelectContent>
-                      {[...standardFields, ...customFields].map((field) => (
-                        <SelectItem key={field.field} value={field.field}>
-                          {field.field_name}
-                        </SelectItem>
-                      ))}
+                      {[...standardFields, ...customFields].map((field) => {
+                        const mappedField = mapFieldToOption(field);
+                        return (
+                          <SelectItem key={mappedField.field} value={mappedField.field}>
+                            {mappedField.field_name}
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                   <div className="mt-2 space-y-2">
@@ -123,12 +128,12 @@ export const ReportConfiguration = ({
                   </div>
                 </div>
 
-                {/* Y Axis (formerly Metrics) */}
+                {/* Y Axis Section */}
                 <div>
                   <label className="block text-sm font-medium mb-2">Y Axis (Values)</label>
                   <Select
                     onValueChange={(value) => {
-                      const allFields = [...standardFields, ...customFields];
+                      const allFields = [...standardFields, ...customFields].map(mapFieldToOption);
                       const field = allFields.find(f => f.field === value);
                       if (field) {
                         const newMetric = {
@@ -151,6 +156,7 @@ export const ReportConfiguration = ({
                     </SelectTrigger>
                     <SelectContent>
                       {[...standardFields, ...customFields]
+                        .map(mapFieldToOption)
                         .filter(field => field.field_type === 'number')
                         .map((field) => (
                           <SelectItem key={field.field} value={field.field}>

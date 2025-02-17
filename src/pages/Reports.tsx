@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
 import { Plus, BarChart2, PieChart, LineChart, Table, ArrowLeft } from "lucide-react";
-import type { ReportConfiguration, ReportConfig, CustomField, Deal } from "@/types/types";
+import type { ReportConfiguration as ReportConfigurationType, ReportConfig, CustomField, Deal } from "@/types/types";
 import { ReportCard } from "@/components/reports/ReportCard";
 import { ReportConfiguration as ReportConfigComponent } from "@/components/reports/ReportConfiguration";
+import type { ReportConfiguration } from "@/components/reports/types";
 
 interface StandardField {
   field_name: string;
@@ -42,11 +43,13 @@ const Reports = () => {
     { value: 'max' as const, label: 'Maximum' },
   ];
 
-  const visualizationTypes: { value: VisualizationType; label: string; icon: JSX.Element }[] = [
-    { value: 'bar', label: 'Bar Chart', icon: <BarChart2 className="h-4 w-4" /> },
-    { value: 'line', label: 'Line Chart', icon: <LineChart className="h-4 w-4" /> },
-    { value: 'pie', label: 'Pie Chart', icon: <PieChart className="h-4 w-4" /> },
-    { value: 'table', label: 'Table', icon: <Table className="h-4 w-4" /> },
+  type VisualizationType = 'bar' | 'line' | 'pie' | 'table';
+
+  const visualizationTypes = [
+    { value: 'bar' as const, label: 'Bar Chart', icon: <BarChart2 className="h-4 w-4" /> },
+    { value: 'line' as const, label: 'Line Chart', icon: <LineChart className="h-4 w-4" /> },
+    { value: 'pie' as const, label: 'Pie Chart', icon: <PieChart className="h-4 w-4" /> },
+    { value: 'table' as const, label: 'Table', icon: <Table className="h-4 w-4" /> },
   ];
 
   useEffect(() => {
@@ -534,6 +537,8 @@ const Reports = () => {
                   editingName={editingName}
                   onEditNameChange={setEditingName}
                   onSaveReportName={saveReportName}
+                  onExportExcel={downloadExcel}
+                  onExportGoogleSheets={downloadGoogleSheets}
                 />
               ))}
             </div>
@@ -553,6 +558,8 @@ const Reports = () => {
               editingName={editingName}
               onEditNameChange={setEditingName}
               onSaveReportName={saveReportName}
+              onExportExcel={downloadExcel}
+              onExportGoogleSheets={downloadGoogleSheets}
             />
           ))}
         </div>
