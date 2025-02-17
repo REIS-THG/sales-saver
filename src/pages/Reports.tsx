@@ -43,7 +43,8 @@ import {
   Table,
   Star,
   StarOff,
-  Pencil
+  Pencil,
+  ArrowLeft
 } from "lucide-react";
 import type { 
   ReportConfiguration, 
@@ -484,7 +485,17 @@ const Reports = () => {
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Reports</h1>
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate('/dashboard')}
+              className="hover:bg-gray-100"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <h1 className="text-3xl font-bold">Reports</h1>
+          </div>
           <Button onClick={createReport}>
             <Plus className="h-4 w-4 mr-2" />
             New Report
