@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import {
   flexRender,
@@ -28,6 +29,7 @@ import DealDetailsModal from "./DealDetailsModal";
 import { SortableTableRow } from "./SortableTableRow";
 import { CheckCircle2, AlertCircle, Clock, Ban } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 const columnHelper = createColumnHelper<Deal>();
 
@@ -81,13 +83,17 @@ const columns = [
         return "bg-red-100 text-red-800";
       };
       return (
-        <span
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            info.row.original.onHealthScoreClick?.(info.row.original.id);
+          }}
           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getHealthScoreColor(
             score
-          )}`}
+          )} hover:opacity-80 transition-opacity cursor-pointer`}
         >
           {score}%
-        </span>
+        </button>
       );
     },
   }),
@@ -101,6 +107,7 @@ export function DealsTable({ initialDeals }: DealsTableProps) {
   const [deals, setDeals] = useState<Deal[]>(initialDeals);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
+  const navigate = useNavigate();
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -109,8 +116,18 @@ export function DealsTable({ initialDeals }: DealsTableProps) {
     })
   );
 
+  const handleHealthScoreClick = (dealId: string) => {
+    navigate(`/deal-genius?dealId=${dealId}`);
+  };
+
+  // Add onHealthScoreClick to each deal
+  const dealsWithHandler = deals.map(deal => ({
+    ...deal,
+    onHealthScoreClick: handleHealthScoreClick
+  }));
+
   const table = useReactTable({
-    data: deals,
+    data: dealsWithHandler,
     columns,
     state: {
       sorting,

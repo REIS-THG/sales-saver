@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -25,6 +25,7 @@ interface Insight {
 }
 
 const DealGenius = () => {
+  const [searchParams] = useSearchParams();
   const [deals, setDeals] = useState<Deal[]>([]);
   const [selectedDeal, setSelectedDeal] = useState<string | null>(null);
   const [insights, setInsights] = useState<Insight[]>([]);
@@ -35,7 +36,12 @@ const DealGenius = () => {
 
   useEffect(() => {
     fetchDeals();
-  }, []);
+    const dealId = searchParams.get('dealId');
+    if (dealId) {
+      setSelectedDeal(dealId);
+      fetchInsights(dealId);
+    }
+  }, [searchParams]);
 
   const fetchDeals = async () => {
     const { data: authData } = await supabase.auth.getUser();
@@ -59,10 +65,11 @@ const DealGenius = () => {
       return;
     }
 
-    // Type cast the status to ensure it matches the Deal interface
+    // Type cast the data to match the Deal interface
     const typedDeals = data.map(deal => ({
       ...deal,
-      status: (deal.status || 'open') as 'open' | 'stalled' | 'won' | 'lost'
+      status: (deal.status || 'open') as Deal['status'],
+      custom_fields: deal.custom_fields as Record<string, string | number | boolean> || {},
     }));
 
     setDeals(typedDeals);
