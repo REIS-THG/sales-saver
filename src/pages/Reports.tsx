@@ -24,6 +24,7 @@ const Reports = () => {
   const [loading, setLoading] = useState(true);
   const [editingReportId, setEditingReportId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
+  const [userData, setUserData] = useState<User | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -51,10 +52,35 @@ const Reports = () => {
   ];
 
   useEffect(() => {
+    fetchUserData();
     fetchReports();
     fetchCustomFields();
     fetchDeals();
   }, []);
+
+  const fetchUserData = async () => {
+    try {
+      const { data: authData } = await supabase.auth.getUser();
+      const userId = authData.user?.id;
+
+      if (!userId) {
+        navigate("/auth");
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("users")
+        .select("*")
+        .eq("user_id", userId)
+        .single();
+
+      if (error) throw error;
+
+      setUserData(data);
+    } catch (err) {
+      console.error("Error fetching user data:", err);
+    }
+  };
 
   const fetchReports = async () => {
     try {
@@ -522,6 +548,30 @@ const Reports = () => {
     }
   };
 
+  const handleExportExcel = async (report: ReportConfiguration) => {
+    if (userData?.subscription_status !== 'pro' && report.config.dimensions.some(d => d.type === 'custom')) {
+      toast({
+        title: "Pro Feature Required",
+        description: "Upgrade to Pro to export reports with custom fields",
+        variant: "destructive",
+      });
+      return;
+    }
+    await downloadExcel(report);
+  };
+
+  const handleExportGoogleSheets = async (report: ReportConfiguration) => {
+    if (userData?.subscription_status !== 'pro' && report.config.dimensions.some(d => d.type === 'custom')) {
+      toast({
+        title: "Pro Feature Required",
+        description: "Upgrade to Pro to export reports with custom fields",
+        variant: "destructive",
+      });
+      return;
+    }
+    await downloadGoogleSheets(report);
+  };
+
   const favoriteReports = reports.filter(report => report.is_favorite);
   const otherReports = reports.filter(report => !report.is_favorite);
 
@@ -569,8 +619,8 @@ const Reports = () => {
                   editingName={editingName}
                   onEditNameChange={setEditingName}
                   onSaveReportName={saveReportName}
-                  onExportExcel={downloadExcel}
-                  onExportGoogleSheets={downloadGoogleSheets}
+                  onExportExcel={handleExportExcel}
+                  onExportGoogleSheets={handleExportGoogleSheets}
                 />
               ))}
             </div>
@@ -590,8 +640,8 @@ const Reports = () => {
               editingName={editingName}
               onEditNameChange={setEditingName}
               onSaveReportName={saveReportName}
-              onExportExcel={downloadExcel}
-              onExportGoogleSheets={downloadGoogleSheets}
+              onExportExcel={handleExportExcel}
+              onExportGoogleSheets={handleExportGoogleSheets}
             />
           ))}
         </div>

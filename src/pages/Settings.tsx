@@ -22,6 +22,9 @@ import {
   Mail,
   Lock,
   CreditCard,
+  Trophy,
+  Check,
+  AlertCircle,
 } from "lucide-react";
 import {
   Table,
@@ -658,6 +661,77 @@ const Settings = () => {
                     </TableBody>
                   </Table>
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Subscription</CardTitle>
+              <CardDescription>
+                Manage your subscription and billing details
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-medium">Current Plan</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {userData?.subscription_status === 'free' ? 'Free Plan' : 'Pro Plan'}
+                    </p>
+                  </div>
+                  {userData?.subscription_status === 'free' && (
+                    <Button
+                      disabled={userData?.successful_deals_count < 5}
+                      onClick={() => window.location.href = '/upgrade'}
+                    >
+                      Upgrade to Pro
+                    </Button>
+                  )}
+                </div>
+
+                {userData?.subscription_status === 'free' && (
+                  <>
+                    <div className="space-y-4">
+                      <h4 className="font-medium">Unlock Pro Features</h4>
+                      <div className="grid gap-4">
+                        <div className="flex items-center gap-2">
+                          {userData?.successful_deals_count >= 5 ? (
+                            <Check className="h-5 w-5 text-green-500" />
+                          ) : (
+                            <AlertCircle className="h-5 w-5 text-yellow-500" />
+                          )}
+                          <p className="text-sm">
+                            {userData?.successful_deals_count}/5 successful deals completed
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h4 className="font-medium">Pro Features</h4>
+                      <div className="grid gap-2">
+                        <div className="flex items-center gap-2">
+                          <Trophy className="h-4 w-4 text-yellow-500" />
+                          <p className="text-sm">Unlimited custom fields</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Trophy className="h-4 w-4 text-yellow-500" />
+                          <p className="text-sm">Export reports to Excel/Google Sheets</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Check className="h-4 w-4 text-green-500" />
+                          <p className="text-sm">Create and view reports</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Check className="h-4 w-4 text-green-500" />
+                          <p className="text-sm">Basic deal management</p>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </CardContent>
           </Card>

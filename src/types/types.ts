@@ -1,3 +1,4 @@
+
 export interface User {
   id: string;
   user_id: string;
@@ -11,6 +12,7 @@ export interface User {
   email?: string;
   subscription_status?: 'free' | 'pro' | 'enterprise';
   subscription_end_date?: string;
+  successful_deals_count: number;
   billing_address?: {
     street?: string;
     city?: string;

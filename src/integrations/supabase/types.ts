@@ -400,6 +400,7 @@ export type Database = {
           role: string | null
           subscription_end_date: string | null
           subscription_status: string | null
+          successful_deals_count: number | null
           theme: string | null
           updated_at: string | null
           user_id: string | null
@@ -415,6 +416,7 @@ export type Database = {
           role?: string | null
           subscription_end_date?: string | null
           subscription_status?: string | null
+          successful_deals_count?: number | null
           theme?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -430,6 +432,7 @@ export type Database = {
           role?: string | null
           subscription_end_date?: string | null
           subscription_status?: string | null
+          successful_deals_count?: number | null
           theme?: string | null
           updated_at?: string | null
           user_id?: string | null
