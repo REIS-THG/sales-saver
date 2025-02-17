@@ -4,266 +4,249 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Separator } from "@/components/ui/separator";
-import { Loader } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Alert,
+  AlertDescription,
+} from "@/components/ui/alert";
 
 const Auth = () => {
+  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const passwordRequirements = {
+    length: password.length >= 8,
+    uppercase: /[A-Z]/.test(password),
+    lowercase: /[a-z]/.test(password),
+    number: /[0-9]/.test(password),
+    special: /[^A-Za-z0-9]/.test(password),
+  };
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     setLoading(true);
 
     try {
-      if (isForgotPassword) {
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        });
-        
-        if (error) throw error;
-        
-        toast({
-          title: "Reset link sent!",
-          description: "Check your email for the password reset link.",
-        });
-        
-        setIsForgotPassword(false);
-      } else if (isSignUp) {
-        const { error: signUpError } = await supabase.auth.signUp({
+      if (isLogin) {
+        const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback`
+            remember: rememberMe
           }
         });
-        
-        if (signUpError) {
-          if (signUpError.message.includes("already registered")) {
-            throw new Error("This email is already registered. Please try signing in instead.");
-          }
-          throw signUpError;
+        if (error) throw error;
+        navigate("/dashboard");
+      } else {
+        // Check password requirements
+        if (!Object.values(passwordRequirements).every(Boolean)) {
+          setError("Please meet all password requirements");
+          return;
         }
+
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth`,
+            data: {
+              remember: rememberMe
+            }
+          }
+        });
+        if (error) throw error;
         
         toast({
-          title: "Welcome to Sales Saver!",
-          description: "Please check your email to confirm your account. You can also try signing in directly.",
+          title: "Success",
+          description: "Please check your email to confirm your account.",
         });
-        
-        setIsSignUp(false);
-      } else {
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password
-        });
-        
-        if (signInError) {
-          if (signInError.message.includes("Invalid login credentials")) {
-            throw new Error("Invalid email or password. Please try again.");
-          }
-          throw signInError;
-        }
-        
-        navigate("/dashboard");
       }
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "An error occurred");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogleSignIn = async () => {
+  const handleForgotPassword = async () => {
+    if (!email) {
+      setError("Please enter your email address");
+      return;
+    }
+
+    setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`
-        }
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/reset-password`,
       });
-      
       if (error) throw error;
-    } catch (error: any) {
+      
       toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
+        title: "Password Reset Email Sent",
+        description: "Please check your email for the reset link.",
       });
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "An error occurred");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const switchMode = () => {
-    setIsSignUp(!isSignUp);
-    setIsForgotPassword(false);
-    setEmail("");
-    setPassword("");
-  };
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-2xl text-center">
-            {isForgotPassword 
-              ? "Reset Password"
-              : isSignUp 
-                ? "Welcome to Sales Saver" 
-                : "Welcome Back"}
-          </CardTitle>
-          <CardDescription className="text-center">
-            {isForgotPassword
-              ? "Enter your email to receive a password reset link"
-              : isSignUp
-                ? "Create an account to start managing your sales pipeline"
-                : "Sign in to access your dashboard"}
+        <CardHeader className="space-y-1">
+          <div className="flex items-center">
+            <Button
+              variant="ghost"
+              className="mr-2"
+              onClick={() => navigate("/")}
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <CardTitle className="text-2xl">
+              {isLogin ? "Welcome back" : "Create an account"}
+            </CardTitle>
+          </div>
+          <CardDescription>
+            {isLogin
+              ? "Enter your credentials to access your account"
+              : "Enter your details to create your account"}
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {!isForgotPassword && (
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full relative"
-              onClick={handleGoogleSignIn}
-              disabled={loading}
-            >
-              <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512">
-                <path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"></path>
-              </svg>
-              Continue with Google
-            </Button>
-          )}
-          
-          {!isForgotPassword && (
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <Separator className="w-full" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
-                  Or continue with email
-                </span>
-              </div>
-            </div>
+        <CardContent>
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
           
           <form onSubmit={handleAuth} className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium">
-                Email
-              </label>
+              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="you@company.com"
+                placeholder="name@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                disabled={loading}
               />
             </div>
-            {!isForgotPassword && (
-              <div className="space-y-2">
-                <label htmlFor="password" className="text-sm font-medium">
-                  Password
-                </label>
+            
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <div className="relative">
                 <Input
                   id="password"
-                  type="password"
-                  placeholder="••••••••"
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  minLength={6}
-                  disabled={loading}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Password must be at least 6 characters long
-                </p>
-              </div>
-            )}
-            {!isForgotPassword && (
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="remember" 
-                  checked={rememberMe} 
-                  onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                  disabled={loading}
-                />
-                <label
-                  htmlFor="remember"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                  onClick={() => setShowPassword(!showPassword)}
                 >
-                  Remember me
-                </label>
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {!isLogin && (
+              <div className="space-y-2 text-sm">
+                <p className="font-medium">Password requirements:</p>
+                <ul className="space-y-1 text-gray-500">
+                  <li className={passwordRequirements.length ? "text-green-600" : ""}>
+                    ✓ At least 8 characters
+                  </li>
+                  <li className={passwordRequirements.uppercase ? "text-green-600" : ""}>
+                    ✓ At least one uppercase letter
+                  </li>
+                  <li className={passwordRequirements.lowercase ? "text-green-600" : ""}>
+                    ✓ At least one lowercase letter
+                  </li>
+                  <li className={passwordRequirements.number ? "text-green-600" : ""}>
+                    ✓ At least one number
+                  </li>
+                  <li className={passwordRequirements.special ? "text-green-600" : ""}>
+                    ✓ At least one special character
+                  </li>
+                </ul>
               </div>
             )}
-            <Button type="submit" className="w-full relative" disabled={loading}>
-              {loading && <Loader className="mr-2 h-4 w-4 animate-spin" />}
-              {loading 
-                ? "Please wait..." 
-                : isForgotPassword
-                  ? "Send Reset Link"
-                  : isSignUp 
-                    ? "Create Account" 
-                    : "Sign In"}
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="remember"
+                  checked={rememberMe}
+                  onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                />
+                <Label htmlFor="remember" className="text-sm">
+                  Remember me
+                </Label>
+              </div>
+              {isLogin && (
+                <Button
+                  type="button"
+                  variant="link"
+                  className="text-sm"
+                  onClick={handleForgotPassword}
+                >
+                  Forgot password?
+                </Button>
+              )}
+            </div>
+
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? (
+                "Loading..."
+              ) : isLogin ? (
+                "Sign in"
+              ) : (
+                "Create account"
+              )}
             </Button>
           </form>
-        </CardContent>
-        <CardFooter className="flex flex-col space-y-2">
-          <Button
-            type="button"
-            variant="ghost"
-            className="w-full"
-            onClick={switchMode}
-            disabled={loading}
-          >
-            {isSignUp
-              ? "Already have an account? Sign In"
-              : "Don't have an account? Sign Up"}
-          </Button>
-          {!isSignUp && !isForgotPassword && (
+
+          <div className="mt-4 text-center">
             <Button
-              type="button"
               variant="link"
-              className="w-full"
-              onClick={() => {
-                setIsForgotPassword(true);
-                setPassword("");
-              }}
-              disabled={loading}
+              onClick={() => setIsLogin(!isLogin)}
+              className="text-sm"
             >
-              Forgot your password?
+              {isLogin
+                ? "Don't have an account? Sign up"
+                : "Already have an account? Sign in"}
             </Button>
-          )}
-          {isForgotPassword && (
-            <Button
-              type="button"
-              variant="ghost"
-              className="w-full"
-              onClick={() => {
-                setIsForgotPassword(false);
-                setEmail("");
-              }}
-              disabled={loading}
-            >
-              Back to Sign In
-            </Button>
-          )}
-        </CardFooter>
+          </div>
+        </CardContent>
       </Card>
     </div>
   );
