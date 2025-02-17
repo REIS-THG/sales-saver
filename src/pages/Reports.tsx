@@ -4,8 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
-import { Plus, BarChart2, PieChart, LineChart, Table } from "lucide-react";
-import type { ReportConfiguration, ReportConfig, CustomField, Deal, VisualizationType } from "@/types/types";
+import { Plus, BarChart2, PieChart, LineChart, Table, ArrowLeft } from "lucide-react";
+import type { ReportConfiguration, ReportConfig, CustomField, Deal } from "@/types/types";
 import { ReportCard } from "@/components/reports/ReportCard";
 import { ReportConfiguration as ReportConfigComponent } from "@/components/reports/ReportConfiguration";
 

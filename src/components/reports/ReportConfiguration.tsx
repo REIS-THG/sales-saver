@@ -34,190 +34,181 @@ export const ReportConfiguration = ({
           <ResizablePanel defaultSize={40}>
             <div className="h-full p-6">
               <div className="space-y-6">
+                {/* Visualization Type Section - Moved to top */}
                 <div>
-                  <h3 className="text-lg font-semibold mb-4">Data Configuration</h3>
-                  <div className="space-y-6">
-                    {/* Dimensions Section */}
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Dimensions</label>
-                      <Select
-                        onValueChange={(value) => {
-                          const allFields = [...standardFields, ...customFields.map(cf => ({
-                            field: cf.field_name,
-                            field_name: cf.field_name,
-                            field_type: cf.field_type
-                          }))];
-                          const field = allFields.find(f => f.field === value);
-                          if (field) {
-                            const newDimension = {
-                              field: value,
-                              type: 'standard' as const,
-                              label: field.field_name
-                            };
+                  <h3 className="text-lg font-semibold mb-4">Visualization Type</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    {visualizationTypes.map((type) => (
+                      <Button
+                        key={type.value}
+                        variant={report.config.visualization === type.value ? "default" : "outline"}
+                        onClick={() => {
+                          onUpdate(report.id, {
+                            ...report,
+                            config: {
+                              ...report.config,
+                              visualization: type.value
+                            }
+                          });
+                        }}
+                        className="flex items-center justify-start gap-2"
+                      >
+                        {type.icon}
+                        <span>{type.label}</span>
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* X Axis (formerly Dimensions) */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">X Axis (Categories)</label>
+                  <Select
+                    onValueChange={(value) => {
+                      const allFields = [...standardFields, ...customFields.map(cf => ({
+                        field: cf.field_name,
+                        field_name: cf.field_name,
+                        field_type: cf.field_type
+                      }))];
+                      const field = allFields.find(f => f.field === value);
+                      if (field) {
+                        const newDimension = {
+                          field: value,
+                          type: 'standard' as const,
+                          label: field.field_name
+                        };
+                        onUpdate(report.id, {
+                          ...report,
+                          config: {
+                            ...report.config,
+                            dimensions: [...report.config.dimensions, newDimension]
+                          }
+                        });
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Add X axis category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[...standardFields, ...customFields].map((field) => (
+                        <SelectItem key={field.field} value={field.field}>
+                          {field.field_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <div className="mt-2 space-y-2">
+                    {report.config.dimensions.map((dim, index) => (
+                      <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                        <span>{dim.label}</span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            const newDimensions = report.config.dimensions.filter((_, i) => i !== index);
                             onUpdate(report.id, {
                               ...report,
                               config: {
                                 ...report.config,
-                                dimensions: [...report.config.dimensions, newDimension]
+                                dimensions: newDimensions
                               }
                             });
-                          }
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Add dimension" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {[...standardFields, ...customFields].map((field) => (
-                            <SelectItem key={field.field} value={field.field}>
-                              {field.field_name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {/* Display selected dimensions */}
-                      <div className="mt-2 space-y-2">
-                        {report.config.dimensions.map((dim, index) => (
-                          <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
-                            <span>{dim.label}</span>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => {
-                                const newDimensions = report.config.dimensions.filter((_, i) => i !== index);
-                                onUpdate(report.id, {
-                                  ...report,
-                                  config: {
-                                    ...report.config,
-                                    dimensions: newDimensions
-                                  }
-                                });
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4 text-red-500" />
-                            </Button>
-                          </div>
-                        ))}
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
                       </div>
-                    </div>
+                    ))}
+                  </div>
+                </div>
 
-                    {/* Metrics Section */}
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Metrics</label>
-                      <Select
-                        onValueChange={(value) => {
-                          const allFields = [...standardFields, ...customFields];
-                          const field = allFields.find(f => f.field === value);
-                          if (field) {
-                            const newMetric = {
-                              field: value,
-                              aggregation: 'sum' as const,
-                              label: `Sum of ${field.field_name}`
-                            };
-                            onUpdate(report.id, {
-                              ...report,
-                              config: {
-                                ...report.config,
-                                metrics: [...report.config.metrics, newMetric]
-                              }
-                            });
+                {/* Y Axis (formerly Metrics) */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">Y Axis (Values)</label>
+                  <Select
+                    onValueChange={(value) => {
+                      const allFields = [...standardFields, ...customFields];
+                      const field = allFields.find(f => f.field === value);
+                      if (field) {
+                        const newMetric = {
+                          field: value,
+                          aggregation: 'sum' as const,
+                          label: `Sum of ${field.field_name}`
+                        };
+                        onUpdate(report.id, {
+                          ...report,
+                          config: {
+                            ...report.config,
+                            metrics: [...report.config.metrics, newMetric]
                           }
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Add metric" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {[...standardFields, ...customFields]
-                            .filter(field => field.field_type === 'number')
-                            .map((field) => (
-                              <SelectItem key={field.field} value={field.field}>
-                                {field.field_name}
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
-                      {/* Display selected metrics */}
-                      <div className="mt-2 space-y-2">
-                        {report.config.metrics.map((metric, index) => (
-                          <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
-                            <div className="flex items-center gap-2">
-                              <span>{metric.label}</span>
-                              <Select
-                                value={metric.aggregation}
-                                onValueChange={(value) => {
-                                  const newMetrics = report.config.metrics.map((m, i) => 
-                                    i === index ? { ...m, aggregation: value as any } : m
-                                  );
-                                  onUpdate(report.id, {
-                                    ...report,
-                                    config: {
-                                      ...report.config,
-                                      metrics: newMetrics
-                                    }
-                                  });
-                                }}
-                              >
-                                <SelectTrigger className="h-7 w-24">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {aggregations.map((agg) => (
-                                    <SelectItem key={agg.value} value={agg.value}>
-                                      {agg.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => {
-                                const newMetrics = report.config.metrics.filter((_, i) => i !== index);
-                                onUpdate(report.id, {
-                                  ...report,
-                                  config: {
-                                    ...report.config,
-                                    metrics: newMetrics
-                                  }
-                                });
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4 text-red-500" />
-                            </Button>
-                          </div>
+                        });
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Add Y axis value" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[...standardFields, ...customFields]
+                        .filter(field => field.field_type === 'number')
+                        .map((field) => (
+                          <SelectItem key={field.field} value={field.field}>
+                            {field.field_name}
+                          </SelectItem>
                         ))}
-                      </div>
-                    </div>
-
-                    {/* Visualization Type Section */}
-                    <div>
-                      <label className="block text-sm font-medium mb-2">
-                        Visualization Type
-                      </label>
-                      <div className="grid grid-cols-2 gap-2">
-                        {visualizationTypes.map((type) => (
-                          <Button
-                            key={type.value}
-                            variant={report.config.visualization === type.value ? "default" : "outline"}
-                            onClick={() => {
+                    </SelectContent>
+                  </Select>
+                  <div className="mt-2 space-y-2">
+                    {report.config.metrics.map((metric, index) => (
+                      <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                        <div className="flex items-center gap-2">
+                          <span>{metric.label}</span>
+                          <Select
+                            value={metric.aggregation}
+                            onValueChange={(value) => {
+                              const newMetrics = report.config.metrics.map((m, i) => 
+                                i === index ? { ...m, aggregation: value as any } : m
+                              );
                               onUpdate(report.id, {
                                 ...report,
                                 config: {
                                   ...report.config,
-                                  visualization: type.value
+                                  metrics: newMetrics
                                 }
                               });
                             }}
-                            className="flex items-center justify-start gap-2"
                           >
-                            {type.icon}
-                            <span>{type.label}</span>
-                          </Button>
-                        ))}
+                            <SelectTrigger className="h-7 w-24">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {aggregations.map((agg) => (
+                                <SelectItem key={agg.value} value={agg.value}>
+                                  {agg.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            const newMetrics = report.config.metrics.filter((_, i) => i !== index);
+                            onUpdate(report.id, {
+                              ...report,
+                              config: {
+                                ...report.config,
+                                metrics: newMetrics
+                              }
+                            });
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
                       </div>
-                    </div>
+                    ))}
                   </div>
                 </div>
               </div>

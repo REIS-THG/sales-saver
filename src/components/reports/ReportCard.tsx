@@ -14,7 +14,9 @@ export const ReportCard = ({
   editingReportId,
   editingName,
   onEditNameChange,
-  onSaveReportName
+  onSaveReportName,
+  onExportExcel,
+  onExportGoogleSheets
 }: ReportCardProps) => {
   return (
     <Card className="cursor-pointer hover:shadow-lg transition-shadow">
@@ -47,7 +49,11 @@ export const ReportCard = ({
             <CardDescription>{report.description}</CardDescription>
           </div>
           <div className="flex gap-2">
-            <ReportExportButton report={report} />
+            <ReportExportButton 
+              report={report}
+              onExportExcel={onExportExcel}
+              onExportGoogleSheets={onExportGoogleSheets}
+            />
             <Button
               variant="ghost"
               size="icon"

@@ -1,5 +1,53 @@
 
-import { StandardField, VisualizationType } from "@/types/types";
+export interface ReportDimension {
+  field: string;
+  type: 'standard' | 'custom';
+  label: string;
+}
+
+export interface ReportMetric {
+  field: string;
+  aggregation: 'sum' | 'avg' | 'count' | 'min' | 'max';
+  label: string;
+}
+
+export interface ReportFilter {
+  field: string;
+  operator: 'equals' | 'contains' | 'greater_than' | 'less_than' | 'between' | 'in';
+  value: any;
+}
+
+export interface ReportConfig {
+  dimensions: ReportDimension[];
+  metrics: ReportMetric[];
+  filters: ReportFilter[];
+  visualization: 'bar' | 'line' | 'pie' | 'table';
+}
+
+export interface ReportConfiguration {
+  id: string;
+  user_id: string;
+  name: string;
+  description?: string;
+  config: ReportConfig;
+  created_at?: string;
+  updated_at?: string;
+  is_favorite?: boolean;
+}
+
+export interface StandardField {
+  field_name: string;
+  field: string;
+  field_type: "text" | "number" | "boolean" | "date";
+}
+
+export interface CustomField {
+  id: string;
+  field_name: string;
+  field_type: "text" | "number" | "boolean" | "date";
+  is_required: boolean;
+  user_id?: string;
+}
 
 export interface ReportCardProps {
   report: ReportConfiguration;
@@ -10,6 +58,8 @@ export interface ReportCardProps {
   editingName: string;
   onEditNameChange: (name: string) => void;
   onSaveReportName: () => void;
+  onExportExcel: (report: ReportConfiguration) => Promise<void>;
+  onExportGoogleSheets: (report: ReportConfiguration) => Promise<void>;
 }
 
 export interface ReportConfigurationProps {
@@ -19,7 +69,7 @@ export interface ReportConfigurationProps {
   standardFields: StandardField[];
   customFields: CustomField[];
   aggregations: { value: 'sum' | 'avg' | 'count' | 'min' | 'max'; label: string; }[];
-  visualizationTypes: { value: VisualizationType; label: string; icon: JSX.Element; }[];
+  visualizationTypes: { value: 'bar' | 'line' | 'pie' | 'table'; label: string; icon: JSX.Element; }[];
 }
 
 export interface ReportPreviewProps {
