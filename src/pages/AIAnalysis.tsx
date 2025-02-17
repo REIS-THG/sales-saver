@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -50,7 +51,7 @@ const AIAnalysis = () => {
 
   const handleAnalyze = async (dealId: string) => {
     await analyzeDeal(dealId, {
-      salesApproach: 'consultative',
+      salesApproach: 'consultative_selling',
       industry: 'technology',
       purposeNotes: '',
       toneAnalysis: {
