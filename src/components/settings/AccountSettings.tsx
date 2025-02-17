@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Mail, Lock, UserIcon, CreditCard } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { Link } from "react-router-dom";
 
 interface AccountSettingsProps {
   userData: User | null;
@@ -99,7 +100,9 @@ export function AccountSettings({ userData }: AccountSettingsProps) {
               <div className="flex items-center justify-between mt-2">
                 <span className="capitalize">{userData?.subscription_status || 'free'}</span>
                 {userData?.subscription_status === 'free' && (
-                  <Button>Upgrade to Pro</Button>
+                  <Link to="/subscription">
+                    <Button>Upgrade to Pro</Button>
+                  </Link>
                 )}
               </div>
               {userData?.subscription_end_date && (
