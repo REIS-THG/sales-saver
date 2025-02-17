@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -17,11 +16,14 @@ export const ReportConfiguration = ({
   aggregations,
   visualizationTypes,
 }: ReportConfigurationProps) => {
-  const mapFieldToOption = (field: StandardField | CustomField) => ({
-    field: 'field' in field ? field.field : field.field_name,
-    field_name: field.field_name,
-    field_type: field.field_type as "text" | "number" | "boolean" | "date"
-  });
+  const mapFieldToOption = (field: StandardField | CustomField) => {
+    const fieldType = field.field_type as "text" | "number" | "boolean" | "date";
+    return {
+      field: 'field' in field ? field.field : field.field_name,
+      field_name: field.field_name,
+      field_type: fieldType
+    };
+  };
 
   return (
     <Card>

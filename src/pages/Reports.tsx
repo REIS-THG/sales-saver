@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,16 +5,10 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
 import { Plus, BarChart2, PieChart, LineChart, Table, ArrowLeft } from "lucide-react";
-import type { CustomField, Deal, User } from "@/types/types";
+import type { CustomField, Deal, User, StandardField } from "@/types/types";
 import { ReportCard } from "@/components/reports/ReportCard";
 import { ReportConfiguration as ReportConfigComponent } from "@/components/reports/ReportConfiguration";
 import type { ReportConfiguration, ReportConfig, ReportVisualization } from "@/components/reports/types";
-
-interface StandardField {
-  field_name: string;
-  field: string;
-  field_type: "text" | "number" | "boolean" | "date";
-}
 
 const Reports = () => {
   const [reports, setReports] = useState<ReportConfiguration[]>([]);
@@ -77,7 +70,11 @@ const Reports = () => {
 
       if (error) throw error;
 
-      setUserData(data);
+      setUserData({
+        ...data,
+        role: data.role as 'sales_rep' | 'manager',
+        subscription_status: data.subscription_status as 'free' | 'pro' | 'enterprise'
+      });
     } catch (err) {
       console.error("Error fetching user data:", err);
     }
@@ -217,12 +214,15 @@ const Reports = () => {
         name: "New Report",
         description: "Custom report description",
         user_id: userId,
-        config: JSON.stringify(initialConfig) // Convert to JSON string for Supabase
+        config: initialConfig
       };
 
       const { data, error } = await supabase
         .from('report_configurations')
-        .insert(newReportData)
+        .insert({
+          ...newReportData,
+          config: JSON.stringify(initialConfig)
+        })
         .select()
         .single();
 
