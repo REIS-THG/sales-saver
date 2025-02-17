@@ -1,10 +1,15 @@
-
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { CustomField, Deal } from "@/types/types";
 import { ArrowUpDown, Trash2, Activity } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export const getColumns = (
   customFields: CustomField[], 
@@ -61,21 +66,41 @@ export const getColumns = (
       cell: ({ row }) => {
         const score = row.original.health_score;
         let color;
+        let healthStatus;
+        
         if (score >= 70) {
           color = "bg-green-100 text-green-800";
+          healthStatus = "Healthy - This deal is progressing well with positive indicators";
         } else if (score >= 40) {
           color = "bg-yellow-100 text-yellow-800";
+          healthStatus = "Moderate - This deal needs attention but has potential";
         } else {
           color = "bg-red-100 text-red-800";
+          healthStatus = "At Risk - This deal requires immediate attention";
         }
         
         return (
-          <div className="flex items-center gap-2">
-            <Activity className="h-4 w-4" />
-            <Badge className={color}>
-              {score}%
-            </Badge>
-          </div>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-2">
+                  <Activity className="h-4 w-4" />
+                  <Badge className={color}>
+                    {score}%
+                  </Badge>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">
+                <div className="space-y-2">
+                  <p className="font-medium">{healthStatus}</p>
+                  <p className="text-sm text-muted-foreground">
+                    Deal health is automatically calculated based on AI analysis of risks, 
+                    opportunities, and overall deal progress. The score updates with each new analysis.
+                  </p>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         );
       },
     },
@@ -103,7 +128,6 @@ export const getColumns = (
         );
       },
     },
-    // Action column
     {
       id: "actions",
       cell: ({ row }) => {
