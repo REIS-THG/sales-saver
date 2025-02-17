@@ -45,7 +45,7 @@ export function SortableTableRow({ row, onClick, onAnalyze }: SortableTableRowPr
     opacity: isDragging ? 0.5 : undefined,
     backgroundColor: isDragging ? "var(--muted)" : undefined,
     cursor: isDragging ? "grabbing" : "pointer",
-    position: isDragging ? "relative" as const, // Fix for TypeScript error
+    position: isDragging ? ("relative" as const) : undefined,
     zIndex: isDragging ? 1 : undefined,
     boxShadow: isDragging ? "0 4px 12px rgba(0, 0, 0, 0.1)" : undefined,
   };
