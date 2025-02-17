@@ -1,7 +1,8 @@
+
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Upload, FileText, Mail, Mic } from "lucide-react";
+import { ArrowLeft, FileText, Mail, Mic, ListChecks } from "lucide-react";
 import { AnalysisForm } from "@/components/deal-genius/AnalysisForm";
 import { InsightsList } from "@/components/deal-genius/InsightsList";
 import { useDealGenius } from "@/hooks/use-deal-genius";
@@ -44,6 +45,7 @@ const DealGenius = () => {
   const [persuasiveness, setPersuasiveness] = useState(50);
   const [urgency, setUrgency] = useState(50);
   const [selectedChannel, setSelectedChannel] = useState<'f2f' | 'email' | 'social_media'>('email');
+  const [isGeneratingNextSteps, setIsGeneratingNextSteps] = useState(false);
 
   useEffect(() => {
     fetchDeals();
@@ -55,6 +57,12 @@ const DealGenius = () => {
   }, [searchParams]);
 
   const isAnalysisLimited = subscriptionTier === 'free' && analysisCount >= 1;
+
+  const handleCreateNextSteps = async () => {
+    setIsGeneratingNextSteps(true);
+    // Add your next steps generation logic here
+    setTimeout(() => setIsGeneratingNextSteps(false), 2000);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -111,7 +119,7 @@ const DealGenius = () => {
             <div className="p-6">
               <TabsList className="w-full justify-start">
                 <TabsTrigger value="analysis">Deal Analysis</TabsTrigger>
-                <TabsTrigger value="output">Analysis Output</TabsTrigger>
+                <TabsTrigger value="next-steps">Next Step Assistant</TabsTrigger>
                 <TabsTrigger value="history">Analysis History</TabsTrigger>
               </TabsList>
             </div>
@@ -184,23 +192,28 @@ const DealGenius = () => {
               </div>
             </TabsContent>
 
-            <TabsContent value="output" className="p-6">
+            <TabsContent value="next-steps" className="p-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Communication Settings</CardTitle>
+                  <CardTitle>Next Steps Configuration</CardTitle>
                   <CardDescription>
-                    Customize how you want to communicate the next steps
+                    Customize how you want your next steps to be presented
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <ToneAnalysis
-                    formality={formality}
-                    setFormality={setFormality}
-                    persuasiveness={persuasiveness}
-                    setPersuasiveness={setPersuasiveness}
-                    urgency={urgency}
-                    setUrgency={setUrgency}
-                  />
+                  <div className="mt-6">
+                    <label className="text-sm font-medium mb-2 block">
+                      Tone
+                    </label>
+                    <ToneAnalysis
+                      formality={formality}
+                      setFormality={setFormality}
+                      persuasiveness={persuasiveness}
+                      setPersuasiveness={setPersuasiveness}
+                      urgency={urgency}
+                      setUrgency={setUrgency}
+                    />
+                  </div>
                   <div className="mt-6">
                     <label className="text-sm font-medium mb-2 block">
                       Communication Channel
@@ -210,6 +223,14 @@ const DealGenius = () => {
                       setSelectedChannel={setSelectedChannel}
                     />
                   </div>
+                  <Button 
+                    className="w-full mt-6"
+                    onClick={handleCreateNextSteps}
+                    disabled={isGeneratingNextSteps}
+                  >
+                    <ListChecks className="w-4 h-4 mr-2" />
+                    {isGeneratingNextSteps ? 'Creating Next Steps...' : 'Create Next Steps'}
+                  </Button>
                 </CardContent>
               </Card>
 
