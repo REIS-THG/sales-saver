@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { type Deal, type DealNote, type CustomField } from "@/types/types";
 import {
@@ -171,23 +172,23 @@ const DealDetailsModal = ({ deal, onClose, onDealUpdated, customFields }: DealDe
 
   return (
     <Dialog open={!!deal} onOpenChange={() => onClose()}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle className="flex justify-between items-center">
-            <span>{deal.deal_name}</span>
-            <div className="flex items-center gap-4">
-              <div className="text-sm">
+      <DialogContent className="sm:max-w-[600px] w-full max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="space-y-4">
+          <DialogTitle className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <span className="text-xl font-semibold break-all">{deal?.deal_name}</span>
+            <div className="flex items-center gap-4 sm:ml-auto">
+              <div className="text-sm whitespace-nowrap">
                 Health Score: 
                 <span className={`ml-2 px-2 py-1 rounded ${
-                  deal.health_score >= 70 ? 'bg-green-100 text-green-800' :
-                  deal.health_score >= 40 ? 'bg-yellow-100 text-yellow-800' :
+                  deal?.health_score >= 70 ? 'bg-green-100 text-green-800' :
+                  deal?.health_score >= 40 ? 'bg-yellow-100 text-yellow-800' :
                   'bg-red-100 text-red-800'
                 }`}>
-                  {deal.health_score}%
+                  {deal?.health_score}%
                 </span>
               </div>
               <Select value={status} onValueChange={handleStatusChange}>
-                <SelectTrigger className="w-[140px]">
+                <SelectTrigger className="w-[120px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -200,57 +201,61 @@ const DealDetailsModal = ({ deal, onClose, onDealUpdated, customFields }: DealDe
             </div>
           </DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 mt-4">
-          <div>
-            <p className="text-sm text-gray-500">Company</p>
-            <p className="font-medium">{deal.company_name}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500">Amount</p>
-            <p className="font-medium">
-              ${Number(deal.amount).toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
-            </p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500">Contact</p>
-            <p className="font-medium">{`${deal.contact_first_name} ${deal.contact_last_name}`}</p>
-            <p className="text-sm text-gray-500">{deal.contact_email}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500">Dates</p>
-            <p className="font-medium">
-              Start: {new Date(deal.start_date).toLocaleDateString()}
-            </p>
-            {deal.expected_close_date && (
+
+        <div className="space-y-6 mt-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <p className="text-sm text-gray-500">Company</p>
+              <p className="font-medium break-all">{deal?.company_name}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm text-gray-500">Amount</p>
               <p className="font-medium">
-                Expected Close: {new Date(deal.expected_close_date).toLocaleDateString()}
+                ${Number(deal?.amount).toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
               </p>
-            )}
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm text-gray-500">Contact</p>
+              <p className="font-medium break-all">{`${deal?.contact_first_name} ${deal?.contact_last_name}`}</p>
+              <p className="text-sm text-gray-500 break-all">{deal?.contact_email}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm text-gray-500">Dates</p>
+              <p className="font-medium">
+                Start: {deal?.start_date ? new Date(deal.start_date).toLocaleDateString() : 'N/A'}
+              </p>
+              {deal?.expected_close_date && (
+                <p className="font-medium">
+                  Expected Close: {new Date(deal.expected_close_date).toLocaleDateString()}
+                </p>
+              )}
+            </div>
           </div>
-          {deal.next_action && (
-            <div>
+
+          {deal?.next_action && (
+            <div className="space-y-1">
               <p className="text-sm text-gray-500">Next Action</p>
-              <p className="font-medium">{deal.next_action}</p>
+              <p className="font-medium break-all">{deal.next_action}</p>
             </div>
           )}
           
           <div className="border-t pt-4">
-            <h3 className="font-medium mb-2">Notes</h3>
+            <h3 className="font-medium mb-4">Notes</h3>
             <div className="space-y-4">
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Textarea
                   placeholder="Add a note..."
                   value={newNote}
                   onChange={(e) => setNewNote(e.target.value)}
-                  className="flex-1"
+                  className="flex-1 min-h-[80px]"
                 />
                 <Button 
                   onClick={handleAddNote} 
                   disabled={isLoading || !newNote.trim()}
-                  className="flex items-center gap-2"
+                  className="sm:self-start whitespace-nowrap"
                 >
                   {isAnalyzing && <Spinner size="sm" />}
                   Add Note
@@ -258,10 +263,10 @@ const DealDetailsModal = ({ deal, onClose, onDealUpdated, customFields }: DealDe
               </div>
               <div className="space-y-3 max-h-[300px] overflow-y-auto">
                 {notes.map((note) => (
-                  <div key={note.id} className="bg-gray-50 p-3 rounded-md">
-                    <p className="text-sm text-gray-600">{note.content}</p>
+                  <div key={note.id} className="bg-gray-50 p-3 rounded-md space-y-2">
+                    <p className="text-sm text-gray-600 break-words">{note.content}</p>
                     {note.sentiment_score !== null && (
-                      <div className="mt-2 text-xs text-gray-500">
+                      <div className="text-xs text-gray-500">
                         Sentiment: 
                         <span className={`ml-1 ${
                           note.sentiment_score > 30 ? 'text-green-600' :
@@ -274,7 +279,7 @@ const DealDetailsModal = ({ deal, onClose, onDealUpdated, customFields }: DealDe
                         </span>
                       </div>
                     )}
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-xs text-gray-400">
                       {format(new Date(note.created_at), "PPp")}
                     </p>
                   </div>
