@@ -176,6 +176,36 @@ export function DealsTable({ initialDeals }: DealsTableProps) {
     navigate(`/deal-genius?dealId=${dealId}`);
   };
 
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (active.id !== over?.id) {
+      setDeals((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over?.id);
+        
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+
+  const handleDealUpdated = async () => {
+    const { data: authData } = await supabase.auth.getUser();
+    const userId = authData.user?.id;
+
+    if (!userId) return;
+
+    const { data: dealsData } = await supabase
+      .from("deals")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+
+    if (dealsData) {
+      setDeals(dealsData as Deal[]);
+    }
+  };
+
   const dealsWithHandler = deals.map(deal => ({
     ...deal,
     onHealthScoreClick: handleHealthScoreClick
