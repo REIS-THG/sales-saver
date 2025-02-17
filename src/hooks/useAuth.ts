@@ -45,7 +45,30 @@ export function useAuth() {
       return;
     }
 
-    setUser(data);
+    if (data) {
+      // Ensure role is either 'sales_rep' or 'manager'
+      const role = data.role === 'manager' ? 'manager' : 'sales_rep';
+      
+      // Create a properly typed User object
+      const userData: User = {
+        id: data.id,
+        user_id: data.user_id,
+        full_name: data.full_name,
+        role: role,
+        created_at: data.created_at,
+        updated_at: data.updated_at,
+        theme: data.theme,
+        default_deal_view: data.default_deal_view,
+        custom_views: data.custom_views || [],
+        email: data.email,
+        subscription_status: data.subscription_status || 'free',
+        subscription_end_date: data.subscription_end_date,
+        successful_deals_count: data.successful_deals_count || 0,
+        billing_address: data.billing_address || {}
+      };
+
+      setUser(userData);
+    }
     setLoading(false);
   };
 
