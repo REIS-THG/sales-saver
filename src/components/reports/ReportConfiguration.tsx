@@ -20,7 +20,7 @@ export const ReportConfiguration = ({
   const mapFieldToOption = (field: StandardField | CustomField) => ({
     field: 'field' in field ? field.field : field.field_name,
     field_name: field.field_name,
-    field_type: field.field_type
+    field_type: field.field_type as "text" | "number" | "boolean" | "date"
   });
 
   return (

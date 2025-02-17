@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -5,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
 import { Plus, BarChart2, PieChart, LineChart, Table, ArrowLeft } from "lucide-react";
-import type { CustomField, Deal } from "@/types/types";
+import type { CustomField, Deal, User } from "@/types/types";
 import { ReportCard } from "@/components/reports/ReportCard";
 import { ReportConfiguration as ReportConfigComponent } from "@/components/reports/ReportConfiguration";
 import type { ReportConfiguration, ReportConfig, ReportVisualization } from "@/components/reports/types";
@@ -216,7 +217,7 @@ const Reports = () => {
         name: "New Report",
         description: "Custom report description",
         user_id: userId,
-        config: initialConfig
+        config: JSON.stringify(initialConfig) // Convert to JSON string for Supabase
       };
 
       const { data, error } = await supabase
