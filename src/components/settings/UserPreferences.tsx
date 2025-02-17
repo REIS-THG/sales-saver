@@ -19,7 +19,7 @@ export function UserPreferences({
   onDefaultViewChange,
 }: UserPreferencesProps) {
   return (
-    <Card>
+    <Card className="transition-colors">
       <CardHeader>
         <CardTitle>User Preferences</CardTitle>
         <CardDescription>Customize your experience</CardDescription>
@@ -33,12 +33,12 @@ export function UserPreferences({
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            <Sun className="h-4 w-4" />
+            <Sun className="h-4 w-4 text-orange-500" />
             <Switch
               checked={theme === "dark"}
               onCheckedChange={(checked) => onThemeChange(checked ? "dark" : "light")}
             />
-            <Moon className="h-4 w-4" />
+            <Moon className="h-4 w-4 text-blue-500" />
           </div>
         </div>
 

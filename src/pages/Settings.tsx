@@ -13,7 +13,16 @@ import { CreditCard } from "lucide-react";
 export default function Settings() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const [theme, setTheme] = useState("light");
+  const [theme, setTheme] = useState(() => {
+    // Check localStorage first
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) return savedTheme;
+    // Then check system preference
+    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      return 'dark';
+    }
+    return 'light';
+  });
   const [defaultView, setDefaultView] = useState("table");
 
   useEffect(() => {
@@ -23,9 +32,16 @@ export default function Settings() {
     }
   }, [user, loading, navigate]);
 
+  useEffect(() => {
+    // Apply theme to document
+    document.documentElement.classList.remove('light', 'dark');
+    document.documentElement.classList.add(theme);
+    // Save theme preference
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
   const handleThemeChange = async (newTheme: string) => {
     setTheme(newTheme);
-    // Implement theme change logic
   };
 
   const handleDefaultViewChange = async (newView: string) => {
@@ -60,10 +76,10 @@ export default function Settings() {
       </div>
       
       {user.subscription_status === 'free' && (
-        <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-100 rounded-lg p-4 mb-8 flex items-center justify-between">
+        <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border border-purple-100 dark:border-purple-800 rounded-lg p-4 mb-8 flex items-center justify-between">
           <div>
-            <h3 className="font-semibold text-purple-900">You're on the Free Plan</h3>
-            <p className="text-sm text-purple-700">Upgrade to Pro to unlock all features</p>
+            <h3 className="font-semibold text-purple-900 dark:text-purple-100">You're on the Free Plan</h3>
+            <p className="text-sm text-purple-700 dark:text-purple-300">Upgrade to Pro to unlock all features</p>
           </div>
           <Link to="/subscription">
             <Button>Upgrade to Pro</Button>
