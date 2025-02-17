@@ -104,7 +104,7 @@ export function SubscriptionPlanCard({ plan, onUpgrade }: SubscriptionPlanCardPr
             Current Plan
           </Button>
         ) : plan.name === "Pro" ? (
-          <div className="w-full [&>stripe-buy-button]:[&>iframe]:!block [&>stripe-buy-button]:[&>iframe]:!w-full [&>stripe-buy-button]:[&>iframe]:!h-10">
+          <div className="w-full [&>stripe-buy-button]:block [&>stripe-buy-button]:w-full [&>stripe-buy-button]:[&>iframe]:!w-full [&>stripe-buy-button]:[&>iframe]:!min-h-[40px] [&>stripe-buy-button]:[&>iframe]:!max-h-[40px]">
             <stripe-buy-button
               buy-button-id="buy_btn_1QtdHaDaihWQpHM6vSaLMfRh"
               publishable-key="pk_live_51Qtb8WDaihWQpHM6zckr56vWVg2BeBX6sFXA9FgOrmbdN3H5HY3GBMiO3DaO5rYOuCDsOjUrQAQV9xdbtvh3VSXR005zCbf5Dz"
