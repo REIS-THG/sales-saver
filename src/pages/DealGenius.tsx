@@ -59,7 +59,13 @@ const DealGenius = () => {
       return;
     }
 
-    setDeals(data);
+    // Type cast the status to ensure it matches the Deal interface
+    const typedDeals = data.map(deal => ({
+      ...deal,
+      status: (deal.status || 'open') as 'open' | 'stalled' | 'won' | 'lost'
+    }));
+
+    setDeals(typedDeals);
   };
 
   const fetchInsights = async (dealId: string) => {
@@ -76,8 +82,13 @@ const DealGenius = () => {
         title: "Error",
         description: "Failed to fetch insights",
       });
-    } else {
-      setInsights(data);
+    } else if (data) {
+      // Type cast the insight_type to ensure it matches the Insight interface
+      const typedInsights = data.map(insight => ({
+        ...insight,
+        insight_type: insight.insight_type as 'opportunity' | 'risk' | 'action' | 'trend'
+      }));
+      setInsights(typedInsights);
     }
     setIsLoading(false);
   };

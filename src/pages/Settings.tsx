@@ -181,9 +181,12 @@ const Settings = () => {
       return;
     }
 
-    const userData = {
+    const userData: User = {
       ...userDataResult,
-      role: userDataResult.role as 'sales_rep' | 'manager'
+      role: userDataResult.role as 'sales_rep' | 'manager',
+      custom_views: userDataResult.custom_views as Record<string, any>[] || [],
+      billing_address: userDataResult.billing_address || {},
+      subscription_status: userDataResult.subscription_status as 'free' | 'pro' | 'enterprise' || 'free'
     };
 
     setUserData(userData);
