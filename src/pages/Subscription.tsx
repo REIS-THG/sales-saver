@@ -2,9 +2,15 @@
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check } from "lucide-react";
+import { Check, HelpCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Spinner } from "@/components/ui/spinner";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export default function Subscription() {
   const { user, loading } = useAuth();
@@ -29,63 +35,136 @@ export default function Subscription() {
       price: "0",
       description: "Perfect for getting started",
       features: [
-        "Up to 50 deals",
+        "Up to 5 deals",
+        "1 deal analysis per month",
+        "1 saved report",
         "Basic deal tracking",
-        "Email support",
-        "Standard analytics"
+        "Email support"
+      ],
+      limitations: [
+        "Limited analytics",
+        "No AI-powered insights",
+        "No custom fields",
+        "No team collaboration"
       ],
       current: user.subscription_status === "free"
     },
     {
       name: "Pro",
-      price: "29",
+      price: "30",
+      billingPeriod: "per user/month",
       description: "For growing sales teams",
       features: [
         "Unlimited deals",
+        "Unlimited deal analysis",
+        "Unlimited saved reports",
         "Advanced analytics",
         "Priority support",
         "Custom fields",
         "AI-powered insights",
-        "Team collaboration"
+        "Team collaboration",
+        "Export capabilities",
+        "API access"
       ],
       current: user.subscription_status === "pro"
+    },
+    {
+      name: "Enterprise",
+      price: "Custom",
+      description: "For large organizations",
+      features: [
+        "Everything in Pro",
+        "Custom contract terms",
+        "Dedicated account manager",
+        "Custom integrations",
+        "Enhanced security features",
+        "SSO integration",
+        "Custom training sessions",
+        "SLA guarantees",
+        "Audit logs",
+        "Volume discounts"
+      ],
+      contact: true,
+      current: user.subscription_status === "enterprise"
     }
   ];
 
-  const handleUpgrade = async (planType: "free" | "pro") => {
-    // TODO: Implement Stripe checkout
+  const handleUpgrade = async (planType: "free" | "pro" | "enterprise") => {
+    if (planType === "enterprise") {
+      // Open email client with pre-filled subject
+      window.location.href = `mailto:enterprise@example.com?subject=Enterprise Plan Inquiry&body=I'm interested in learning more about the Enterprise plan.`;
+      return;
+    }
+
+    // TODO: Implement Stripe checkout for pro plan
     console.log("Upgrading to", planType);
   };
 
   return (
-    <div className="container py-10 max-w-6xl">
+    <div className="container py-10 max-w-7xl">
       <div className="text-center mb-10">
         <h1 className="text-4xl font-bold mb-4">Choose Your Plan</h1>
         <p className="text-lg text-muted-foreground">
-          Select the perfect plan for your sales needs
+          Scale your sales pipeline with the right tools for your team
         </p>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+      <div className="grid md:grid-cols-3 gap-8 max-w-7xl mx-auto">
         {plans.map((plan) => (
-          <Card key={plan.name} className={`flex flex-col ${plan.current ? 'border-primary' : ''}`}>
+          <Card 
+            key={plan.name} 
+            className={`flex flex-col ${plan.current ? 'border-primary ring-2 ring-primary' : ''} ${plan.name === 'Pro' ? 'md:-mt-4 md:mb-4' : ''}`}
+          >
             <CardHeader>
-              <CardTitle className="text-2xl">{plan.name}</CardTitle>
-              <CardDescription>
-                <span className="text-3xl font-bold">${plan.price}</span>
-                {plan.price !== "0" && <span className="text-muted-foreground">/month</span>}
+              <CardTitle className="text-2xl flex items-center gap-2">
+                {plan.name}
+                {plan.name === 'Pro' && (
+                  <span className="text-xs font-medium bg-primary text-primary-foreground px-2 py-1 rounded-full">
+                    POPULAR
+                  </span>
+                )}
+              </CardTitle>
+              <CardDescription className="space-y-2">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-3xl font-bold">
+                    {plan.price === "Custom" ? "Contact Us" : `$${plan.price}`}
+                  </span>
+                  {plan.billingPeriod && (
+                    <span className="text-sm text-muted-foreground">/{plan.billingPeriod}</span>
+                  )}
+                </div>
+                <p>{plan.description}</p>
               </CardDescription>
             </CardHeader>
             <CardContent className="flex-1">
-              <p className="text-muted-foreground mb-4">{plan.description}</p>
-              <ul className="space-y-3">
+              <div className="space-y-4">
                 {plan.features.map((feature) => (
-                  <li key={feature} className="flex items-center gap-2">
-                    <Check className="h-5 w-5 text-primary" />
+                  <div key={feature} className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-primary mt-0.5" />
                     <span>{feature}</span>
-                  </li>
+                  </div>
                 ))}
-              </ul>
+                {plan.limitations && (
+                  <div className="mt-4 pt-4 border-t">
+                    <p className="text-sm text-muted-foreground mb-2">Limitations:</p>
+                    {plan.limitations.map((limitation) => (
+                      <div key={limitation} className="flex items-start gap-2">
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Upgrade to Pro to remove this limitation</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                        <span className="text-sm text-muted-foreground">{limitation}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </CardContent>
             <CardFooter>
               {plan.current ? (
@@ -95,15 +174,26 @@ export default function Subscription() {
               ) : (
                 <Button 
                   className="w-full" 
-                  onClick={() => handleUpgrade(plan.name.toLowerCase() as "free" | "pro")}
-                  variant={plan.name === "Pro" ? "default" : "outline"}
+                  onClick={() => handleUpgrade(plan.name.toLowerCase() as "free" | "pro" | "enterprise")}
+                  variant={plan.name === "Free" ? "outline" : "default"}
                 >
-                  {plan.name === "Free" ? "Downgrade" : "Upgrade"} to {plan.name}
+                  {plan.contact ? "Contact Sales" : `Get ${plan.name}`}
                 </Button>
               )}
             </CardFooter>
           </Card>
         ))}
+      </div>
+
+      <div className="mt-12 text-center">
+        <p className="text-sm text-muted-foreground">
+          All plans include our core features: Deal tracking, Basic analytics, and Email support.
+          <br />
+          Questions? Contact our sales team at{" "}
+          <a href="mailto:sales@example.com" className="text-primary hover:underline">
+            sales@example.com
+          </a>
+        </p>
       </div>
     </div>
   );
