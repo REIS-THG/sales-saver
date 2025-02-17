@@ -10,10 +10,19 @@ import { subscriptionPlans } from "@/components/subscription/plans-data";
 import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 
-// Initialize Stripe with a check for the publishable key
-const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY 
-  ? loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
-  : Promise.reject(new Error('Stripe publishable key is not set'));
+// Initialize Stripe with proper error handling
+let stripePromise: Promise<any> | null = null;
+
+const getStripe = () => {
+  if (!stripePromise) {
+    const key = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+    if (!key) {
+      return Promise.reject(new Error('Stripe publishable key is not configured'));
+    }
+    stripePromise = loadStripe(key);
+  }
+  return stripePromise;
+};
 
 export default function Subscription() {
   const { user, loading } = useAuth();
@@ -65,16 +74,9 @@ export default function Subscription() {
 
     if (planType === "pro") {
       try {
-        // Check if Stripe is properly initialized
-        const stripe = await stripePromise.catch(() => {
-          throw new Error('Stripe failed to initialize. Please check your configuration.');
-        });
+        const stripe = await getStripe();
 
-        if (!stripe) {
-          throw new Error('Stripe failed to initialize');
-        }
-
-        const { data: { sessionId }, error } = await supabase.functions.invoke('create-checkout-session', {
+        const { data, error } = await supabase.functions.invoke('create-checkout-session', {
           body: {
             priceId: plans[1].priceId,
             userId: user.user_id,
@@ -86,12 +88,16 @@ export default function Subscription() {
           throw error;
         }
 
+        if (!data?.sessionId) {
+          throw new Error('No session ID returned from the server');
+        }
+
         // Redirect to Stripe Checkout
         const result = await stripe.redirectToCheckout({
-          sessionId
+          sessionId: data.sessionId
         });
 
-        if (result.error) {
+        if (result?.error) {
           throw result.error;
         }
 
