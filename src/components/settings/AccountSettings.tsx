@@ -100,7 +100,7 @@ export function AccountSettings({ userData }: AccountSettingsProps) {
               <div className="flex items-center justify-between mt-2">
                 <span className="capitalize">{userData?.subscription_status || 'free'}</span>
                 <div className="space-x-2">
-                  {userData?.subscription_status === 'pro' && (
+                  {userData?.subscription_status === 'pro' ? (
                     <>
                       <a href="https://billing.stripe.com/p/login/3cseWi90FfLW98I9AA" target="_blank" rel="noopener noreferrer">
                         <Button variant="outline">
@@ -113,11 +113,18 @@ export function AccountSettings({ userData }: AccountSettingsProps) {
                         </Button>
                       </a>
                     </>
-                  )}
-                  {userData?.subscription_status === 'free' && (
-                    <Link to="/subscription">
-                      <Button>Upgrade to Pro</Button>
-                    </Link>
+                  ) : (
+                    <>
+                      <Button variant="outline" disabled className="opacity-50">
+                        Update Payment Info
+                      </Button>
+                      <Button variant="outline" disabled className="opacity-50">
+                        Manage Billing
+                      </Button>
+                      <Link to="/subscription">
+                        <Button>Upgrade to Pro</Button>
+                      </Link>
+                    </>
                   )}
                 </div>
               </div>
