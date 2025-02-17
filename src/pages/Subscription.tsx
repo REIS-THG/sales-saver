@@ -120,17 +120,6 @@ export default function Subscription() {
           />
         ))}
       </div>
-
-      <div className="mt-12 text-center">
-        <p className="text-sm text-muted-foreground">
-          All plans include our core features: Deal tracking, Basic analytics, and Email support.
-          <br />
-          Questions? Contact our sales team at{" "}
-          <a href="mailto:sales@example.com" className="text-primary hover:underline">
-            sales@example.com
-          </a>
-        </p>
-      </div>
     </div>
   );
 }
