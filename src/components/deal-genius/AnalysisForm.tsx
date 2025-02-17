@@ -23,6 +23,7 @@ interface AnalysisFormProps {
   onDealChange: (dealId: string) => void;
   isAnalyzing: boolean;
   isLoading?: boolean;
+  isLimited?: boolean;
   onAnalyze: (params: {
     salesApproach: Insight['sales_approach'];
     industry: string;

@@ -12,6 +12,8 @@ export function useDealGenius() {
   const [isLoading, setIsLoading] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [analysisCount, setAnalysisCount] = useState(0);
+  const [subscriptionTier, setSubscriptionTier] = useState<'free' | 'pro'>('free');
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -102,6 +104,12 @@ export function useDealGenius() {
     setIsLoading(false);
   };
 
+  const handleFileUpload = async (file: File, type: 'transcript' | 'email' | 'voice') => {
+    // Implementation for file upload
+    console.log('File upload:', file, type);
+    // Add your file upload logic here
+  };
+
   const analyzeDeal = async (
     dealId: string,
     analysisParams: {
@@ -157,8 +165,11 @@ export function useDealGenius() {
     isLoading,
     isAnalyzing,
     error,
+    analysisCount,
+    subscriptionTier,
     fetchDeals,
     fetchInsights,
     analyzeDeal,
+    handleFileUpload,
   };
 }
