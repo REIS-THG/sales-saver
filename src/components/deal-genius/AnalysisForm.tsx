@@ -8,7 +8,7 @@ import { useState } from "react";
 import { Deal, Insight } from "@/types/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle, RefreshCw, Loader2 } from "lucide-react";
+import { AlertTriangle, RefreshCw, Loader2, Sparkles } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
