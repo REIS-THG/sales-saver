@@ -92,14 +92,24 @@ const DealGenius = () => {
       });
     } else if (data) {
       const typedInsights: DealInsight[] = data.map(insight => ({
-        ...insight,
-        priority: insight.priority || 'medium',
-        status: insight.status || 'open',
-        insight_type: insight.insight_type || 'action_item',
         id: insight.id,
         deal_id: insight.deal_id,
+        insight_type: insight.insight_type as 'risk' | 'opportunity' | 'action_item',
         content: insight.content,
-      } as DealInsight));
+        created_at: insight.created_at,
+        updated_at: insight.updated_at,
+        confidence_score: insight.confidence_score,
+        coaching_suggestion: insight.coaching_suggestion,
+        communication_template: insight.communication_template,
+        sales_approach: insight.sales_approach,
+        communication_channel: insight.communication_channel,
+        industry: insight.industry,
+        word_choice_analysis: insight.word_choice_analysis,
+        source_data: insight.source_data,
+        is_processed: insight.is_processed,
+        tone_analysis: insight.tone_analysis,
+        purpose_notes: insight.purpose_notes
+      }));
       
       setInsights(typedInsights);
     }

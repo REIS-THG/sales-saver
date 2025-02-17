@@ -17,11 +17,11 @@ export const ReportConfiguration = ({
   visualizationTypes,
 }: ReportConfigurationProps) => {
   const mapFieldToOption = (field: StandardField | CustomField) => {
-    const fieldType = field.field_type as "text" | "number" | "boolean" | "date";
+    const fieldType = field.field_type;
     return {
       field: 'field' in field ? field.field : field.field_name,
       field_name: field.field_name,
-      field_type: fieldType
+      field_type: fieldType as "text" | "number" | "boolean" | "date"
     };
   };
 

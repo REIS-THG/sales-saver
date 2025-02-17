@@ -106,7 +106,6 @@ const Dashboard = () => {
       }
 
       const typedDeals: Deal[] = (dealsData || []).map((deal) => ({
-        ...deal,
         id: deal.id,
         deal_name: deal.deal_name,
         company_name: deal.company_name,
@@ -114,24 +113,20 @@ const Dashboard = () => {
         status: (deal.status || 'open') as Deal['status'],
         health_score: deal.health_score || 50,
         user_id: deal.user_id,
+        created_at: deal.created_at || undefined,
+        updated_at: deal.updated_at || undefined,
+        start_date: deal.start_date || undefined,
+        expected_close_date: deal.expected_close_date || undefined,
+        last_contacted: deal.last_contacted || undefined,
+        next_action: deal.next_action || undefined,
+        contact_email: deal.contact_email || undefined,
+        contact_first_name: deal.contact_first_name || undefined,
+        contact_last_name: deal.contact_last_name || undefined,
+        company_url: deal.company_url || undefined,
         notes: Array.isArray(deal.notes) ? deal.notes : [],
-        custom_fields: deal.custom_fields ? deal.custom_fields as Record<string, any> : {},
-        name: deal.deal_name,
-        value: deal.amount,
-        created_at: deal.created_at || null,
-        updated_at: deal.updated_at || null,
-        close_date: deal.close_date || null,
-        start_date: deal.start_date || null,
-        expected_close_date: deal.expected_close_date || null,
-        last_contacted: deal.last_contacted || null,
-        next_action: deal.next_action || null,
-        customer_name: deal.customer_name || null,
-        customer_email: deal.customer_email || null,
-        contact_email: deal.contact_email || null,
-        contact_first_name: deal.contact_first_name || null,
-        contact_last_name: deal.contact_last_name || null,
-        company_url: deal.company_url || null,
-        probability: deal.probability || null
+        custom_fields: deal.custom_fields ? (typeof deal.custom_fields === 'string' ? JSON.parse(deal.custom_fields) : deal.custom_fields) : {},
+        last_note_at: deal.last_note_at || undefined,
+        notes_count: deal.notes_count || 0
       }));
 
       setDeals(typedDeals);
