@@ -42,48 +42,44 @@ export interface Deal {
   amount: number;
   status: 'open' | 'won' | 'lost' | 'stalled';
   health_score: number;
-  close_date?: string;
-  start_date?: string;
-  expected_close_date?: string;
+  close_date?: string | null;
+  start_date?: string | null;
+  expected_close_date?: string | null;
   user_id: string;
-  created_at?: string;
-  updated_at?: string;
-  last_contacted?: string;
-  next_action?: string;
-  customer_name?: string;
-  customer_email?: string;
-  contact_email?: string;
-  contact_first_name?: string;
-  contact_last_name?: string;
-  company_url?: string;
-  probability?: number;
-  notes?: string[];
-  custom_fields?: Record<string, any>;
+  created_at?: string | null;
+  updated_at?: string | null;
+  last_contacted?: string | null;
+  next_action?: string | null;
+  customer_name?: string | null;
+  customer_email?: string | null;
+  contact_email?: string | null;
+  contact_first_name?: string | null;
+  contact_last_name?: string | null;
+  company_url?: string | null;
+  probability?: number | null;
+  notes: string[];
+  custom_fields: Record<string, any>;
   name?: string;
   value?: number;
 }
 
-export interface BulkImport {
-  id: string;
-  user_id: string;
-  file_name: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
-  total_rows?: number;
-  processed_rows?: number;
-  failed_rows?: number;
-  error_message?: string;
-  created_at?: string;
-  updated_at?: string;
-}
-
-export interface DealAnalysis {
+export interface DealInsight {
   id: string;
   deal_id: string;
-  analysis_type: 'sentiment' | 'risk' | 'opportunity';
-  result: Record<string, any>;
+  insight_type: 'risk' | 'opportunity' | 'action_item';
+  content: string;
+  priority: 'low' | 'medium' | 'high';
+  status: 'open' | 'acknowledged' | 'resolved';
   created_at?: string;
+  updated_at?: string;
   confidence_score?: number;
-  recommendations?: string[];
+  coaching_suggestion?: string;
+  communication_template?: string;
+  sales_approach?: 'consultative_selling' | 'solution_selling' | 'transactional_selling' | 'value_based_selling';
+  communication_channel?: 'f2f' | 'email' | 'social_media';
+  industry?: string;
+  word_choice_analysis?: Record<string, any>;
+  source_data?: Record<string, any>;
 }
 
 export interface DealNote {
@@ -97,15 +93,27 @@ export interface DealNote {
   key_points?: string[];
 }
 
-export interface DealInsight {
+export interface DealAnalysis {
   id: string;
   deal_id: string;
-  insight_type: 'risk' | 'opportunity' | 'action_item';
-  content: string;
-  priority: 'low' | 'medium' | 'high';
+  analysis_type: 'sentiment' | 'risk' | 'opportunity';
+  result: Record<string, any>;
+  created_at?: string;
+  confidence_score?: number;
+  recommendations?: string[];
+}
+
+export interface BulkImport {
+  id: string;
+  user_id: string;
+  file_name: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  total_rows?: number;
+  processed_rows?: number;
+  failed_rows?: number;
+  error_message?: string;
   created_at?: string;
   updated_at?: string;
-  status: 'open' | 'acknowledged' | 'resolved';
 }
 
 export interface Insight {

@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Spinner } from "@/components/ui/spinner";
 import { ArrowLeft } from "lucide-react";
-import { Deal, Insight } from "@/types/types";
+import { Deal, Insight, DealInsight } from "@/types/types";
 import { DealSelector } from "@/components/deal-genius/DealSelector";
 import { AnalysisParameters } from "@/components/deal-genius/AnalysisParameters";
 import { ToneAnalysis } from "@/components/deal-genius/ToneAnalysis";
@@ -65,12 +64,16 @@ const DealGenius = () => {
       return;
     }
 
-    setDeals(data.map(deal => ({
+    const typedDeals: Deal[] = (data || []).map(deal => ({
       ...deal,
       name: deal.deal_name,
       value: deal.amount,
-      custom_fields: deal.custom_fields as Record<string, any> || {},
-    })));
+      status: (deal.status || 'open') as Deal['status'],
+      notes: Array.isArray(deal.notes) ? deal.notes : [],
+      custom_fields: deal.custom_fields ? deal.custom_fields as Record<string, any> : {}
+    }));
+
+    setDeals(typedDeals);
   };
 
   const fetchInsights = async (dealId: string) => {
@@ -88,11 +91,17 @@ const DealGenius = () => {
         description: "Failed to fetch insights",
       });
     } else if (data) {
-      setInsights(data.map(insight => ({
+      const typedInsights: DealInsight[] = data.map(insight => ({
         ...insight,
         priority: insight.priority || 'medium',
-        status: insight.status || 'open'
-      } as Insight)));
+        status: insight.status || 'open',
+        insight_type: insight.insight_type || 'action_item',
+        id: insight.id,
+        deal_id: insight.deal_id,
+        content: insight.content,
+      } as DealInsight));
+      
+      setInsights(typedInsights);
     }
     setIsLoading(false);
   };

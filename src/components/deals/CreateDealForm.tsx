@@ -23,7 +23,6 @@ import { Plus } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { z } from "zod";
 
 interface CreateDealFormProps {
   onDealCreated: () => void;
@@ -84,7 +83,7 @@ const CreateDealForm = ({ onDealCreated, customFields, onBeforeCreate }: CreateD
     setNewDeal({ ...newDeal, amount: formatted });
   };
 
-  const handleSubmit = async (data: z.infer<typeof FormSchema>) => {
+  const handleSubmit = async () => {
     if (onBeforeCreate) {
       const canProceed = await onBeforeCreate();
       if (!canProceed) {

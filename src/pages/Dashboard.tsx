@@ -106,14 +106,33 @@ const Dashboard = () => {
         throw fetchError;
       }
 
-      const typedDeals = (dealsData || []).map((deal) => ({
+      const typedDeals: Deal[] = (dealsData || []).map((deal) => ({
         ...deal,
-        notes: Array.isArray(deal.notes) ? deal.notes : [],
-        status: deal.status as Deal["status"] || "open",
+        id: deal.id,
+        deal_name: deal.deal_name,
+        company_name: deal.company_name,
+        amount: deal.amount,
+        status: (deal.status || 'open') as Deal['status'],
         health_score: deal.health_score || 50,
+        user_id: deal.user_id,
+        notes: Array.isArray(deal.notes) ? deal.notes : [],
+        custom_fields: deal.custom_fields ? deal.custom_fields as Record<string, any> : {},
         name: deal.deal_name,
         value: deal.amount,
-        custom_fields: deal.custom_fields || {}
+        created_at: deal.created_at || null,
+        updated_at: deal.updated_at || null,
+        close_date: deal.close_date || null,
+        start_date: deal.start_date || null,
+        expected_close_date: deal.expected_close_date || null,
+        last_contacted: deal.last_contacted || null,
+        next_action: deal.next_action || null,
+        customer_name: deal.customer_name || null,
+        customer_email: deal.customer_email || null,
+        contact_email: deal.contact_email || null,
+        contact_first_name: deal.contact_first_name || null,
+        contact_last_name: deal.contact_last_name || null,
+        company_url: deal.company_url || null,
+        probability: deal.probability || null
       }));
 
       setDeals(typedDeals);
