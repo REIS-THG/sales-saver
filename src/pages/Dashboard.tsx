@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Deal, CustomField } from "@/types/types";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut, Settings as SettingsIcon } from "lucide-react";
+import { LogOut, Settings as SettingsIcon, BarChart2 } from "lucide-react";
 import CreateDealForm from "@/components/deals/CreateDealForm";
 import { DealsTable } from "@/components/deals/DealsTable";
 import { Switch } from "@/components/ui/switch";
@@ -143,6 +143,10 @@ const Dashboard = () => {
           <h1 className="text-2xl font-bold text-gray-900">Sales Dashboard</h1>
           <div className="flex items-center gap-4">
             <CreateDealForm onDealCreated={fetchDeals} customFields={customFields} />
+            <Button variant="ghost" onClick={() => navigate("/reports")}>
+              <BarChart2 className="h-5 w-5 mr-2" />
+              Reports
+            </Button>
             <Button variant="ghost" onClick={() => navigate("/settings")}>
               <SettingsIcon className="h-5 w-5 mr-2" />
               Settings

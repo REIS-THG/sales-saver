@@ -1,4 +1,3 @@
-
 export interface User {
   id: string;
   user_id: string;
@@ -84,3 +83,47 @@ export interface CustomField {
   updated_at?: string;
   user_id?: string;
 }
+
+export interface ReportConfiguration {
+  id: string;
+  user_id: string;
+  name: string;
+  description?: string;
+  config: ReportConfig;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ReportConfig {
+  dimensions: ReportDimension[];
+  metrics: ReportMetric[];
+  filters: ReportFilter[];
+  timeRange?: TimeRange;
+  visualization: VisualizationType;
+}
+
+export interface ReportDimension {
+  field: string;
+  type: 'standard' | 'custom';
+  label: string;
+}
+
+export interface ReportMetric {
+  field: string;
+  aggregation: 'sum' | 'avg' | 'count' | 'min' | 'max';
+  label: string;
+}
+
+export interface ReportFilter {
+  field: string;
+  operator: 'equals' | 'contains' | 'greater_than' | 'less_than' | 'between' | 'in';
+  value: any;
+}
+
+export interface TimeRange {
+  start: string;
+  end: string;
+  preset?: 'last_7_days' | 'last_30_days' | 'last_90_days' | 'this_month' | 'this_quarter' | 'this_year';
+}
+
+export type VisualizationType = 'bar' | 'line' | 'pie' | 'table' | 'number' | 'area';
