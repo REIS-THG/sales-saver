@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Pencil, Save, Star, StarOff, Trash2 } from "lucide-react";
 import { ReportCardProps } from "./types";
 import { ReportExportButton } from "./ReportExportButton";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export const ReportCard = ({
   report,
@@ -65,16 +66,16 @@ export const ReportCard = ({
                 <StarOff className="h-4 w-4" />
               )}
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete(report.id);
-              }}
-            >
-              <Trash2 className="h-4 w-4 text-red-500" />
-            </Button>
+            <ConfirmDialog
+              title="Delete Report"
+              description="Are you sure you want to delete this report? This action cannot be undone."
+              onConfirm={() => onDelete(report.id)}
+              triggerButton={
+                <Button variant="ghost" size="icon">
+                  <Trash2 className="h-4 w-4 text-red-500" />
+                </Button>
+              }
+            />
           </div>
         </div>
       </CardHeader>
