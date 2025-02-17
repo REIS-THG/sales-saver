@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Deal, CustomField } from "@/types/types";
@@ -24,13 +23,15 @@ import { Plus } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import { z } from "zod";
 
 interface CreateDealFormProps {
   onDealCreated: () => void;
   customFields: CustomField[];
+  onBeforeCreate?: () => Promise<boolean>;
 }
 
-const CreateDealForm = ({ onDealCreated, customFields }: CreateDealFormProps) => {
+const CreateDealForm = ({ onDealCreated, customFields, onBeforeCreate }: CreateDealFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [newDeal, setNewDeal] = useState({
@@ -83,7 +84,14 @@ const CreateDealForm = ({ onDealCreated, customFields }: CreateDealFormProps) =>
     setNewDeal({ ...newDeal, amount: formatted });
   };
 
-  const handleCreateDeal = async () => {
+  const handleSubmit = async (data: z.infer<typeof FormSchema>) => {
+    if (onBeforeCreate) {
+      const canProceed = await onBeforeCreate();
+      if (!canProceed) {
+        return;
+      }
+    }
+
     try {
       setIsSubmitting(true);
       setError(null);
@@ -353,7 +361,7 @@ const CreateDealForm = ({ onDealCreated, customFields }: CreateDealFormProps) =>
           )}
           <Button
             className="w-full mt-4"
-            onClick={handleCreateDeal}
+            onClick={handleSubmit}
             disabled={isSubmitting || !newDeal.deal_name || !newDeal.company_name || !newDeal.amount}
           >
             Create Deal

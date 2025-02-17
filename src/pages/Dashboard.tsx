@@ -1,7 +1,8 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import type { Deal, CustomField } from "@/types/types";
+import type { Deal, CustomField, User } from "@/types/types";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { LogOut, Settings as SettingsIcon, BarChart2 } from "lucide-react";
@@ -9,6 +10,15 @@ import CreateDealForm from "@/components/deals/CreateDealForm";
 import { DealsTable } from "@/components/deals/DealsTable";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+const FREE_DEAL_LIMIT = 5;
 
 const Dashboard = () => {
   const [deals, setDeals] = useState<Deal[]>([]);
@@ -16,8 +26,31 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCustomFields, setShowCustomFields] = useState(false);
+  const [userData, setUserData] = useState<User | null>(null);
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const fetchUserData = async () => {
+    const { data: authData } = await supabase.auth.getUser();
+    if (!authData.user) {
+      navigate("/auth");
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("users")
+      .select("*")
+      .eq("user_id", authData.user.id)
+      .single();
+
+    if (error) {
+      console.error("Error fetching user data:", error);
+      return;
+    }
+
+    setUserData(data as User);
+  };
 
   const fetchCustomFields = async () => {
     try {
@@ -74,26 +107,21 @@ const Dashboard = () => {
       }
 
       const typedDeals = (dealsData || []).map((deal) => ({
-        id: deal.id,
-        user_id: deal.user_id,
-        deal_name: deal.deal_name,
-        company_name: deal.company_name,
-        amount: deal.amount,
-        status: deal.status as Deal["status"],
+        ...deal,
+        notes: Array.isArray(deal.notes) ? deal.notes : [],
+        status: deal.status as Deal["status"] || "open",
         health_score: deal.health_score || 50,
-        last_contacted: deal.last_contacted || null,
-        next_action: deal.next_action || null,
-        created_at: deal.created_at,
-        updated_at: deal.updated_at,
-        contact_first_name: deal.contact_first_name || "",
-        contact_last_name: deal.contact_last_name || "",
-        contact_email: deal.contact_email || "",
-        start_date: deal.start_date || new Date().toISOString(),
-        expected_close_date: deal.expected_close_date || "",
-        custom_fields: deal.custom_fields as Record<string, string | number | boolean> | null,
+        name: deal.deal_name,
+        value: deal.amount,
+        custom_fields: deal.custom_fields || {}
       }));
 
       setDeals(typedDeals);
+
+      // Check if free user has reached deal limit
+      if (userData?.subscription_status === 'free' && typedDeals.length >= FREE_DEAL_LIMIT) {
+        setShowUpgradeDialog(true);
+      }
     } catch (err) {
       console.error("Error fetching deals:", err);
       setError(err instanceof Error ? err.message : "Failed to fetch deals");
@@ -107,10 +135,24 @@ const Dashboard = () => {
     }
   };
 
+  const handleCreateDeal = async () => {
+    if (userData?.subscription_status === 'free' && deals.length >= FREE_DEAL_LIMIT) {
+      setShowUpgradeDialog(true);
+      return false; // Prevent deal creation
+    }
+    return true; // Allow deal creation
+  };
+
   useEffect(() => {
-    fetchDeals();
-    fetchCustomFields();
+    fetchUserData();
   }, []);
+
+  useEffect(() => {
+    if (userData) {
+      fetchDeals();
+      fetchCustomFields();
+    }
+  }, [userData]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -142,7 +184,11 @@ const Dashboard = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-900">Sales Dashboard</h1>
           <div className="flex items-center gap-4">
-            <CreateDealForm onDealCreated={fetchDeals} customFields={customFields} />
+            <CreateDealForm 
+              onDealCreated={fetchDeals} 
+              customFields={customFields}
+              onBeforeCreate={handleCreateDeal}
+            />
             <Button variant="ghost" onClick={() => navigate("/reports")}>
               <BarChart2 className="h-5 w-5 mr-2" />
               Reports
@@ -168,12 +214,39 @@ const Dashboard = () => {
           />
           <Label htmlFor="custom-fields">Show Custom Fields</Label>
         </div>
+        {userData?.subscription_status === 'free' && (
+          <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+            <p className="text-yellow-800">
+              Free plan: {deals.length}/{FREE_DEAL_LIMIT} deals used
+            </p>
+          </div>
+        )}
         <DealsTable 
           initialDeals={deals} 
           customFields={customFields}
           showCustomFields={showCustomFields}
         />
       </main>
+
+      <AlertDialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Upgrade to Pro</AlertDialogTitle>
+            <AlertDialogDescription>
+              You've reached the limit of {FREE_DEAL_LIMIT} deals on the free plan. 
+              Upgrade to Pro for unlimited deals and additional features.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex justify-end gap-4 mt-4">
+            <Button variant="outline" onClick={() => setShowUpgradeDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => navigate("/settings")}>
+              Upgrade Now
+            </Button>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
