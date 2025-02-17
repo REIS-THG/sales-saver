@@ -202,11 +202,12 @@ const Reports = () => {
         visualization: 'bar'
       };
 
+      // Convert the config to a JSON-compatible format
       const newReportData = {
         name: "New Report",
         description: "Custom report description",
         user_id: userId,
-        config: initialConfig
+        config: JSON.parse(JSON.stringify(initialConfig)) // This ensures the object is JSON-compatible
       };
 
       const { data, error } = await supabase
