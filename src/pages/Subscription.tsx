@@ -5,6 +5,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Check, HelpCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Spinner } from "@/components/ui/spinner";
+import { loadStripe } from "@stripe/stripe-js";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 import {
   Tooltip,
   TooltipContent,
@@ -12,9 +15,13 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+// Initialize Stripe
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+
 export default function Subscription() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   if (loading) {
     return (
@@ -53,6 +60,7 @@ export default function Subscription() {
       name: "Pro",
       price: "30",
       billingPeriod: "per user/month",
+      priceId: import.meta.env.VITE_STRIPE_PRO_PRICE_ID,
       description: "For growing sales teams",
       features: [
         "Unlimited deals",
@@ -91,13 +99,70 @@ export default function Subscription() {
 
   const handleUpgrade = async (planType: "free" | "pro" | "enterprise") => {
     if (planType === "enterprise") {
-      // Open email client with pre-filled subject
       window.location.href = `mailto:enterprise@example.com?subject=Enterprise Plan Inquiry&body=I'm interested in learning more about the Enterprise plan.`;
       return;
     }
 
-    // TODO: Implement Stripe checkout for pro plan
-    console.log("Upgrading to", planType);
+    if (planType === "pro") {
+      try {
+        const stripe = await stripePromise;
+        if (!stripe) {
+          throw new Error("Stripe failed to initialize");
+        }
+
+        const { data: { sessionId }, error } = await supabase.functions.invoke('create-checkout-session', {
+          body: {
+            priceId: plans[1].priceId,
+            userId: user.user_id,
+            customerEmail: user.email
+          }
+        });
+
+        if (error) {
+          throw error;
+        }
+
+        // Redirect to Stripe Checkout
+        const result = await stripe.redirectToCheckout({
+          sessionId
+        });
+
+        if (result.error) {
+          throw result.error;
+        }
+
+      } catch (error) {
+        console.error('Error:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to start checkout process. Please try again later."
+        });
+      }
+    }
+
+    if (planType === "free") {
+      try {
+        const { error } = await supabase.functions.invoke('cancel-subscription', {
+          body: { userId: user.user_id }
+        });
+
+        if (error) throw error;
+
+        toast({
+          title: "Success",
+          description: "Your subscription has been cancelled. Changes will take effect at the end of your billing period."
+        });
+
+      } catch (error) {
+        console.error('Error:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to cancel subscription. Please try again later."
+        });
+      }
+    }
   };
 
   return (
