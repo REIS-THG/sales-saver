@@ -1,7 +1,7 @@
 
 import { Insight } from "@/types/types";
 import { InsightCard } from "./InsightCard";
-import { Spinner } from "@/components/ui/spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface InsightsListProps {
   insights: Insight[];
@@ -11,8 +11,10 @@ interface InsightsListProps {
 export function InsightsList({ insights, isLoading }: InsightsListProps) {
   if (isLoading) {
     return (
-      <div className="flex justify-center py-8">
-        <Spinner size="lg" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {[1, 2, 3, 4].map((i) => (
+          <Skeleton key={i} className="h-[200px] w-full" />
+        ))}
       </div>
     );
   }

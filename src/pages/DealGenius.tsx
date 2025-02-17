@@ -8,6 +8,7 @@ import { InsightsList } from "@/components/deal-genius/InsightsList";
 import { useDealGenius } from "@/hooks/use-deal-genius";
 import { useNavigate } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const DealGenius = () => {
   const [searchParams] = useSearchParams();
@@ -66,6 +67,7 @@ const DealGenius = () => {
               fetchInsights(dealId);
             }}
             isAnalyzing={isAnalyzing}
+            isLoading={isLoading}
             onAnalyze={(params) => {
               if (selectedDeal) {
                 analyzeDeal(selectedDeal, params);

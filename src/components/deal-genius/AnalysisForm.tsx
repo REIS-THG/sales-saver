@@ -1,18 +1,19 @@
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
-import { Deal, Insight } from "@/types/types";
 import { DealSelector } from "./DealSelector";
 import { AnalysisParameters } from "./AnalysisParameters";
 import { ToneAnalysis } from "./ToneAnalysis";
 import { CommunicationChannel } from "./CommunicationChannel";
+import { useState } from "react";
+import { Deal, Insight } from "@/types/types";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface AnalysisFormProps {
   deals: Deal[];
   selectedDeal: string | null;
   onDealChange: (dealId: string) => void;
   isAnalyzing: boolean;
+  isLoading?: boolean;
   onAnalyze: (params: {
     salesApproach: Insight['sales_approach'];
     industry: string;
@@ -31,6 +32,7 @@ export function AnalysisForm({
   selectedDeal,
   onDealChange,
   isAnalyzing,
+  isLoading,
   onAnalyze,
 }: AnalysisFormProps) {
   const [salesApproach, setSalesApproach] = useState<Insight['sales_approach']>('consultative_selling');
@@ -54,6 +56,20 @@ export function AnalysisForm({
       communicationChannel: selectedChannel,
     });
   };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-10 w-full" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Skeleton className="h-32" />
+          <Skeleton className="h-32" />
+          <Skeleton className="h-24" />
+          <Skeleton className="h-24" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -96,8 +112,7 @@ export function AnalysisForm({
           disabled={!selectedDeal || isAnalyzing}
           className="w-full flex items-center justify-center gap-2"
         >
-          {isAnalyzing && <Spinner size="sm" />}
-          Analyze Deal
+          {isAnalyzing ? "Analyzing..." : "Analyze Deal"}
         </Button>
       </div>
     </div>
