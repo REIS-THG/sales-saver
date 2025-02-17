@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -5,10 +6,10 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
 import { Plus, BarChart2, PieChart, LineChart, Table, ArrowLeft } from "lucide-react";
-import type { ReportConfiguration as ReportConfigurationType, ReportConfig, CustomField, Deal } from "@/types/types";
+import type { CustomField, Deal } from "@/types/types";
 import { ReportCard } from "@/components/reports/ReportCard";
 import { ReportConfiguration as ReportConfigComponent } from "@/components/reports/ReportConfiguration";
-import type { ReportConfiguration } from "@/components/reports/types";
+import type { ReportConfiguration, ReportVisualization } from "@/components/reports/types";
 
 interface StandardField {
   field_name: string;
@@ -43,13 +44,11 @@ const Reports = () => {
     { value: 'max' as const, label: 'Maximum' },
   ];
 
-  type VisualizationType = 'bar' | 'line' | 'pie' | 'table';
-
-  const visualizationTypes = [
-    { value: 'bar' as const, label: 'Bar Chart', icon: <BarChart2 className="h-4 w-4" /> },
-    { value: 'line' as const, label: 'Line Chart', icon: <LineChart className="h-4 w-4" /> },
-    { value: 'pie' as const, label: 'Pie Chart', icon: <PieChart className="h-4 w-4" /> },
-    { value: 'table' as const, label: 'Table', icon: <Table className="h-4 w-4" /> },
+  const visualizationTypes: { value: ReportVisualization; label: string; icon: JSX.Element }[] = [
+    { value: 'bar', label: 'Bar Chart', icon: <BarChart2 className="h-4 w-4" /> },
+    { value: 'line', label: 'Line Chart', icon: <LineChart className="h-4 w-4" /> },
+    { value: 'pie', label: 'Pie Chart', icon: <PieChart className="h-4 w-4" /> },
+    { value: 'table', label: 'Table', icon: <Table className="h-4 w-4" /> },
   ];
 
   useEffect(() => {
@@ -69,7 +68,10 @@ const Reports = () => {
 
       const typedReports: ReportConfiguration[] = (reportsData || []).map(report => ({
         ...report,
-        config: report.config as unknown as ReportConfig
+        config: {
+          ...report.config,
+          visualization: report.config.visualization as ReportVisualization
+        }
       }));
 
       setReports(typedReports);
@@ -162,18 +164,18 @@ const Reports = () => {
         return;
       }
 
-      const initialConfig: ReportConfig = {
+      const initialConfig = {
         dimensions: [],
         metrics: [],
         filters: [],
-        visualization: 'bar'
+        visualization: 'bar' as ReportVisualization
       };
 
       const newReportData = {
         name: "New Report",
         description: "Custom report description",
         user_id: userId,
-        config: JSON.parse(JSON.stringify(initialConfig))
+        config: initialConfig
       };
 
       const { data, error } = await supabase
@@ -186,7 +188,10 @@ const Reports = () => {
 
       const newReport: ReportConfiguration = {
         ...data,
-        config: data.config as unknown as ReportConfig
+        config: {
+          ...data.config,
+          visualization: data.config.visualization as ReportVisualization
+        }
       };
 
       setReports(prev => [newReport, ...prev]);

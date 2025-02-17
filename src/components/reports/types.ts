@@ -1,4 +1,6 @@
 
+import type { StandardField, CustomField } from "@/types/types";
+
 export interface ReportDimension {
   field: string;
   type: 'standard' | 'custom';
@@ -17,11 +19,13 @@ export interface ReportFilter {
   value: any;
 }
 
+export type ReportVisualization = 'bar' | 'line' | 'pie' | 'table';
+
 export interface ReportConfig {
   dimensions: ReportDimension[];
   metrics: ReportMetric[];
   filters: ReportFilter[];
-  visualization: 'bar' | 'line' | 'pie' | 'table';
+  visualization: ReportVisualization;
 }
 
 export interface ReportConfiguration {
@@ -33,20 +37,6 @@ export interface ReportConfiguration {
   created_at?: string;
   updated_at?: string;
   is_favorite?: boolean;
-}
-
-export interface StandardField {
-  field_name: string;
-  field: string;
-  field_type: "text" | "number" | "boolean" | "date";
-}
-
-export interface CustomField {
-  id: string;
-  field_name: string;
-  field_type: "text" | "number" | "boolean" | "date";
-  is_required: boolean;
-  user_id?: string;
 }
 
 export interface ReportCardProps {
@@ -69,7 +59,7 @@ export interface ReportConfigurationProps {
   standardFields: StandardField[];
   customFields: CustomField[];
   aggregations: { value: 'sum' | 'avg' | 'count' | 'min' | 'max'; label: string; }[];
-  visualizationTypes: { value: 'bar' | 'line' | 'pie' | 'table'; label: string; icon: JSX.Element; }[];
+  visualizationTypes: { value: ReportVisualization; label: string; icon: JSX.Element; }[];
 }
 
 export interface ReportPreviewProps {

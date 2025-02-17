@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { Trash2 } from "lucide-react";
+import type { StandardField, CustomField } from "@/types/types";
 import { ReportConfigurationProps } from "./types";
 import { ReportPreview } from "./ReportPreview";
 
