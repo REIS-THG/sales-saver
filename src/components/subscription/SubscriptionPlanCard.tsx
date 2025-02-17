@@ -98,17 +98,18 @@ export function SubscriptionPlanCard({ plan, onUpgrade }: SubscriptionPlanCardPr
           )}
         </div>
       </CardContent>
-      <CardFooter>
+      <CardFooter className="p-6">
         {plan.current ? (
           <Button className="w-full" disabled>
             Current Plan
           </Button>
         ) : plan.name === "Pro" ? (
-          <stripe-buy-button
-            buy-button-id="buy_btn_1QtdHaDaihWQpHM6vSaLMfRh"
-            publishable-key="pk_live_51Qtb8WDaihWQpHM6zckr56vWVg2BeBX6sFXA9FgOrmbdN3H5HY3GBMiO3DaO5rYOuCDsOjUrQAQV9xdbtvh3VSXR005zCbf5Dz"
-            className="w-full"
-          />
+          <div className="w-full [&>stripe-buy-button]:[&>iframe]:!block [&>stripe-buy-button]:[&>iframe]:!w-full [&>stripe-buy-button]:[&>iframe]:!h-10">
+            <stripe-buy-button
+              buy-button-id="buy_btn_1QtdHaDaihWQpHM6vSaLMfRh"
+              publishable-key="pk_live_51Qtb8WDaihWQpHM6zckr56vWVg2BeBX6sFXA9FgOrmbdN3H5HY3GBMiO3DaO5rYOuCDsOjUrQAQV9xdbtvh3VSXR005zCbf5Dz"
+            />
+          </div>
         ) : (
           <Button 
             className="w-full" 

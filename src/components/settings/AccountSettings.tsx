@@ -96,14 +96,23 @@ export function AccountSettings({ userData }: AccountSettingsProps) {
           <div className="flex items-center space-x-4">
             <CreditCard className="h-5 w-5 text-gray-500" />
             <div className="flex-1">
-              <Label>Subscription Status</Label>
+              <Label>Subscription & Billing</Label>
               <div className="flex items-center justify-between mt-2">
                 <span className="capitalize">{userData?.subscription_status || 'free'}</span>
-                {userData?.subscription_status === 'free' && (
-                  <Link to="/subscription">
-                    <Button>Upgrade to Pro</Button>
-                  </Link>
-                )}
+                <div className="space-x-2">
+                  {userData?.subscription_status === 'pro' && (
+                    <a href="https://billing.stripe.com/p/login/3cseWi90FfLW98I9AA" target="_blank" rel="noopener noreferrer">
+                      <Button variant="outline">
+                        Manage Billing
+                      </Button>
+                    </a>
+                  )}
+                  {userData?.subscription_status === 'free' && (
+                    <Link to="/subscription">
+                      <Button>Upgrade to Pro</Button>
+                    </Link>
+                  )}
+                </div>
               </div>
               {userData?.subscription_end_date && (
                 <p className="text-sm text-gray-500 mt-1">
