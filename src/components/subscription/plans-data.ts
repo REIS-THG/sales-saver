@@ -13,9 +13,8 @@ export const subscriptionPlans = [
     ],
     limitations: [
       "Limited analytics",
-      "No AI-powered insights",
-      "No custom fields",
-      "No team collaboration"
+      "Limited AI-powered insights",
+      "Limited custom fields"
     ]
   },
   {
