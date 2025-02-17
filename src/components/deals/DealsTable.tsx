@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import {
   flexRender,
@@ -211,8 +210,7 @@ export function DealsTable({ initialDeals, customFields, showCustomFields }: Dea
         title="Delete Deal"
         description={`Are you sure you want to delete the deal "${dealToDelete?.deal_name}"? This action cannot be undone and will permanently remove all associated data.`}
         onConfirm={handleDeleteConfirm}
-        triggerButton={null}
-        open={!!dealToDelete}
+        isOpen={!!dealToDelete}
         onOpenChange={(open) => !open && setDealToDelete(null)}
       />
     </div>

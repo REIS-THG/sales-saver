@@ -25,6 +25,7 @@ import {
   Trophy,
   Check,
   AlertCircle,
+  Trash2,
 } from "lucide-react";
 import {
   Table,
@@ -384,6 +385,27 @@ const Settings = () => {
     }
   };
 
+  const handleDeleteCustomField = async (fieldId: string) => {
+    const { error } = await supabase
+      .from("custom_fields")
+      .delete()
+      .eq("id", fieldId);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete custom field",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: "Custom field deleted successfully",
+      });
+      fetchCustomFields();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -599,6 +621,18 @@ const Settings = () => {
                         <TableCell>
                           {new Date(field.created_at).toLocaleDateString()}
                         </TableCell>
+                        <TableCell>
+                          <ConfirmDialog
+                            title="Delete Custom Field"
+                            description={`Are you sure you want to delete the "${field.field_name}" field? This action cannot be undone and may affect existing deals using this field.`}
+                            onConfirm={() => handleDeleteCustomField(field.id)}
+                            triggerButton={
+                              <Button variant="ghost" size="icon">
+                                <Trash2 className="h-4 w-4 text-red-500" />
+                              </Button>
+                            }
+                          />
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -735,6 +769,69 @@ const Settings = () => {
               </div>
             </CardContent>
           </Card>
+
+          <ConfirmDialog
+            title="Delete Account Data"
+            description="Are you sure you want to delete all your account data? This action cannot be undone and will permanently remove all your deals, reports, and custom fields."
+            onConfirm={async () => {
+              const { error } = await supabase
+                .from("users")
+                .delete()
+                .eq("user_id", userData?.user_id);
+
+              if (error) {
+                toast({
+                  title: "Error",
+                  description: "Failed to delete account data",
+                  variant: "destructive",
+                });
+              } else {
+                toast({
+                  title: "Success",
+                  description: "Account data deleted successfully",
+                });
+                navigate("/auth");
+              }
+            }}
+            triggerButton={
+              <Button variant="destructive" className="mt-8">
+                Delete Account Data
+              </Button>
+            }
+          />
+
+          <ConfirmDialog
+            title="Update Workspace Settings"
+            description="Are you sure you want to update your workspace settings? This may affect how data is displayed across your account."
+            onConfirm={async () => {
+              const { error } = await supabase
+                .from("users")
+                .update({
+                  theme,
+                  default_deal_view: defaultView,
+                })
+                .eq("user_id", userData?.user_id);
+
+              if (error) {
+                toast({
+                  title: "Error",
+                  description: "Failed to update workspace settings",
+                  variant: "destructive",
+                });
+              } else {
+                toast({
+                  title: "Success",
+                  description: "Workspace settings updated successfully",
+                });
+              }
+            }}
+            triggerButton={
+              <Button className="mt-4">
+                Save Workspace Settings
+              </Button>
+            }
+            variant="default"
+          />
         </div>
       </div>
     </div>

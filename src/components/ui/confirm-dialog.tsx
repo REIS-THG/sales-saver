@@ -8,7 +8,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button, ButtonProps } from "@/components/ui/button";
 import { AlertTriangle } from "lucide-react";
@@ -17,10 +16,12 @@ interface ConfirmDialogProps {
   title: string;
   description: string;
   onConfirm: () => void;
-  triggerButton: React.ReactNode;
+  triggerButton?: React.ReactNode;
   confirmText?: string;
   cancelText?: string;
   variant?: ButtonProps["variant"];
+  isOpen?: boolean;
+  onOpenChange?: (isOpen: boolean) => void;
 }
 
 export function ConfirmDialog({
@@ -31,12 +32,16 @@ export function ConfirmDialog({
   confirmText = "Confirm",
   cancelText = "Cancel",
   variant = "destructive",
+  isOpen,
+  onOpenChange,
 }: ConfirmDialogProps) {
   return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>
-        {triggerButton}
-      </AlertDialogTrigger>
+    <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
+      {triggerButton && (
+        <AlertDialog.Trigger asChild>
+          {triggerButton}
+        </AlertDialog.Trigger>
+      )}
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2">
