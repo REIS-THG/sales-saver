@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -49,9 +48,6 @@ const Auth = () => {
         const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
-          options: {
-            remember: rememberMe
-          }
         });
         if (error) throw error;
         navigate("/dashboard");
@@ -68,7 +64,7 @@ const Auth = () => {
           options: {
             emailRedirectTo: `${window.location.origin}/auth`,
             data: {
-              remember: rememberMe
+              prefersDarkMode: false,
             }
           }
         });
