@@ -1,3 +1,4 @@
+
 export interface StandardField {
   field_name: string;
   field: string;
@@ -92,6 +93,12 @@ export interface DealNote {
   updated_at?: string;
   sentiment_score?: number;
   key_points?: string[];
+  ai_analysis?: {
+    next_actions?: string[] | string;
+    key_points?: string[] | string;
+    sentiment_score?: number;
+    health_score?: number;
+  };
 }
 
 export interface DealAnalysis {
