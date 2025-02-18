@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft, AlertCircle } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -17,7 +18,17 @@ import {
 import {
   Alert,
   AlertDescription,
+  AlertTitle,
 } from "@/components/ui/alert";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { Progress } from "@/components/ui/progress";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -27,16 +38,21 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetEmailSent, setResetEmailSent] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const passwordRequirements = {
+  const passwordStrength = {
     length: password.length >= 8,
     uppercase: /[A-Z]/.test(password),
     lowercase: /[a-z]/.test(password),
     number: /[0-9]/.test(password),
     special: /[^A-Za-z0-9]/.test(password),
   };
+
+  const passwordStrengthScore = Object.values(passwordStrength).filter(Boolean).length * 20;
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,9 +68,9 @@ const Auth = () => {
         if (error) throw error;
         navigate("/dashboard");
       } else {
-        // Check password requirements
-        if (!Object.values(passwordRequirements).every(Boolean)) {
+        if (!Object.values(passwordStrength).every(Boolean)) {
           setError("Please meet all password requirements");
+          setLoading(false);
           return;
         }
 
@@ -83,18 +99,15 @@ const Auth = () => {
   };
 
   const handleForgotPassword = async () => {
-    if (!email) {
-      setError("Please enter your email address");
-      return;
-    }
-
+    setError(null);
     setLoading(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`,
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/reset-password`,
       });
       if (error) throw error;
       
+      setResetEmailSent(true);
       toast({
         title: "Password Reset Email Sent",
         description: "Please check your email for the reset link.",
@@ -115,6 +128,7 @@ const Auth = () => {
               variant="ghost"
               className="mr-2"
               onClick={() => navigate("/")}
+              aria-label="Go back to home page"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
@@ -131,6 +145,8 @@ const Auth = () => {
         <CardContent>
           {error && (
             <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
@@ -145,6 +161,8 @@ const Auth = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                aria-label="Email address"
+                autoComplete="email"
               />
             </div>
             
@@ -157,6 +175,8 @@ const Auth = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  aria-label="Password"
+                  autoComplete={isLogin ? "current-password" : "new-password"}
                 />
                 <Button
                   type="button"
@@ -164,6 +184,7 @@ const Auth = () => {
                   size="sm"
                   className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                   onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -175,22 +196,26 @@ const Auth = () => {
             </div>
 
             {!isLogin && (
-              <div className="space-y-2 text-sm">
-                <p className="font-medium">Password requirements:</p>
-                <ul className="space-y-1 text-gray-500">
-                  <li className={passwordRequirements.length ? "text-green-600" : ""}>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>Password Strength</Label>
+                  <span className="text-sm text-gray-500">{passwordStrengthScore}%</span>
+                </div>
+                <Progress value={passwordStrengthScore} className="h-2" />
+                <ul className="space-y-1 text-sm text-gray-500">
+                  <li className={passwordStrength.length ? "text-green-600" : ""}>
                     ✓ At least 8 characters
                   </li>
-                  <li className={passwordRequirements.uppercase ? "text-green-600" : ""}>
+                  <li className={passwordStrength.uppercase ? "text-green-600" : ""}>
                     ✓ At least one uppercase letter
                   </li>
-                  <li className={passwordRequirements.lowercase ? "text-green-600" : ""}>
+                  <li className={passwordStrength.lowercase ? "text-green-600" : ""}>
                     ✓ At least one lowercase letter
                   </li>
-                  <li className={passwordRequirements.number ? "text-green-600" : ""}>
+                  <li className={passwordStrength.number ? "text-green-600" : ""}>
                     ✓ At least one number
                   </li>
-                  <li className={passwordRequirements.special ? "text-green-600" : ""}>
+                  <li className={passwordStrength.special ? "text-green-600" : ""}>
                     ✓ At least one special character
                   </li>
                 </ul>
@@ -203,20 +228,62 @@ const Auth = () => {
                   id="remember"
                   checked={rememberMe}
                   onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                  aria-label="Remember me"
                 />
                 <Label htmlFor="remember" className="text-sm">
                   Remember me
                 </Label>
               </div>
               {isLogin && (
-                <Button
-                  type="button"
-                  variant="link"
-                  className="text-sm"
-                  onClick={handleForgotPassword}
-                >
-                  Forgot password?
-                </Button>
+                <Sheet open={isResetPasswordModalOpen} onOpenChange={setIsResetPasswordModalOpen}>
+                  <SheetTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="text-sm"
+                    >
+                      Forgot password?
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent>
+                    <SheetHeader>
+                      <SheetTitle>Reset Password</SheetTitle>
+                      <SheetDescription>
+                        Enter your email address and we'll send you a link to reset your password.
+                      </SheetDescription>
+                    </SheetHeader>
+                    <div className="mt-6 space-y-4">
+                      {resetEmailSent ? (
+                        <Alert>
+                          <AlertDescription>
+                            Password reset email sent! Please check your inbox.
+                          </AlertDescription>
+                        </Alert>
+                      ) : (
+                        <>
+                          <div className="space-y-2">
+                            <Label htmlFor="reset-email">Email</Label>
+                            <Input
+                              id="reset-email"
+                              type="email"
+                              value={resetEmail}
+                              onChange={(e) => setResetEmail(e.target.value)}
+                              placeholder="Enter your email"
+                              aria-label="Email for password reset"
+                            />
+                          </div>
+                          <Button
+                            onClick={handleForgotPassword}
+                            disabled={loading || !resetEmail}
+                            className="w-full"
+                          >
+                            {loading ? "Sending..." : "Send Reset Link"}
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </SheetContent>
+                </Sheet>
               )}
             </div>
 
@@ -234,7 +301,10 @@ const Auth = () => {
           <div className="mt-4 text-center">
             <Button
               variant="link"
-              onClick={() => setIsLogin(!isLogin)}
+              onClick={() => {
+                setIsLogin(!isLogin);
+                setError(null);
+              }}
               className="text-sm"
             >
               {isLogin
