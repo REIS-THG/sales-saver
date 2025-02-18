@@ -105,9 +105,18 @@ const Reports = () => {
 
   const fetchReports = async () => {
     try {
+      const { data: authData } = await supabase.auth.getUser();
+      const userId = authData.user?.id;
+
+      if (!userId) {
+        navigate("/auth");
+        return;
+      }
+
       const { data: reportsData, error } = await supabase
         .from('report_configurations')
         .select('*')
+        .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -243,10 +252,7 @@ const Reports = () => {
 
       const { data, error } = await supabase
         .from('report_configurations')
-        .insert({
-          ...newReportData,
-          config: JSON.stringify(initialConfig)
-        })
+        .insert([newReportData])
         .select()
         .single();
 
