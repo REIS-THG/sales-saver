@@ -1,10 +1,16 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import type { ReportConfiguration, ReportConfig, ReportVisualization } from "@/components/reports/types";
-import type { Json } from "@/integrations/supabase/types";
+import { supabase } from "@/integrations/supabase/client";
+import type { ReportConfiguration, ReportConfig } from "@/components/reports/types";
+import {
+  fetchUserReports,
+  createUserReport,
+  updateUserReport,
+  deleteUserReport,
+  toggleReportFavorite
+} from "@/services/report-service";
 
 export function useReports() {
   const [reports, setReports] = useState<ReportConfiguration[]>([]);
@@ -22,37 +28,8 @@ export function useReports() {
         return;
       }
 
-      const { data: reportsData, error } = await supabase
-        .from('report_configurations')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      const typedReports: ReportConfiguration[] = (reportsData || []).map(report => {
-        const config = typeof report.config === 'string' 
-          ? JSON.parse(report.config) 
-          : report.config;
-
-        return {
-          id: report.id,
-          user_id: report.user_id,
-          name: report.name,
-          description: report.description || undefined,
-          config: {
-            dimensions: config.dimensions || [],
-            metrics: config.metrics || [],
-            filters: config.filters || [],
-            visualization: (config.visualization || 'bar') as ReportVisualization
-          },
-          created_at: report.created_at,
-          updated_at: report.updated_at,
-          is_favorite: report.is_favorite
-        };
-      });
-
-      setReports(typedReports);
+      const reportsData = await fetchUserReports(userId);
+      setReports(reportsData);
     } catch (err) {
       console.error('Error fetching reports:', err);
       toast({
@@ -82,41 +59,7 @@ export function useReports() {
         visualization: 'bar'
       };
 
-      const newReportData = {
-        name: "New Report",
-        description: "Custom report description",
-        user_id: userId,
-        config: initialConfig as unknown as Json
-      };
-
-      const { data, error } = await supabase
-        .from('report_configurations')
-        .insert(newReportData)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      const config = typeof data.config === 'string' 
-        ? JSON.parse(data.config) 
-        : data.config;
-
-      const newReport: ReportConfiguration = {
-        id: data.id,
-        user_id: data.user_id,
-        name: data.name,
-        description: data.description || undefined,
-        config: {
-          dimensions: config.dimensions || [],
-          metrics: config.metrics || [],
-          filters: config.filters || [],
-          visualization: (config.visualization || 'bar') as ReportVisualization
-        },
-        created_at: data.created_at,
-        updated_at: data.updated_at,
-        is_favorite: data.is_favorite
-      };
-
+      const newReport = await createUserReport(userId, initialConfig);
       setReports(prev => [newReport, ...prev]);
       return newReport;
     } catch (err) {
@@ -132,38 +75,11 @@ export function useReports() {
 
   const updateReport = async (reportId: string, updates: Partial<ReportConfiguration>) => {
     try {
-      const updateData = {
-        ...updates,
-        config: updates.config ? (updates.config as unknown as Json) : undefined
-      };
-
-      const { data, error } = await supabase
-        .from('report_configurations')
-        .update(updateData)
-        .eq('id', reportId)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      const config = typeof data.config === 'string' 
-        ? JSON.parse(data.config) 
-        : data.config;
-
-      const updatedReport: ReportConfiguration = {
-        ...data,
-        config: {
-          dimensions: config.dimensions || [],
-          metrics: config.metrics || [],
-          filters: config.filters || [],
-          visualization: (config.visualization || 'bar') as ReportVisualization
-        }
-      };
-
+      const updatedReport = await updateUserReport(reportId, updates);
       setReports(prev => prev.map(report => 
         report.id === reportId ? updatedReport : report
       ));
-
+      
       toast({
         title: "Success",
         description: "Report updated successfully",
@@ -183,15 +99,9 @@ export function useReports() {
 
   const deleteReport = async (reportId: string) => {
     try {
-      const { error } = await supabase
-        .from('report_configurations')
-        .delete()
-        .eq('id', reportId);
-
-      if (error) throw error;
-
+      await deleteUserReport(reportId);
       setReports(prev => prev.filter(report => report.id !== reportId));
-
+      
       toast({
         title: "Success",
         description: "Report deleted successfully",
@@ -210,32 +120,7 @@ export function useReports() {
 
   const toggleFavorite = async (reportId: string, currentStatus: boolean) => {
     try {
-      const { data, error } = await supabase
-        .from('report_configurations')
-        .update({ 
-          is_favorite: !currentStatus,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', reportId)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      const config = typeof data.config === 'string' 
-        ? JSON.parse(data.config) 
-        : data.config;
-
-      const updatedReport: ReportConfiguration = {
-        ...data,
-        config: {
-          dimensions: config.dimensions || [],
-          metrics: config.metrics || [],
-          filters: config.filters || [],
-          visualization: (config.visualization || 'bar') as ReportVisualization
-        }
-      };
-
+      const updatedReport = await toggleReportFavorite(reportId, currentStatus);
       setReports(prev => prev.map(report => 
         report.id === reportId ? updatedReport : report
       ));
