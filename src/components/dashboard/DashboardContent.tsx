@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -52,7 +51,7 @@ export function DashboardContent({
         <p className="text-sm text-gray-500 dark:text-gray-400">Manage and track your deals</p>
       </div>
 
-      {userData?.subscription_status === 'free' && (
+      {!userData?.subscription_status && (
         <Card className="mb-6 p-4 bg-gradient-to-r from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 border-amber-200 dark:border-amber-800">
           <div className="flex items-center justify-between">
             <div className="space-y-1">

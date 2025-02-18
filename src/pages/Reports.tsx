@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, ArrowLeft, BarChart2, PieChart, LineChart, Table } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import * as XLSX from 'xlsx';
 import { supabase } from "@/integrations/supabase/client";
 import { useReports } from "@/hooks/use-reports";
@@ -9,7 +9,15 @@ import { ReportsList } from "@/components/reports/ReportsList";
 import { ReportConfiguration } from "@/components/reports/ReportConfiguration";
 import type { ReportConfiguration as ReportConfigType } from "@/components/reports/types";
 import { useToast } from "@/hooks/use-toast";
-import type { CustomField, Deal, User, StandardField } from "@/types/types";
+import type { CustomField, Deal, User } from "@/types/types";
+
+const standardFields: StandardField[] = [
+  { field: 'amount', field_name: 'Deal Amount', field_type: 'number' },
+  { field: 'status', field_name: 'Deal Status', field_type: 'text' },
+  { field: 'health_score', field_name: 'Health Score', field_type: 'number' },
+  { field: 'created_at', field_name: 'Creation Date', field_type: 'date' },
+  { field: 'company_name', field_name: 'Company', field_type: 'text' },
+];
 
 const Reports = () => {
   const navigate = useNavigate();
@@ -33,14 +41,6 @@ const Reports = () => {
   const [customFields, setCustomFields] = useState<CustomField[]>([]);
   const [deals, setDeals] = useState<Deal[]>([]);
   const [userData, setUserData] = useState<User | null>(null);
-
-  const standardFields: StandardField[] = [
-    { field: 'amount', field_name: 'Deal Amount', field_type: 'number' },
-    { field: 'status', field_name: 'Deal Status', field_type: 'text' },
-    { field: 'health_score', field_name: 'Health Score', field_type: 'number' },
-    { field: 'created_at', field_name: 'Creation Date', field_type: 'date' },
-    { field: 'company_name', field_name: 'Company', field_type: 'text' },
-  ];
 
   const aggregations = [
     { value: 'sum' as const, label: 'Sum' },
