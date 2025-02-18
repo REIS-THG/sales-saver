@@ -1,16 +1,25 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import type { ReportConfiguration, ReportConfig, ReportVisualization } from "@/components/reports/types";
 import type { Json } from "@/integrations/supabase/types";
 
 const PAGE_SIZE = 9;
 
+async function checkAuth() {
+  const { data: { user }, error } = await supabase.auth.getSession();
+  if (error || !user) {
+    throw new Error('Authentication required');
+  }
+  return user;
+}
+
 export async function fetchUserReports(userId: string, page = 1) {
+  await checkAuth();
   console.log('Fetching reports for user:', userId);
   
   const { data: reportsData, error, count } = await supabase
     .from('report_configurations')
     .select('*', { count: 'exact' })
-    .eq('user_id', userId)
     .order('created_at', { ascending: false })
     .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
 
@@ -45,6 +54,7 @@ export async function fetchUserReports(userId: string, page = 1) {
 }
 
 export async function createUserReport(userId: string, initialConfig: ReportConfig) {
+  await checkAuth();
   console.log('Creating report for user:', userId);
   
   const newReportData = {
@@ -87,6 +97,7 @@ export async function createUserReport(userId: string, initialConfig: ReportConf
 }
 
 export async function updateUserReport(reportId: string, updates: Partial<ReportConfiguration>) {
+  await checkAuth();
   const updateData = {
     ...updates,
     config: updates.config ? (updates.config as unknown as Json) : undefined
@@ -117,6 +128,7 @@ export async function updateUserReport(reportId: string, updates: Partial<Report
 }
 
 export async function deleteUserReport(reportId: string) {
+  await checkAuth();
   const { error } = await supabase
     .from('report_configurations')
     .delete()
@@ -127,6 +139,7 @@ export async function deleteUserReport(reportId: string) {
 }
 
 export async function toggleReportFavorite(reportId: string, currentStatus: boolean) {
+  await checkAuth();
   const { data, error } = await supabase
     .from('report_configurations')
     .update({ 

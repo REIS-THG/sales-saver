@@ -700,6 +700,12 @@ export type Database = {
         }
         Returns: Database["public"]["Enums"]["team_member_role"]
       }
+      get_user_teams: {
+        Args: {
+          user_id: string
+        }
+        Returns: string[]
+      }
       is_team_member: {
         Args: {
           team_id: string
