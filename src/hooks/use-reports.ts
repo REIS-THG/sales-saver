@@ -23,14 +23,22 @@ export function useReports() {
 
   const fetchReports = async (page = currentPage) => {
     try {
-      const { data: authData } = await supabase.auth.getUser();
-      const userId = authData.user?.id;
-
-      if (!userId) {
+      const { data: authData, error: authError } = await supabase.auth.getUser();
+      
+      if (authError) {
+        console.error('Auth error:', authError);
         navigate("/auth");
         return;
       }
 
+      const userId = authData.user?.id;
+      if (!userId) {
+        console.error('No user ID found');
+        navigate("/auth");
+        return;
+      }
+
+      console.log('Fetching reports for page:', page);
       const { reports: reportsData, totalCount } = await fetchUserReports(userId, page);
       setReports(reportsData);
       setTotalPages(Math.ceil(totalCount / 9)); // 9 items per page
@@ -49,10 +57,17 @@ export function useReports() {
 
   const createReport = async () => {
     try {
-      const { data: authData } = await supabase.auth.getUser();
-      const userId = authData.user?.id;
+      const { data: authData, error: authError } = await supabase.auth.getUser();
+      
+      if (authError) {
+        console.error('Auth error:', authError);
+        navigate("/auth");
+        return null;
+      }
 
+      const userId = authData.user?.id;
       if (!userId) {
+        console.error('No user ID found');
         navigate("/auth");
         return null;
       }
@@ -66,6 +81,12 @@ export function useReports() {
 
       const newReport = await createUserReport(userId, initialConfig);
       setReports(prev => [newReport, ...prev]);
+      
+      toast({
+        title: "Success",
+        description: "New report created successfully",
+      });
+      
       return newReport;
     } catch (err) {
       console.error('Error creating report:', err);

@@ -5,6 +5,8 @@ import type { Json } from "@/integrations/supabase/types";
 const PAGE_SIZE = 9;
 
 export async function fetchUserReports(userId: string, page = 1) {
+  console.log('Fetching reports for user:', userId);
+  
   const { data: reportsData, error, count } = await supabase
     .from('report_configurations')
     .select('*', { count: 'exact' })
@@ -12,7 +14,10 @@ export async function fetchUserReports(userId: string, page = 1) {
     .order('created_at', { ascending: false })
     .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
 
-  if (error) throw error;
+  if (error) {
+    console.error('Error in fetchUserReports:', error);
+    throw error;
+  }
 
   const reports = (reportsData || []).map(report => {
     const config = typeof report.config === 'string' 
@@ -40,6 +45,8 @@ export async function fetchUserReports(userId: string, page = 1) {
 }
 
 export async function createUserReport(userId: string, initialConfig: ReportConfig) {
+  console.log('Creating report for user:', userId);
+  
   const newReportData = {
     name: "New Report",
     description: "Custom report description",
@@ -53,7 +60,10 @@ export async function createUserReport(userId: string, initialConfig: ReportConf
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error('Error in createUserReport:', error);
+    throw error;
+  }
 
   const config = typeof data.config === 'string' 
     ? JSON.parse(data.config) 
