@@ -18,24 +18,11 @@ export async function fetchUserReports(userId: string, page = 1) {
   console.log('Fetching reports for user:', userId);
   console.log('Fetching reports for page:', page);
   
-  // First fetch the user's team IDs
-  const { data: teamIds } = await supabase
-    .from('team_members')
-    .select('team_id')
-    .eq('user_id', userId);
-
-  // Then fetch reports
-  const query = supabase
+  // Simplified query that relies on RLS policies
+  const { data: reportsData, error, count } = await supabase
     .from('report_configurations')
     .select('*', { count: 'exact' })
-    .eq('user_id', userId);
-
-  // Add team filter if user is part of any teams
-  if (teamIds && teamIds.length > 0) {
-    query.or(`team_id.in.(${teamIds.map(t => t.team_id).join(',')}),user_id.eq.${userId}`);
-  }
-
-  const { data: reportsData, error, count } = await query
+    .eq('user_id', userId)
     .order('created_at', { ascending: false })
     .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
 
@@ -182,3 +169,4 @@ export async function toggleReportFavorite(reportId: string, currentStatus: bool
     }
   };
 }
+
