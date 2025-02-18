@@ -50,6 +50,8 @@ export function SortableTableRow({
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
   const [isSelected, setIsSelected] = useState(false);
+  const [showStatusDialog, setShowStatusDialog] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState<Deal["status"]>(row.original.status);
   const { toast } = useToast();
   
   const {
@@ -74,13 +76,18 @@ export function SortableTableRow({
     boxShadow: isDragging ? "0 8px 24px rgba(0, 0, 0, 0.15)" : undefined,
   };
 
-  const handleStatusChange = async (newStatus: string) => {
+  const handleStatusChange = async (newStatus: Deal["status"]) => {
+    setPendingStatus(newStatus);
+    setShowStatusDialog(true);
+  };
+
+  const handleStatusConfirm = async () => {
     setIsUpdating(true);
     setUpdateError(null);
 
     const { error } = await supabase
       .from("deals")
-      .update({ status: newStatus })
+      .update({ status: pendingStatus })
       .eq("id", row.original.id);
 
     if (error) {
@@ -97,6 +104,7 @@ export function SortableTableRow({
       });
     }
     setIsUpdating(false);
+    setShowStatusDialog(false);
   };
 
   const handleRetry = () => {
@@ -181,44 +189,28 @@ export function SortableTableRow({
               </Tooltip>
             </TooltipProvider>
           ) : null}
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Select
-                value={row.original.status}
-                onValueChange={handleStatusChange}
-                disabled={isUpdating}
-              >
-                <SelectTrigger className="w-[130px]">
-                  {isUpdating ? (
-                    <div className="flex items-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>Updating...</span>
-                    </div>
-                  ) : (
-                    <SelectValue />
-                  )}
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="open">Open</SelectItem>
-                  <SelectItem value="won">Won</SelectItem>
-                  <SelectItem value="lost">Lost</SelectItem>
-                  <SelectItem value="stalled">Stalled</SelectItem>
-                </SelectContent>
-              </Select>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Change Deal Status</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Are you sure you want to change the status of this deal? This action will update the deal's health score and analytics.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction>Confirm</AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <Select
+            value={row.original.status}
+            onValueChange={handleStatusChange}
+            disabled={isUpdating}
+          >
+            <SelectTrigger className="w-[130px]">
+              {isUpdating ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Updating...</span>
+                </div>
+              ) : (
+                <SelectValue />
+              )}
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="open">Open</SelectItem>
+              <SelectItem value="won">Won</SelectItem>
+              <SelectItem value="lost">Lost</SelectItem>
+              <SelectItem value="stalled">Stalled</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </TableCell>
       <TableCell onClick={(e) => e.stopPropagation()}>
@@ -231,6 +223,21 @@ export function SortableTableRow({
           View Details
         </Button>
       </TableCell>
+
+      <AlertDialog open={showStatusDialog} onOpenChange={setShowStatusDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Change Deal Status</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to change the status of this deal? This action will update the deal's health score and analytics.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleStatusConfirm}>Confirm</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </TableRow>
   );
 }
