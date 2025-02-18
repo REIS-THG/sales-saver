@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { type Deal, type DealNote, type CustomField } from "@/types/types";
 import {
@@ -19,7 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { Spinner } from "@/components/ui/spinner";
-import { Loader2 } from "lucide-react";
+import { Loader2, MessageSquare, Bot, Activity } from "lucide-react";
 
 interface DealDetailsModalProps {
   deal: Deal | null;
@@ -169,6 +170,45 @@ const DealDetailsModal = ({ deal, onClose, onDealUpdated, customFields }: DealDe
     setIsStatusUpdating(false);
   };
 
+  const renderAIAnalysis = (analysis: any) => {
+    if (!analysis) return null;
+
+    return (
+      <div className="mt-2 space-y-2 bg-slate-50 p-3 rounded-md">
+        <div className="flex items-center gap-2 text-sm text-slate-600">
+          <Bot className="h-4 w-4" />
+          <span className="font-medium">AI Analysis</span>
+        </div>
+        {analysis.next_actions && (
+          <div className="pl-6">
+            <p className="text-sm font-medium text-slate-700">Recommended Next Actions:</p>
+            <ul className="list-disc pl-4 text-sm text-slate-600">
+              {typeof analysis.next_actions === 'string' 
+                ? <li>{analysis.next_actions}</li>
+                : analysis.next_actions.map((action: string, i: number) => (
+                    <li key={i}>{action}</li>
+                  ))
+              }
+            </ul>
+          </div>
+        )}
+        {analysis.key_points && (
+          <div className="pl-6">
+            <p className="text-sm font-medium text-slate-700">Key Points:</p>
+            <ul className="list-disc pl-4 text-sm text-slate-600">
+              {typeof analysis.key_points === 'string'
+                ? <li>{analysis.key_points}</li>
+                : analysis.key_points.map((point: string, i: number) => (
+                    <li key={i}>{point}</li>
+                  ))
+              }
+            </ul>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   if (!deal) return null;
 
   return (
@@ -251,7 +291,10 @@ const DealDetailsModal = ({ deal, onClose, onDealUpdated, customFields }: DealDe
           )}
           
           <div className="border-t pt-4">
-            <h3 className="font-medium mb-4">Notes</h3>
+            <h3 className="font-medium mb-4 flex items-center gap-2">
+              <MessageSquare className="h-4 w-4" />
+              Notes & Analysis
+            </h3>
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row gap-2">
                 <Textarea
@@ -272,6 +315,10 @@ const DealDetailsModal = ({ deal, onClose, onDealUpdated, customFields }: DealDe
               <div className="space-y-3 max-h-[300px] overflow-y-auto">
                 {notes.map((note) => (
                   <div key={note.id} className="bg-gray-50 p-3 rounded-md space-y-2">
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Activity className="h-4 w-4" />
+                      <span>{format(new Date(note.created_at), "PPp")}</span>
+                    </div>
                     <p className="text-sm text-gray-600 break-words">{note.content}</p>
                     {note.sentiment_score !== null && (
                       <div className="text-xs text-gray-500">
@@ -287,9 +334,7 @@ const DealDetailsModal = ({ deal, onClose, onDealUpdated, customFields }: DealDe
                         </span>
                       </div>
                     )}
-                    <p className="text-xs text-gray-400">
-                      {format(new Date(note.created_at), "PPp")}
-                    </p>
+                    {note.ai_analysis && renderAIAnalysis(note.ai_analysis)}
                   </div>
                 ))}
               </div>
