@@ -1,4 +1,3 @@
-
 export interface StandardField {
   field_name: string;
   field: string;
@@ -127,4 +126,41 @@ export interface BulkImport {
 export interface Insight extends DealInsight {
   priority: 'low' | 'medium' | 'high';
   status: 'open' | 'acknowledged' | 'resolved';
+}
+
+export interface DripCampaign {
+  id: string;
+  name: string;
+  description?: string;
+  user_id: string;
+  deal_id?: string;
+  status: 'active' | 'paused' | 'completed';
+  created_at?: string;
+  updated_at?: string;
+  trigger_type: 'manual' | 'scheduled' | 'deal_stage_change';
+  trigger_delay?: string;
+}
+
+export interface DripCampaignStep {
+  id: string;
+  campaign_id: string;
+  step_order: number;
+  message_type: 'email' | 'task' | 'notification';
+  content: string;
+  delay_after?: string;
+  status: 'pending' | 'completed' | 'failed';
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface DripCampaignExecution {
+  id: string;
+  campaign_id: string;
+  step_id: string;
+  deal_id?: string;
+  status: 'pending' | 'completed' | 'failed';
+  scheduled_for?: string;
+  executed_at?: string;
+  created_at?: string;
+  updated_at?: string;
 }

@@ -1,4 +1,4 @@
-import { FileText, Mail, Mic, Sparkles } from "lucide-react";
+import { FileText, Mail, Mic, Sparkles, FileAudio } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -12,7 +12,7 @@ interface DealAnalysisTabProps {
   isAnalysisLimited: boolean;
   onDealSelect: (dealId: string) => void;
   onAnalyze: (dealId: string) => void;
-  onFileUpload: (file: File, type: 'transcript' | 'email' | 'voice') => void;
+  onFileUpload: (file: File, type: 'transcript' | 'email' | 'voice' | 'audio') => void;
   insights?: Insight[];
 }
 
@@ -174,11 +174,11 @@ export function DealAnalysisTab({
               isDisabled={isAnalysisLimited}
             />
             <FileUploadCard
-              icon={<Mic className="h-6 w-6" />}
-              title="Voice Recordings"
-              description="Upload voice notes or calls"
-              accept=".mp3,.wav,.m4a"
-              onUpload={(file) => onFileUpload(file, 'voice')}
+              icon={<FileAudio className="h-6 w-6" />}
+              title="Digital Audio"
+              description="Upload audio files"
+              accept=".mp3,.wav,.m4a,.ogg"
+              onUpload={(file) => onFileUpload(file, 'audio')}
               isDisabled={isAnalysisLimited}
             />
           </div>
@@ -206,14 +206,14 @@ interface FileUploadCardProps {
   isDisabled?: boolean;
 }
 
-function FileUploadCard({
+const FileUploadCard = ({
   icon,
   title,
   description,
   accept,
   onUpload,
   isDisabled = false,
-}: FileUploadCardProps) {
+}: FileUploadCardProps) => {
   return (
     <Card className={`relative ${isDisabled ? 'opacity-50' : ''}`}>
       <CardContent className="p-6 text-center space-y-4">
