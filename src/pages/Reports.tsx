@@ -73,10 +73,15 @@ const Reports = () => {
   ) : null;
 
   useEffect(() => {
-    fetchUserData();
-    fetchCustomFields();
-    fetchDeals();
-  }, [fetchReports]);
+    const initializeData = async () => {
+      await fetchUserData();
+      await fetchCustomFields();
+      await fetchDeals();
+      await fetchReports();
+    };
+
+    initializeData();
+  }, []);
 
   const fetchUserData = async () => {
     try {
@@ -128,6 +133,11 @@ const Reports = () => {
       });
     } catch (err) {
       console.error("Error fetching user data:", err);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to fetch user data",
+      });
     }
   };
 
@@ -200,12 +210,21 @@ const Reports = () => {
   };
 
   const handleCreateReport = async () => {
-    const newReport = await createReport();
-    if (newReport) {
-      setSelectedReport(newReport);
+    try {
+      const newReport = await createReport();
+      if (newReport) {
+        setSelectedReport(newReport);
+        toast({
+          title: "Success",
+          description: "New report created",
+        });
+      }
+    } catch (error) {
+      console.error('Error creating report:', error);
       toast({
-        title: "Success",
-        description: "New report created",
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to create report",
       });
     }
   };
@@ -361,9 +380,6 @@ const Reports = () => {
     return formattedData;
   };
 
-  const favoriteReports = reports.filter(report => report.is_favorite);
-  const otherReports = reports.filter(report => !report.is_favorite);
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -387,7 +403,7 @@ const Reports = () => {
             </Button>
             <h1 className="text-3xl font-bold">Reports</h1>
           </div>
-          <Button onClick={handleCreateReport}>
+          <Button onClick={handleCreateReport} disabled={actionLoading['create']}>
             <Plus className="h-4 w-4 mr-2" />
             New Report
           </Button>
@@ -395,7 +411,7 @@ const Reports = () => {
         </div>
 
         <ReportsList
-          reports={favoriteReports}
+          reports={reports.filter(report => report.is_favorite)}
           onEdit={setSelectedReport}
           onDelete={deleteReport}
           onToggleFavorite={toggleFavorite}
@@ -414,7 +430,7 @@ const Reports = () => {
 
         <h2 className="text-xl font-semibold mb-4">All Reports</h2>
         <ReportsList
-          reports={otherReports}
+          reports={reports.filter(report => !report.is_favorite)}
           onEdit={setSelectedReport}
           onDelete={deleteReport}
           onToggleFavorite={toggleFavorite}
