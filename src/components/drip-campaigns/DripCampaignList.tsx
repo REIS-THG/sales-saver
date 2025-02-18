@@ -31,18 +31,18 @@ export function DripCampaignList() {
 
       if (error) throw error;
       
-      // Ensure the data matches our DripCampaign interface
-      const typedCampaigns = (data || []).map(campaign => ({
+      // Ensure the data matches our DripCampaign interface and handle trigger_delay type
+      const typedCampaigns: DripCampaign[] = (data || []).map(campaign => ({
         id: campaign.id,
         name: campaign.name,
-        description: campaign.description,
+        description: campaign.description || undefined,
         user_id: campaign.user_id,
-        deal_id: campaign.deal_id,
+        deal_id: campaign.deal_id || undefined,
         status: campaign.status as DripCampaign['status'],
-        created_at: campaign.created_at,
-        updated_at: campaign.updated_at,
+        created_at: campaign.created_at || undefined,
+        updated_at: campaign.updated_at || undefined,
         trigger_type: campaign.trigger_type as DripCampaign['trigger_type'],
-        trigger_delay: campaign.trigger_delay
+        trigger_delay: campaign.trigger_delay ? String(campaign.trigger_delay) : undefined
       }));
 
       setCampaigns(typedCampaigns);

@@ -1,4 +1,5 @@
-import { FileText, Mail, FileAudio } from "lucide-react";
+
+import { FileText, Mail, FileAudio, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
