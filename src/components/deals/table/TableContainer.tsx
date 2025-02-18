@@ -1,3 +1,4 @@
+
 import { DndContext, closestCenter, type DragEndEvent } from "@dnd-kit/core";
 import { arrayMove, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { Table, TableBody } from "@/components/ui/table";
@@ -9,6 +10,7 @@ import { TableFilters } from "./components/TableFilters";
 import { ExportMenu } from "./components/ExportMenu";
 import { TablePagination } from "./components/TablePagination";
 import { TableHeader } from "./components/TableHeader";
+
 interface TableContainerProps {
   table: any;
   deals: Deal[];
@@ -18,6 +20,7 @@ interface TableContainerProps {
   onRowSelection?: (selectedDeals: Deal[]) => void;
   isUpdating?: boolean;
 }
+
 export function TableContainer({
   table,
   deals,
@@ -28,11 +31,9 @@ export function TableContainer({
   isUpdating = false
 }: TableContainerProps) {
   const sensors = useDragSensors();
+
   const handleDragEnd = (event: DragEndEvent) => {
-    const {
-      active,
-      over
-    } = event;
+    const { active, over } = event;
     if (active.id !== over?.id) {
       const oldIndex = deals.findIndex(item => item.id === active.id);
       const newIndex = deals.findIndex(item => item.id === over?.id);
@@ -40,6 +41,7 @@ export function TableContainer({
       onDealsReorder(newDeals);
     }
   };
+
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
       onRowSelection?.(deals);
@@ -47,34 +49,60 @@ export function TableContainer({
       onRowSelection?.([]);
     }
   };
+
   if (loading || isUpdating) {
-    return <div className="flex items-center justify-center p-8">
+    return (
+      <div className="flex items-center justify-center p-8">
         <Spinner size="lg" />
-      </div>;
+      </div>
+    );
   }
-  return <div className="space-y-4 px-0">
+
+  return (
+    <div className="space-y-4">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
         <TableFilters table={table} />
         <ExportMenu deals={deals} />
       </div>
 
-      <div className="rounded-md border overflow-auto max-h-[calc(100vh-280px)] bg-white dark:bg-gray-800">
-        <div className="min-w-[800px]"> {/* Minimum width to prevent table from becoming too narrow */}
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <Table>
-              <TableHeader table={table} onSelectAll={handleSelectAll} showSelection={!!onRowSelection} />
-              <TableBody>
-                <SortableContext items={deals.map(d => d.id)} strategy={verticalListSortingStrategy}>
-                  {table.getRowModel().rows.map(row => <SortableTableRow key={row.original.id} row={row} onClick={() => onDealClick(row.original)} onSelection={onRowSelection} />)}
-                </SortableContext>
-              </TableBody>
-            </Table>
-          </DndContext>
+      <div className="border rounded-md bg-white dark:bg-gray-800">
+        <div className="overflow-auto">
+          <div className="min-w-[800px]">
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <Table>
+                <TableHeader 
+                  table={table}
+                  onSelectAll={handleSelectAll}
+                  showSelection={!!onRowSelection}
+                />
+                <TableBody>
+                  <SortableContext
+                    items={deals.map(d => d.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {table.getRowModel().rows.map(row => (
+                      <SortableTableRow
+                        key={row.original.id}
+                        row={row}
+                        onClick={() => onDealClick(row.original)}
+                        onSelection={onRowSelection}
+                      />
+                    ))}
+                  </SortableContext>
+                </TableBody>
+              </Table>
+            </DndContext>
+          </div>
         </div>
       </div>
 
       <div className="mt-4 flex justify-center sm:justify-end">
         <TablePagination table={table} totalDeals={deals.length} />
       </div>
-    </div>;
+    </div>
+  );
 }

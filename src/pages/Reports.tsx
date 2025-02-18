@@ -57,6 +57,15 @@ const Reports = () => {
     { value: 'table', label: 'Table', icon: <Table className="h-4 w-4" /> },
   ];
 
+  const isFreePlan = !userData?.subscription_status;
+  const upgradeButton = isFreePlan ? (
+    <Link to="/subscription" className="w-full sm:w-auto">
+      <Button className="w-full">
+        Upgrade to Pro
+      </Button>
+    </Link>
+  ) : null;
+
   useEffect(() => {
     fetchReports();
     fetchUserData();
@@ -375,6 +384,7 @@ const Reports = () => {
             <Plus className="h-4 w-4 mr-2" />
             New Report
           </Button>
+          {upgradeButton}
         </div>
 
         <ReportsList
