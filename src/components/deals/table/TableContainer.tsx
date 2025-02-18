@@ -11,7 +11,6 @@ import { Spinner } from "@/components/ui/spinner";
 import {
   Pagination,
   PaginationContent,
-  PaginationEllipsis,
   PaginationItem,
   PaginationLink,
   PaginationNext,
@@ -234,26 +233,35 @@ export function TableContainer({
         <Pagination>
           <PaginationContent>
             <PaginationItem>
-              <PaginationPrevious 
-                onClick={() => table.previousPage()} 
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => table.previousPage()}
                 disabled={!table.getCanPreviousPage()}
-              />
+              >
+                Previous
+              </Button>
             </PaginationItem>
             {Array.from({ length: table.getPageCount() }, (_, i) => (
               <PaginationItem key={i}>
-                <PaginationLink
+                <Button
+                  variant={table.getState().pagination.pageIndex === i ? "default" : "ghost"}
+                  size="sm"
                   onClick={() => table.setPageIndex(i)}
-                  isActive={table.getState().pagination.pageIndex === i}
                 >
                   {i + 1}
-                </PaginationLink>
+                </Button>
               </PaginationItem>
             ))}
             <PaginationItem>
-              <PaginationNext 
-                onClick={() => table.nextPage()} 
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => table.nextPage()}
                 disabled={!table.getCanNextPage()}
-              />
+              >
+                Next
+              </Button>
             </PaginationItem>
           </PaginationContent>
         </Pagination>
