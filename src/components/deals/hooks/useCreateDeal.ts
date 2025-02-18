@@ -33,16 +33,36 @@ export const useCreateDeal = (onDealCreated: () => void, onBeforeCreate?: () => 
 
   const fetchTeams = async () => {
     try {
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+
+      if (!userData.user) {
+        console.log("No authenticated user found");
+        return;
+      }
+
       const { data: teamData, error: teamsError } = await supabase
         .from("teams")
-        .select("*, team_members!inner(user_id)")
-        .eq("team_members.user_id", (await supabase.auth.getUser()).data.user?.id);
+        .select(`
+          id,
+          name,
+          owner_id
+        `)
+        .in('id', 
+          supabase
+            .from('team_members')
+            .select('team_id')
+            .eq('user_id', userData.user.id)
+        );
 
-      if (teamsError) throw teamsError;
+      if (teamsError) {
+        console.error("Error fetching teams:", teamsError);
+        throw teamsError;
+      }
       
       setTeams(teamData || []);
     } catch (err) {
-      console.error("Error fetching teams:", err);
+      console.error("Error in fetchTeams:", err);
       toast({
         variant: "destructive",
         title: "Error",
