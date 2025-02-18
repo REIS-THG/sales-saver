@@ -73,7 +73,6 @@ const Reports = () => {
   ) : null;
 
   useEffect(() => {
-    fetchReports();
     fetchUserData();
     fetchCustomFields();
     fetchDeals();
@@ -97,6 +96,8 @@ const Reports = () => {
 
       if (error) throw error;
 
+      const subscription_status = data.subscription_status ? 'pro' : 'free' as const;
+
       const billingAddressData = data.billing_address as Record<string, string> | null;
       const billingAddress = {
         street: billingAddressData?.street || '',
@@ -118,7 +119,7 @@ const Reports = () => {
           ? data.custom_views.map(view => typeof view === 'string' ? JSON.parse(view) : view)
           : [],
         email: data.email,
-        subscription_status: data.subscription_status as 'free' | 'pro' | 'enterprise',
+        subscription_status: subscription_status,
         subscription_end_date: data.subscription_end_date,
         successful_deals_count: data.successful_deals_count || 0,
         billing_address: billingAddress,
