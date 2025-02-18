@@ -101,8 +101,7 @@ export function DealsTable({
     deals,
     customFields,
     showCustomFields,
-    (deal: Deal) => setDealToDelete(deal),
-    handleBulkStatusUpdate
+    (deal: Deal) => setDealToDelete(deal)
   );
 
   useEffect(() => {
