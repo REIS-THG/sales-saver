@@ -12,6 +12,7 @@ export function useTeams() {
 
   const fetchTeams = useCallback(async () => {
     try {
+      // First, fetch teams the user has access to
       const { data: teamsData, error: teamsError } = await supabase
         .from("teams")
         .select("*");
@@ -21,6 +22,7 @@ export function useTeams() {
       const teams = teamsData as Team[];
       setTeams(teams);
 
+      // Then fetch members for each team separately
       const membersPromises = teams.map(async (team) => {
         const { data: membersData, error: membersError } = await supabase
           .from("team_members")
