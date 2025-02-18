@@ -1,5 +1,4 @@
-
-import { FileText, Mail, FileAudio, Sparkles } from "lucide-react";
+import { FileText, Mail, FileIcon, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -175,10 +174,10 @@ export function DealAnalysisTab({
               isDisabled={isAnalysisLimited}
             />
             <FileUploadCard
-              icon={<FileAudio className="h-6 w-6" />}
-              title="Digital Audio"
-              description="Upload audio files"
-              accept=".mp3,.wav,.m4a,.ogg"
+              icon={<FileIcon className="h-6 w-6" />}
+              title="Digital Files"
+              description="Upload images, audio, or documents"
+              accept=".jpg,.jpeg,.png,.pdf,.mp3,.wav,.m4a,.ogg,.doc,.docx"
               onUpload={(file) => onFileUpload(file, 'audio')}
               isDisabled={isAnalysisLimited}
             />
