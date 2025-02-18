@@ -686,6 +686,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_access_report: {
+        Args: {
+          report_id: string
+          checking_user_id: string
+        }
+        Returns: boolean
+      }
       can_access_team: {
         Args: {
           team_id: string

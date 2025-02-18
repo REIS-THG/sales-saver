@@ -73,15 +73,36 @@ const Reports = () => {
   ) : null;
 
   useEffect(() => {
+    let mounted = true;
+
     const initializeData = async () => {
-      await fetchUserData();
-      await fetchCustomFields();
-      await fetchDeals();
-      await fetchReports();
+      try {
+        if (!mounted) return;
+        
+        await fetchUserData();
+        await fetchCustomFields();
+        await fetchDeals();
+        if (mounted) {
+          await fetchReports();
+        }
+      } catch (error) {
+        console.error('Error initializing data:', error);
+        if (mounted) {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to load reports data",
+          });
+        }
+      }
     };
 
     initializeData();
-  }, []);
+
+    return () => {
+      mounted = false;
+    };
+  }, [fetchReports]);
 
   const fetchUserData = async () => {
     try {
