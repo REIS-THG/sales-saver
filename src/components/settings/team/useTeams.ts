@@ -162,9 +162,9 @@ export function useTeams() {
         .from("users")
         .select("id, user_id")
         .eq("email", email.trim())
-        .single();
+        .maybeSingle();
 
-      if (userError || !userData) {
+      if (!userData) {
         toast({
           variant: "destructive",
           title: "Error",
