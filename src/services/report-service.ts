@@ -6,11 +6,11 @@ import type { Json } from "@/integrations/supabase/types";
 const PAGE_SIZE = 9;
 
 async function checkAuth() {
-  const { data: { user }, error } = await supabase.auth.getSession();
-  if (error || !user) {
+  const { data: { session }, error } = await supabase.auth.getSession();
+  if (error || !session?.user) {
     throw new Error('Authentication required');
   }
-  return user;
+  return session.user;
 }
 
 export async function fetchUserReports(userId: string, page = 1) {
