@@ -12,7 +12,7 @@ export function useTeams() {
 
   const fetchTeams = useCallback(async () => {
     try {
-      // First, fetch teams the user has access to
+      // Fetch teams (RLS will handle permissions)
       const { data: teamsData, error: teamsError } = await supabase
         .from("teams")
         .select("*");
@@ -22,7 +22,7 @@ export function useTeams() {
       const teams = teamsData as Team[];
       setTeams(teams);
 
-      // Then fetch members for each team separately
+      // Fetch members for each team
       const membersPromises = teams.map(async (team) => {
         const { data: membersData, error: membersError } = await supabase
           .from("team_members")
@@ -177,12 +177,6 @@ export function useTeams() {
       }
 
       // Add team member
-      console.log('Adding new team member:', { 
-        team_id: teamId, 
-        user_id: userData.user_id,
-        role 
-      });
-      
       const { error: memberError } = await supabase
         .from("team_members")
         .insert([
@@ -217,19 +211,13 @@ export function useTeams() {
 
   const deleteTeam = async (teamId: string) => {
     try {
-      const { error: membersError } = await supabase
-        .from("team_members")
-        .delete()
-        .eq("team_id", teamId);
-
-      if (membersError) throw membersError;
-
-      const { error: teamError } = await supabase
+      // RLS policies will handle permission checks
+      const { error } = await supabase
         .from("teams")
         .delete()
         .eq("id", teamId);
 
-      if (teamError) throw teamError;
+      if (error) throw error;
 
       toast({
         title: "Success",
@@ -250,6 +238,7 @@ export function useTeams() {
 
   const removeTeamMember = async (teamId: string, memberId: string) => {
     try {
+      // RLS policies will handle permission checks
       const { error } = await supabase
         .from("team_members")
         .delete()
