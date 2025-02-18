@@ -28,9 +28,10 @@ interface CreateDealFormProps {
   onDealCreated: () => void;
   customFields: CustomField[];
   onBeforeCreate?: () => Promise<boolean>;
+  trigger?: React.ReactNode;
 }
 
-const CreateDealForm = ({ onDealCreated, customFields, onBeforeCreate }: CreateDealFormProps) => {
+const CreateDealForm = ({ onDealCreated, customFields, onBeforeCreate, trigger }: CreateDealFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [teams, setTeams] = useState<Team[]>([]);
@@ -202,10 +203,12 @@ const CreateDealForm = ({ onDealCreated, customFields, onBeforeCreate }: CreateD
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button>
-          <Plus className="h-5 w-5 mr-2" />
-          Create Deal
-        </Button>
+        {trigger || (
+          <Button>
+            <Plus className="h-5 w-5 mr-2" />
+            Create Deal
+          </Button>
+        )}
       </SheetTrigger>
       <SheetContent className="overflow-y-auto">
         <SheetHeader>
