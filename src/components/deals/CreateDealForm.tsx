@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { Deal, CustomField } from "@/types/types";
+import type { Deal, CustomField, Team } from "@/types/types";
 import {
   Sheet,
   SheetContent,
@@ -33,6 +33,7 @@ interface CreateDealFormProps {
 const CreateDealForm = ({ onDealCreated, customFields, onBeforeCreate }: CreateDealFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [teams, setTeams] = useState<Team[]>([]);
   const [newDeal, setNewDeal] = useState({
     deal_name: "",
     company_name: "",
@@ -46,9 +47,34 @@ const CreateDealForm = ({ onDealCreated, customFields, onBeforeCreate }: CreateD
     start_date: new Date().toISOString().split('T')[0],
     expected_close_date: "",
     custom_fields: {} as Record<string, string | number | boolean>,
+    team_id: null as string | null,
   });
   
   const { toast } = useToast();
+
+  useEffect(() => {
+    fetchTeams();
+  }, []);
+
+  const fetchTeams = async () => {
+    try {
+      const { data: teamData, error: teamsError } = await supabase
+        .from("teams")
+        .select("*, team_members!inner(user_id)")
+        .eq("team_members.user_id", (await supabase.auth.getUser()).data.user?.id);
+
+      if (teamsError) throw teamsError;
+      
+      setTeams(teamData || []);
+    } catch (err) {
+      console.error("Error fetching teams:", err);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to fetch teams",
+      });
+    }
+  };
 
   const validateEmail = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -121,6 +147,7 @@ const CreateDealForm = ({ onDealCreated, customFields, onBeforeCreate }: CreateD
           amount: amountAsNumber,
           health_score: 50,
           user_id: user.id,
+          team_id: newDeal.team_id,
         },
       ]);
 
@@ -144,6 +171,7 @@ const CreateDealForm = ({ onDealCreated, customFields, onBeforeCreate }: CreateD
         start_date: new Date().toISOString().split('T')[0],
         expected_close_date: "",
         custom_fields: {},
+        team_id: null,
       });
       
       onDealCreated();
@@ -195,6 +223,31 @@ const CreateDealForm = ({ onDealCreated, customFields, onBeforeCreate }: CreateD
               placeholder="Enter deal name"
             />
           </div>
+
+          {teams.length > 0 && (
+            <div className="space-y-2">
+              <Label htmlFor="team">Team</Label>
+              <Select
+                value={newDeal.team_id || ""}
+                onValueChange={(value) =>
+                  setNewDeal({ ...newDeal, team_id: value || null })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a team (optional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">No team</SelectItem>
+                  {teams.map((team) => (
+                    <SelectItem key={team.id} value={team.id}>
+                      {team.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="company_name">Company Name</Label>
             <Input
