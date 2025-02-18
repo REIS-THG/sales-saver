@@ -14,12 +14,14 @@ interface DealsTableProps {
   initialDeals: Deal[];
   customFields: CustomField[];
   showCustomFields: boolean;
+  onSelectionChange?: (selectedDeals: Deal[]) => void;
 }
 
 export function DealsTable({ 
   initialDeals, 
   customFields, 
-  showCustomFields 
+  showCustomFields,
+  onSelectionChange 
 }: DealsTableProps) {
   const [deals, setDeals] = useState<Deal[]>([]);
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
@@ -97,6 +99,7 @@ export function DealsTable({
         deals={deals}
         onDealClick={(deal) => setSelectedDeal(deal)}
         onDealsReorder={setDeals}
+        onRowSelection={onSelectionChange}
       />
       
       <DealDetailsModal
