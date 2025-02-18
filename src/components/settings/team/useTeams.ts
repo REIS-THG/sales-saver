@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,12 +12,21 @@ export function useTeams() {
 
   const fetchTeams = useCallback(async () => {
     try {
+      setLoading(true);
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) {
+        throw new Error("No authenticated user");
+      }
+
       // Fetch teams (RLS will handle permissions)
       const { data: teamsData, error: teamsError } = await supabase
         .from("teams")
         .select("*");
 
-      if (teamsError) throw teamsError;
+      if (teamsError) {
+        console.error("Error fetching teams:", teamsError);
+        throw teamsError;
+      }
 
       const teams = teamsData as Team[];
       setTeams(teams);
@@ -65,14 +75,14 @@ export function useTeams() {
       });
 
       setTeamMembers(membersMap);
-      setLoading(false);
     } catch (error) {
-      console.error("Error fetching teams:", error);
+      console.error("Error in fetchTeams:", error);
       toast({
         variant: "destructive",
         title: "Error",
         description: "Failed to fetch teams. Please try again.",
       });
+    } finally {
       setLoading(false);
     }
   }, [toast]);
@@ -100,7 +110,10 @@ export function useTeams() {
         .select()
         .single();
 
-      if (teamError) throw teamError;
+      if (teamError) {
+        console.error("Error creating team:", teamError);
+        throw teamError;
+      }
 
       const { error: memberError } = await supabase
         .from("team_members")
@@ -112,16 +125,19 @@ export function useTeams() {
           },
         ]);
 
-      if (memberError) throw memberError;
+      if (memberError) {
+        console.error("Error adding team member:", memberError);
+        throw memberError;
+      }
 
       toast({
         title: "Success",
         description: "Team created successfully.",
       });
-      fetchTeams();
+      await fetchTeams();
       return true;
     } catch (error) {
-      console.error("Error creating team:", error);
+      console.error("Error in createTeam:", error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -131,10 +147,38 @@ export function useTeams() {
     }
   };
 
+  const deleteTeam = async (teamId: string) => {
+    try {
+      const { error } = await supabase
+        .from("teams")
+        .delete()
+        .eq("id", teamId);
+
+      if (error) {
+        console.error("Error deleting team:", error);
+        throw error;
+      }
+
+      toast({
+        title: "Success",
+        description: "Team deleted successfully.",
+      });
+      await fetchTeams();
+      return true;
+    } catch (error) {
+      console.error("Error in deleteTeam:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete team. Please try again.",
+      });
+      return false;
+    }
+  };
+
   const addTeamMember = async (email: string, teamId: string, role: TeamMember["role"]) => {
     try {
       const normalizedEmail = email.trim().toLowerCase();
-      console.log('Adding team member:', { email: normalizedEmail, teamId, role });
       
       // Query users table with case-insensitive comparison
       const { data: userData, error: userError } = await supabase
@@ -156,8 +200,6 @@ export function useTeams() {
         });
         return false;
       }
-
-      console.log('Found user:', userData);
 
       // Check for existing membership
       const { data: existingMember, error: existingMemberError } = await supabase
@@ -201,7 +243,7 @@ export function useTeams() {
         title: "Success",
         description: "Team member added successfully.",
       });
-      fetchTeams();
+      await fetchTeams();
       return true;
     } catch (error) {
       console.error('Error in addTeamMember:', error);
@@ -214,51 +256,26 @@ export function useTeams() {
     }
   };
 
-  const deleteTeam = async (teamId: string) => {
-    try {
-      // RLS policies will handle permission checks
-      const { error } = await supabase
-        .from("teams")
-        .delete()
-        .eq("id", teamId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Team deleted successfully.",
-      });
-      fetchTeams();
-      return true;
-    } catch (error) {
-      console.error("Error deleting team:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to delete team. Please try again.",
-      });
-      return false;
-    }
-  };
-
   const removeTeamMember = async (teamId: string, memberId: string) => {
     try {
-      // RLS policies will handle permission checks
       const { error } = await supabase
         .from("team_members")
         .delete()
         .eq("id", memberId);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error removing team member:", error);
+        throw error;
+      }
 
       toast({
         title: "Success",
         description: "Team member removed successfully.",
       });
-      fetchTeams();
+      await fetchTeams();
       return true;
     } catch (error) {
-      console.error("Error removing team member:", error);
+      console.error("Error in removeTeamMember:", error);
       toast({
         variant: "destructive",
         title: "Error",
