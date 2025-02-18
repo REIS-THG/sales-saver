@@ -40,6 +40,10 @@ export function useReports() {
 
       console.log('Fetching reports for page:', page);
       const { reports: reportsData, totalCount } = await fetchUserReports(userId, page);
+      
+      // Log successful fetch for debugging
+      console.log(`Successfully fetched ${reportsData.length} reports`);
+      
       setReports(reportsData);
       setTotalPages(Math.ceil(totalCount / 9)); // 9 items per page
       setCurrentPage(page);
@@ -48,7 +52,7 @@ export function useReports() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to fetch reports",
+        description: "Failed to fetch reports. Please try again.",
       });
     } finally {
       setLoading(false);
@@ -93,7 +97,7 @@ export function useReports() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to create report",
+        description: "Failed to create report. Please try again.",
       });
       return null;
     }
@@ -118,7 +122,7 @@ export function useReports() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to update report",
+        description: "Failed to update report. Please try again.",
       });
       return null;
     } finally {
@@ -142,7 +146,7 @@ export function useReports() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to delete report",
+        description: "Failed to delete report. Please try again.",
       });
       return false;
     } finally {
@@ -168,7 +172,7 @@ export function useReports() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to update favorite status",
+        description: "Failed to update favorite status. Please try again.",
       });
       return false;
     } finally {
