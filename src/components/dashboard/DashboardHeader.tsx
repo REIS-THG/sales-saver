@@ -1,82 +1,39 @@
 
-import { Button } from "@/components/ui/button";
-import { LogOut, Settings, BarChart2, Sparkles, Plus } from "lucide-react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { UserButton } from "@/components/dashboard/UserButton";
 import CreateDealForm from "@/components/deals/CreateDealForm";
-import type { CustomField } from "@/types/types";
+import { BulkImportDeals } from "@/components/deals/BulkImportDeals";
+import type { CustomField, User } from "@/types/types";
 
 interface DashboardHeaderProps {
-  onDealCreated?: () => Promise<void>;
-  customFields?: CustomField[];
+  onDealCreated: () => void;
+  customFields: CustomField[];
   onBeforeCreate?: () => Promise<boolean>;
-  onSignOut: () => void;
+  onSignOut?: () => void;
+  userData?: User | null;
 }
 
 export function DashboardHeader({
   onDealCreated,
-  customFields = [],
-  onBeforeCreate = async () => true,
-  onSignOut
+  customFields,
+  onBeforeCreate,
+  onSignOut,
+  userData
 }: DashboardHeaderProps) {
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  const isActive = (path: string) => location.pathname === path;
-
   return (
-    <header className="bg-white dark:bg-gray-900 shadow sticky top-0 z-10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-        <div className="flex items-center">
-          <img 
-            src="/lovable-uploads/c5ee71fb-3a16-419d-ac19-2f319771e7b0.png" 
-            alt="Sales Saver Logo" 
-            className="h-10 w-auto mr-6 cursor-pointer"
-            onClick={() => navigate("/dashboard")}
-          />
-        </div>
-        <div className="flex items-center gap-3">
-          {location.pathname !== '/dashboard' && (
-            <Button variant="default" onClick={() => navigate("/dashboard")}>
-              <Plus className="h-5 w-5 mr-2" />
-              Create Deal
-            </Button>
-          )}
-          {location.pathname === '/dashboard' && (
-            <CreateDealForm 
-              onDealCreated={onDealCreated} 
+    <header className="bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          <div className="flex items-center">
+            <CreateDealForm
+              onDealCreated={onDealCreated}
               customFields={customFields}
               onBeforeCreate={onBeforeCreate}
             />
-          )}
-          <Button 
-            variant={isActive('/ai-analysis') ? 'default' : 'outline'} 
-            onClick={() => navigate("/ai-analysis")}
-          >
-            <Sparkles className="h-5 w-5 mr-2" />
-            AI Analysis
-          </Button>
-          <Button 
-            variant={isActive('/reports') ? 'default' : 'outline'} 
-            onClick={() => navigate("/reports")}
-          >
-            <BarChart2 className="h-5 w-5 mr-2" />
-            Reports
-          </Button>
-          <Button 
-            variant={isActive('/settings') ? 'default' : 'outline'} 
-            onClick={() => navigate("/settings")}
-          >
-            <Settings className="h-5 w-5 mr-2" />
-            Settings
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={onSignOut}
-            className="border-red-200 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-950"
-          >
-            <LogOut className="h-5 w-5 mr-2 text-red-500" />
-            <span className="text-red-500">Sign Out</span>
-          </Button>
+            {userData?.subscription_status === 'pro' && (
+              <BulkImportDeals onImportComplete={onDealCreated} />
+            )}
+          </div>
+          <UserButton onSignOut={onSignOut} />
         </div>
       </div>
     </header>
