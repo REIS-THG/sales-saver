@@ -720,6 +720,13 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_team_owner: {
+        Args: {
+          team_id: string
+          user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       communication_channel_type: "f2f" | "email" | "social_media"
