@@ -17,9 +17,10 @@ import { supabase } from "@/integrations/supabase/client";
 interface BulkImportDealsProps {
   onImportComplete: () => void;
   teamId?: string;
+  trigger?: React.ReactNode;
 }
 
-export function BulkImportDeals({ onImportComplete, teamId }: BulkImportDealsProps) {
+export function BulkImportDeals({ onImportComplete, teamId, trigger }: BulkImportDealsProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [importing, setImporting] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -123,10 +124,12 @@ export function BulkImportDeals({ onImportComplete, teamId }: BulkImportDealsPro
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="ml-2">
-          <Upload className="h-4 w-4 mr-2" />
-          Bulk Import
-        </Button>
+        {trigger || (
+          <Button variant="outline" className="ml-2">
+            <Upload className="mr-2 h-4 w-4" />
+            Bulk Import
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
