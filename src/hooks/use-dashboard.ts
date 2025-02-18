@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,24 +16,55 @@ export function useDashboard() {
   const { toast } = useToast();
 
   const fetchUserData = async () => {
-    const { data: authData } = await supabase.auth.getUser();
-    if (!authData.user) {
-      navigate("/auth");
-      return;
+    try {
+      const { data: authData } = await supabase.auth.getUser();
+      if (!authData.user) {
+        navigate("/auth");
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("users")
+        .select("*")
+        .eq("user_id", authData.user.id)
+        .single();
+
+      if (error) throw error;
+
+      // Map subscription status from boolean to string enum
+      const subscription_status = data.subscription_status ? 'pro' : 'free' as const;
+
+      const billingAddressData = data.billing_address as Record<string, string> | null;
+      const billingAddress = {
+        street: billingAddressData?.street || '',
+        city: billingAddressData?.city || '',
+        state: billingAddressData?.state || '',
+        country: billingAddressData?.country || '',
+        postal_code: billingAddressData?.postal_code || ''
+      };
+
+      setUserData({
+        ...data,
+        id: data.id,
+        user_id: data.user_id || authData.user.id,
+        full_name: data.full_name,
+        role: data.role as 'sales_rep' | 'manager',
+        theme: data.theme,
+        default_deal_view: data.default_deal_view,
+        custom_views: Array.isArray(data.custom_views) 
+          ? data.custom_views.map(view => typeof view === 'string' ? JSON.parse(view) : view)
+          : [],
+        email: data.email,
+        subscription_status: subscription_status,
+        subscription_end_date: data.subscription_end_date,
+        successful_deals_count: data.successful_deals_count || 0,
+        billing_address: billingAddress,
+        created_at: data.created_at,
+        updated_at: data.updated_at
+      });
+    } catch (err) {
+      console.error("Error fetching user data:", err);
     }
-
-    const { data, error } = await supabase
-      .from("users")
-      .select("*")
-      .eq("user_id", authData.user.id)
-      .single();
-
-    if (error) {
-      console.error("Error fetching user data:", error);
-      return;
-    }
-
-    setUserData(data as User);
   };
 
   const fetchCustomFields = async () => {

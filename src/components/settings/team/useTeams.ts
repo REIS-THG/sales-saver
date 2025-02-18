@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,18 +36,24 @@ export function useTeams() {
           throw membersError;
         }
 
-        const transformedMembers = (membersData || []).map(member => ({
-          id: member.id,
-          team_id: member.team_id,
-          user_id: member.user_id,
-          role: member.role as TeamMember["role"],
-          created_at: member.created_at,
-          updated_at: member.updated_at,
-          user: {
-            ...member.user,
-            role: member.user.role === 'manager' ? 'manager' : 'sales_rep'
-          } as User
-        }));
+        const transformedMembers = (membersData || []).map(member => {
+          // Map subscription status from boolean to string enum
+          const subscription_status = member.user.subscription_status ? 'pro' : 'free' as const;
+          
+          return {
+            id: member.id,
+            team_id: member.team_id,
+            user_id: member.user_id,
+            role: member.role as TeamMember["role"],
+            created_at: member.created_at,
+            updated_at: member.updated_at,
+            user: {
+              ...member.user,
+              role: member.user.role === 'manager' ? 'manager' : 'sales_rep',
+              subscription_status: subscription_status
+            } as User
+          };
+        });
 
         return { teamId: team.id, members: transformedMembers };
       });

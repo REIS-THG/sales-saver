@@ -73,6 +73,9 @@ export function useAuth() {
           }
         : {};
 
+      // Map the subscription status to the correct type
+      const subscription_status = data.subscription_status ? 'pro' : 'free' as const;
+
       // Create a properly typed User object
       const userData: User = {
         id: data.id,
@@ -85,7 +88,7 @@ export function useAuth() {
         default_deal_view: data.default_deal_view,
         custom_views: custom_views,
         email: data.email,
-        subscription_status: Boolean(data.subscription_status),
+        subscription_status: subscription_status,
         subscription_end_date: data.subscription_end_date,
         successful_deals_count: Number(data.successful_deals_count) || 0,
         billing_address: billing_address,
