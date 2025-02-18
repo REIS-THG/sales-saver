@@ -26,12 +26,55 @@ export function DealsTable({
   const [deals, setDeals] = useState<Deal[]>([]);
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
   const [dealToDelete, setDealToDelete] = useState<Deal | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const updateDealStatus = async (dealId: string, newStatus: Deal["status"]) => {
+    const { error } = await supabase
+      .from("deals")
+      .update({ status: newStatus })
+      .eq("id", dealId);
+
+    if (error) {
+      throw error;
+    }
+
+    // Update local state
+    setDeals(currentDeals => 
+      currentDeals.map(deal => 
+        deal.id === dealId ? { ...deal, status: newStatus } : deal
+      )
+    );
+  };
+
+  const handleBulkStatusUpdate = async (selectedDeals: Deal[], newStatus: Deal["status"]) => {
+    setIsUpdating(true);
+    try {
+      await Promise.all(
+        selectedDeals.map(deal => updateDealStatus(deal.id, newStatus))
+      );
+      toast({
+        title: "Success",
+        description: `Updated ${selectedDeals.length} deals to ${newStatus}`,
+      });
+      // Clear selection after successful update
+      onSelectionChange?.([]);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update some deals. Please try again.",
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   const handleDeleteConfirm = async () => {
     if (!dealToDelete) return;
 
+    setIsUpdating(true);
     const { error } = await supabase
       .from("deals")
       .delete()
@@ -43,7 +86,6 @@ export function DealsTable({
         title: "Error",
         description: "Failed to delete deal. Please try again.",
       });
-      console.error("Error deleting deal:", error);
     } else {
       toast({
         title: "Success",
@@ -52,13 +94,15 @@ export function DealsTable({
       setDeals(deals.filter(deal => deal.id !== dealToDelete.id));
     }
     setDealToDelete(null);
+    setIsUpdating(false);
   };
 
   const { table, globalFilter, setGlobalFilter } = useDealsTable(
     deals,
     customFields,
     showCustomFields,
-    (deal: Deal) => setDealToDelete(deal)
+    (deal: Deal) => setDealToDelete(deal),
+    handleBulkStatusUpdate
   );
 
   useEffect(() => {
@@ -100,6 +144,7 @@ export function DealsTable({
         onDealClick={(deal) => setSelectedDeal(deal)}
         onDealsReorder={setDeals}
         onRowSelection={onSelectionChange}
+        isUpdating={isUpdating}
       />
       
       <DealDetailsModal

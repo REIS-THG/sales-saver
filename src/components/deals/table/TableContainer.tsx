@@ -18,6 +18,7 @@ interface TableContainerProps {
   onDealsReorder: (deals: Deal[]) => void;
   loading?: boolean;
   onRowSelection?: (selectedDeals: Deal[]) => void;
+  isUpdating?: boolean;
 }
 
 export function TableContainer({ 
@@ -26,7 +27,8 @@ export function TableContainer({
   onDealClick, 
   onDealsReorder,
   loading = false,
-  onRowSelection
+  onRowSelection,
+  isUpdating = false
 }: TableContainerProps) {
   const sensors = useDragSensors();
 
@@ -49,7 +51,7 @@ export function TableContainer({
     }
   };
 
-  if (loading) {
+  if (loading || isUpdating) {
     return (
       <div className="flex items-center justify-center p-8">
         <Spinner size="lg" />
@@ -59,43 +61,47 @@ export function TableContainer({
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end mb-4 gap-2">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
         <TableFilters table={table} />
         <ExportMenu deals={deals} />
       </div>
 
-      <div className="rounded-md border overflow-auto max-h-[calc(100vh-280px)]">
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <Table>
-            <TableHeader 
-              table={table} 
-              onSelectAll={handleSelectAll}
-              showSelection={!!onRowSelection}
-            />
-            <TableBody>
-              <SortableContext
-                items={deals.map((d) => d.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                {table.getRowModel().rows.map((row) => (
-                  <SortableTableRow
-                    key={row.original.id}
-                    row={row}
-                    onClick={() => onDealClick(row.original)}
-                    onSelection={onRowSelection}
-                  />
-                ))}
-              </SortableContext>
-            </TableBody>
-          </Table>
-        </DndContext>
+      <div className="rounded-md border overflow-auto max-h-[calc(100vh-280px)] bg-white dark:bg-gray-800">
+        <div className="min-w-[800px]"> {/* Minimum width to prevent table from becoming too narrow */}
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <Table>
+              <TableHeader 
+                table={table} 
+                onSelectAll={handleSelectAll}
+                showSelection={!!onRowSelection}
+              />
+              <TableBody>
+                <SortableContext
+                  items={deals.map((d) => d.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {table.getRowModel().rows.map((row) => (
+                    <SortableTableRow
+                      key={row.original.id}
+                      row={row}
+                      onClick={() => onDealClick(row.original)}
+                      onSelection={onRowSelection}
+                    />
+                  ))}
+                </SortableContext>
+              </TableBody>
+            </Table>
+          </DndContext>
+        </div>
       </div>
 
-      <TablePagination table={table} totalDeals={deals.length} />
+      <div className="mt-4 flex justify-center sm:justify-end">
+        <TablePagination table={table} totalDeals={deals.length} />
+      </div>
     </div>
   );
 }
