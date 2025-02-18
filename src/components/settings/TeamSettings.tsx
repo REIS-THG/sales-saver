@@ -37,18 +37,30 @@ export function TeamSettings() {
       const teams = teamsData as Team[];
       setTeams(teams);
 
-      // Fetch members for each team
+      // Fetch members for each team with proper join syntax
       const membersPromises = teams.map(async (team) => {
         const { data: membersData, error: membersError } = await supabase
           .from("team_members")
           .select(`
-            *,
-            user:users(*)
+            id,
+            team_id,
+            user_id,
+            role,
+            created_at,
+            updated_at,
+            user:users!user_id(*)
           `)
           .eq("team_id", team.id);
 
         if (membersError) throw membersError;
-        return { teamId: team.id, members: membersData };
+
+        // Transform the data to match our types
+        const typedMembers = (membersData || []).map(member => ({
+          ...member,
+          user: member.user as User
+        })) as (TeamMember & { user: User })[];
+
+        return { teamId: team.id, members: typedMembers };
       });
 
       const membersResults = await Promise.all(membersPromises);
