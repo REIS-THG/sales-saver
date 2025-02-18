@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import type { Deal, CustomField, Team } from "@/types/types";
+
+import type { CustomField } from "@/types/types";
 import {
   Sheet,
   SheetContent,
@@ -18,11 +17,13 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
 import { Plus } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
-import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
+import { formatAmount } from "./utils/form-validation";
+import { CustomFieldsSection } from "./components/CustomFieldsSection";
+import { ContactSection } from "./components/ContactSection";
+import { useCreateDeal } from "./hooks/useCreateDeal";
+import type { Deal } from "@/types/types";
 
 interface CreateDealFormProps {
   onDealCreated: () => void;
@@ -32,162 +33,17 @@ interface CreateDealFormProps {
 }
 
 const CreateDealForm = ({ onDealCreated, customFields, onBeforeCreate, trigger }: CreateDealFormProps) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [teams, setTeams] = useState<Team[]>([]);
-  const [newDeal, setNewDeal] = useState({
-    deal_name: "",
-    company_name: "",
-    company_url: "",
-    amount: "",
-    status: "open" as Deal["status"],
-    contact_first_name: "",
-    contact_last_name: "",
-    contact_email: "",
-    notes: "",
-    start_date: new Date().toISOString().split('T')[0],
-    expected_close_date: "",
-    custom_fields: {} as Record<string, string | number | boolean>,
-    team_id: null as string | null,
-  });
-  
-  const { toast } = useToast();
-
-  useEffect(() => {
-    fetchTeams();
-  }, []);
-
-  const fetchTeams = async () => {
-    try {
-      const { data: teamData, error: teamsError } = await supabase
-        .from("teams")
-        .select("*, team_members!inner(user_id)")
-        .eq("team_members.user_id", (await supabase.auth.getUser()).data.user?.id);
-
-      if (teamsError) throw teamsError;
-      
-      setTeams(teamData || []);
-    } catch (err) {
-      console.error("Error fetching teams:", err);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to fetch teams",
-      });
-    }
-  };
-
-  const validateEmail = (email: string) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  };
-
-  const validateDates = () => {
-    const start = new Date(newDeal.start_date);
-    const end = new Date(newDeal.expected_close_date);
-    const today = new Date();
-
-    if (start > end) {
-      return "Start date cannot be after expected close date";
-    }
-    if (start < today && start.toDateString() !== today.toDateString()) {
-      return "Start date cannot be in the past";
-    }
-    return null;
-  };
-
-  const formatAmount = (value: string) => {
-    const number = value.replace(/[^\d.]/g, '');
-    const parts = number.split('.');
-    const wholePart = parts[0];
-    const decimalPart = parts[1] ? '.' + parts[1].slice(0, 2) : '';
-    
-    const formatted = Number(wholePart).toLocaleString('en-US') + decimalPart;
-    return formatted;
-  };
+  const {
+    isSubmitting,
+    teams,
+    newDeal,
+    setNewDeal,
+    handleSubmit
+  } = useCreateDeal(onDealCreated, onBeforeCreate);
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatAmount(e.target.value);
     setNewDeal({ ...newDeal, amount: formatted });
-  };
-
-  const handleSubmit = async () => {
-    if (onBeforeCreate) {
-      const canProceed = await onBeforeCreate();
-      if (!canProceed) {
-        return;
-      }
-    }
-
-    try {
-      setIsSubmitting(true);
-      setError(null);
-
-      if (!validateEmail(newDeal.contact_email)) {
-        throw new Error("Please enter a valid email address");
-      }
-
-      const dateError = validateDates();
-      if (dateError) {
-        throw new Error(dateError);
-      }
-
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error("No authenticated user found");
-      }
-
-      const amountAsNumber = parseFloat(newDeal.amount.replace(/,/g, ''));
-      if (isNaN(amountAsNumber)) {
-        throw new Error("Please enter a valid amount");
-      }
-
-      const { error: insertError } = await supabase.from("deals").insert([
-        {
-          ...newDeal,
-          amount: amountAsNumber,
-          health_score: 50,
-          user_id: user.id,
-          team_id: newDeal.team_id,
-        },
-      ]);
-
-      if (insertError) throw insertError;
-
-      toast({
-        title: "Success",
-        description: "Deal created successfully",
-      });
-
-      setNewDeal({
-        deal_name: "",
-        company_name: "",
-        company_url: "",
-        amount: "",
-        status: "open",
-        contact_first_name: "",
-        contact_last_name: "",
-        contact_email: "",
-        notes: "",
-        start_date: new Date().toISOString().split('T')[0],
-        expected_close_date: "",
-        custom_fields: {},
-        team_id: null,
-      });
-      
-      onDealCreated();
-    } catch (err) {
-      console.error("Error creating deal:", err);
-      const errorMessage = err instanceof Error ? err.message : "Failed to create deal";
-      setError(errorMessage);
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
   };
 
   const handleCustomFieldChange = (fieldName: string, value: string | number | boolean) => {
@@ -262,6 +118,7 @@ const CreateDealForm = ({ onDealCreated, customFields, onBeforeCreate, trigger }
               placeholder="Enter company name"
             />
           </div>
+
           <div className="space-y-2">
             <Label htmlFor="company_url">Company URL</Label>
             <Input
@@ -274,6 +131,7 @@ const CreateDealForm = ({ onDealCreated, customFields, onBeforeCreate, trigger }
               placeholder="https://example.com"
             />
           </div>
+
           <div className="space-y-2">
             <Label htmlFor="amount">Amount ($)</Label>
             <Input
@@ -283,42 +141,22 @@ const CreateDealForm = ({ onDealCreated, customFields, onBeforeCreate, trigger }
               placeholder="Enter deal amount"
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="contact_first_name">Contact First Name</Label>
-              <Input
-                id="contact_first_name"
-                value={newDeal.contact_first_name}
-                onChange={(e) =>
-                  setNewDeal({ ...newDeal, contact_first_name: e.target.value })
-                }
-                placeholder="First name"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="contact_last_name">Contact Last Name</Label>
-              <Input
-                id="contact_last_name"
-                value={newDeal.contact_last_name}
-                onChange={(e) =>
-                  setNewDeal({ ...newDeal, contact_last_name: e.target.value })
-                }
-                placeholder="Last name"
-              />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="contact_email">Contact Email</Label>
-            <Input
-              id="contact_email"
-              type="email"
-              value={newDeal.contact_email}
-              onChange={(e) =>
-                setNewDeal({ ...newDeal, contact_email: e.target.value })
-              }
-              placeholder="contact@company.com"
-            />
-          </div>
+
+          <ContactSection
+            firstName={newDeal.contact_first_name}
+            lastName={newDeal.contact_last_name}
+            email={newDeal.contact_email}
+            onFirstNameChange={(value) =>
+              setNewDeal({ ...newDeal, contact_first_name: value })
+            }
+            onLastNameChange={(value) =>
+              setNewDeal({ ...newDeal, contact_last_name: value })
+            }
+            onEmailChange={(value) =>
+              setNewDeal({ ...newDeal, contact_email: value })
+            }
+          />
+
           <div className="space-y-2">
             <Label htmlFor="notes">Notes</Label>
             <Textarea
@@ -331,6 +169,7 @@ const CreateDealForm = ({ onDealCreated, customFields, onBeforeCreate, trigger }
               className="min-h-[100px]"
             />
           </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="start_date">Start Date</Label>
@@ -355,6 +194,7 @@ const CreateDealForm = ({ onDealCreated, customFields, onBeforeCreate, trigger }
               />
             </div>
           </div>
+
           <div className="space-y-2">
             <Label htmlFor="status">Status</Label>
             <Select
@@ -374,46 +214,13 @@ const CreateDealForm = ({ onDealCreated, customFields, onBeforeCreate, trigger }
               </SelectContent>
             </Select>
           </div>
-          {customFields.length > 0 && (
-            <>
-              <Separator className="my-4" />
-              <h3 className="text-sm font-medium mb-2">Custom Fields</h3>
-              <div className="space-y-4">
-                {customFields.map((field) => (
-                  <div key={field.id} className="space-y-2">
-                    <Label htmlFor={field.field_name}>
-                      {field.field_name}
-                      {field.is_required && <span className="text-red-500 ml-1">*</span>}
-                    </Label>
-                    {field.field_type === "text" && (
-                      <Input
-                        id={field.field_name}
-                        value={newDeal.custom_fields[field.field_name] as string || ""}
-                        onChange={(e) => handleCustomFieldChange(field.field_name, e.target.value)}
-                        required={field.is_required}
-                      />
-                    )}
-                    {field.field_type === "number" && (
-                      <Input
-                        id={field.field_name}
-                        type="number"
-                        value={newDeal.custom_fields[field.field_name] as number || ""}
-                        onChange={(e) => handleCustomFieldChange(field.field_name, parseFloat(e.target.value))}
-                        required={field.is_required}
-                      />
-                    )}
-                    {field.field_type === "boolean" && (
-                      <Switch
-                        id={field.field_name}
-                        checked={newDeal.custom_fields[field.field_name] as boolean || false}
-                        onCheckedChange={(checked) => handleCustomFieldChange(field.field_name, checked)}
-                      />
-                    )}
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
+
+          <CustomFieldsSection
+            customFields={customFields}
+            values={newDeal.custom_fields}
+            onChange={handleCustomFieldChange}
+          />
+
           <Button
             className="w-full mt-4"
             onClick={handleSubmit}
