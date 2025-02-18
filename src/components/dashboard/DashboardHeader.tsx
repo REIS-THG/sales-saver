@@ -25,7 +25,15 @@ export function DashboardHeader({
 
   return (
     <header className="bg-white dark:bg-gray-900 shadow sticky top-0 z-10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-end items-center">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+        <div className="flex items-center">
+          <img 
+            src="/lovable-uploads/c5ee71fb-3a16-419d-ac19-2f319771e7b0.png" 
+            alt="Sales Saver Logo" 
+            className="h-10 w-auto mr-6 cursor-pointer"
+            onClick={() => navigate("/dashboard")}
+          />
+        </div>
         <div className="flex items-center gap-3">
           {location.pathname !== '/dashboard' && (
             <Button variant="default" onClick={() => navigate("/dashboard")}>

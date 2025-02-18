@@ -34,6 +34,13 @@ const Index = () => {
       <div className="container mx-auto px-4 py-16">
         <div className="max-w-4xl mx-auto text-center space-y-8">
           <div className="space-y-4">
+            <div className="flex justify-center mb-8">
+              <img 
+                src="/lovable-uploads/c5ee71fb-3a16-419d-ac19-2f319771e7b0.png" 
+                alt="Sales Saver Logo" 
+                className="h-32 w-auto"
+              />
+            </div>
             <Badge variant="secondary" className="px-4 py-1">
               ⚡️ Trusted by 10,000+ sales professionals
             </Badge>
