@@ -16,10 +16,12 @@ async function checkAuth() {
 export async function fetchUserReports(userId: string, page = 1) {
   await checkAuth();
   console.log('Fetching reports for user:', userId);
+  console.log('Fetching reports for page:', page);
   
   const { data: reportsData, error, count } = await supabase
     .from('report_configurations')
     .select('*', { count: 'exact' })
+    .or(`user_id.eq.${userId},team_id.not.is.null`)
     .order('created_at', { ascending: false })
     .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
 
