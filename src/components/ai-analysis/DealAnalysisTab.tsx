@@ -1,3 +1,4 @@
+
 import * as React from "react";
 import { FileText, Mail, FileIcon, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -28,7 +29,6 @@ export function DealAnalysisTab({
   onFileUpload,
   insights = [],
 }: DealAnalysisTabProps) {
-  const [generateDripCampaign, setGenerateDripCampaign] = React.useState(false);
   const selectedDealData = deals.find(deal => deal.id === selectedDeal);
   const dealInsights = insights.filter(insight => insight.deal_id === selectedDeal);
 
@@ -183,29 +183,6 @@ export function DealAnalysisTab({
               accept=".jpg,.jpeg,.png,.pdf,.mp3,.wav,.m4a,.ogg,.doc,.docx"
               onUpload={(file) => onFileUpload(file, 'audio')}
               isDisabled={isAnalysisLimited}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Analysis Options</CardTitle>
-          <CardDescription>
-            Configure additional analysis outputs
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <label className="text-sm font-medium">Generate Drip Campaign</label>
-              <p className="text-sm text-muted-foreground">
-                Create an automated follow-up sequence based on the analysis
-              </p>
-            </div>
-            <Switch
-              checked={generateDripCampaign}
-              onCheckedChange={setGenerateDripCampaign}
             />
           </div>
         </CardContent>

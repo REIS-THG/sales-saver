@@ -1,6 +1,9 @@
 
+import * as React from "react";
 import { Deal, Insight } from "@/types/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
 import { InsightsDisplay } from "./InsightsDisplay";
 import { MessageGenerator } from "./MessageGenerator";
 
@@ -12,6 +15,7 @@ interface NextStepsTabProps {
 }
 
 export function NextStepsTab({ deals, selectedDeal, onDealSelect, insights = [] }: NextStepsTabProps) {
+  const [generateDripCampaign, setGenerateDripCampaign] = React.useState(false);
   const dealInsights = insights.filter(insight => insight.deal_id === selectedDeal);
   const selectedDealData = deals.find(deal => deal.id === selectedDeal);
 
@@ -32,6 +36,29 @@ export function NextStepsTab({ deals, selectedDeal, onDealSelect, insights = [] 
           </SelectContent>
         </Select>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Analysis Options</CardTitle>
+          <CardDescription>
+            Configure additional analysis outputs
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <label className="text-sm font-medium">Generate Drip Campaign</label>
+              <p className="text-sm text-muted-foreground">
+                Create an automated follow-up sequence based on the analysis
+              </p>
+            </div>
+            <Switch
+              checked={generateDripCampaign}
+              onCheckedChange={setGenerateDripCampaign}
+            />
+          </div>
+        </CardContent>
+      </Card>
 
       {selectedDealData && (
         <>
