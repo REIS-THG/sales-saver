@@ -16,11 +16,13 @@ interface TeamCardProps {
 
 export function TeamCard({ team, members, onAddMember, onRemoveMember, onDeleteTeam, currentUserIsOwner }: TeamCardProps) {
   return (
-    <Card key={team.id}>
+    <Card className="border border-input bg-card">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <div className="space-y-1">
-          <CardTitle>{team.name}</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-xl font-semibold text-card-foreground">
+            {team.name}
+          </CardTitle>
+          <CardDescription className="text-sm text-muted-foreground">
             Created {new Date(team.created_at!).toLocaleDateString()}
           </CardDescription>
         </div>
@@ -30,7 +32,7 @@ export function TeamCard({ team, members, onAddMember, onRemoveMember, onDeleteT
             description="Are you sure you want to delete this team? This action cannot be undone."
             onConfirm={() => onDeleteTeam(team.id)}
             triggerButton={
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="hover:bg-destructive/10">
                 <Trash2 className="h-4 w-4 text-destructive" />
               </Button>
             }
@@ -39,11 +41,12 @@ export function TeamCard({ team, members, onAddMember, onRemoveMember, onDeleteT
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between">
-          <h4 className="font-medium">Team Members</h4>
+          <h4 className="text-sm font-medium text-card-foreground">Team Members</h4>
           <Button
             variant="outline"
             size="sm"
             onClick={() => onAddMember(team.id)}
+            className="border-input hover:bg-accent"
           >
             <UserPlus className="h-4 w-4 mr-2" />
             Add Member
@@ -53,10 +56,10 @@ export function TeamCard({ team, members, onAddMember, onRemoveMember, onDeleteT
           {members?.map((member) => (
             <div
               key={member.id}
-              className="flex items-center justify-between p-2 rounded-md bg-muted/50"
+              className="flex items-center justify-between p-3 rounded-md bg-muted/50 border border-input"
             >
               <div>
-                <p className="font-medium">{member.user.full_name}</p>
+                <p className="font-medium text-card-foreground">{member.user.full_name}</p>
                 <p className="text-sm text-muted-foreground">
                   {member.user.email} • {member.role}
                 </p>
@@ -66,8 +69,9 @@ export function TeamCard({ team, members, onAddMember, onRemoveMember, onDeleteT
                   variant="ghost"
                   size="icon"
                   onClick={() => onRemoveMember(team.id, member.id)}
+                  className="hover:bg-destructive/10"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-4 w-4 text-destructive" />
                 </Button>
               )}
             </div>

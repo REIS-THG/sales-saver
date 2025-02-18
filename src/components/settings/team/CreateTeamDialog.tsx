@@ -20,16 +20,16 @@ export function CreateTeamDialog({
 }: CreateTeamDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Create Team</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-2xl font-semibold text-foreground">Create Team</DialogTitle>
+          <DialogDescription className="text-muted-foreground">
             Create a new team to collaborate with others.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <label htmlFor="team-name" className="text-sm font-medium">
+        <div className="grid gap-4 py-4">
+          <div className="grid gap-2">
+            <label htmlFor="team-name" className="text-sm font-medium text-foreground">
               Team Name
             </label>
             <Input
@@ -37,14 +37,24 @@ export function CreateTeamDialog({
               value={newTeamName}
               onChange={(e) => onNewTeamNameChange(e.target.value)}
               placeholder="Enter team name"
+              className="border-input bg-background"
             />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            className="border-input hover:bg-accent"
+          >
             Cancel
           </Button>
-          <Button onClick={onCreateTeam}>Create Team</Button>
+          <Button
+            onClick={onCreateTeam}
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            Create Team
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

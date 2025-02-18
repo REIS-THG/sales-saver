@@ -26,16 +26,16 @@ export function AddMemberDialog({
 }: AddMemberDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add Team Member</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-2xl font-semibold text-foreground">Add Team Member</DialogTitle>
+          <DialogDescription className="text-muted-foreground">
             Add a new member to your team by email address.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <label htmlFor="member-email" className="text-sm font-medium">
+        <div className="grid gap-4 py-4">
+          <div className="grid gap-2">
+            <label htmlFor="member-email" className="text-sm font-medium text-foreground">
               Email Address
             </label>
             <Input
@@ -44,14 +44,15 @@ export function AddMemberDialog({
               value={email}
               onChange={(e) => onEmailChange(e.target.value)}
               placeholder="Enter member's email"
+              className="border-input bg-background"
             />
           </div>
-          <div className="space-y-2">
-            <label htmlFor="member-role" className="text-sm font-medium">
+          <div className="grid gap-2">
+            <label htmlFor="member-role" className="text-sm font-medium text-foreground">
               Role
             </label>
             <Select value={role} onValueChange={onRoleChange}>
-              <SelectTrigger>
+              <SelectTrigger className="border-input bg-background">
                 <SelectValue placeholder="Select role" />
               </SelectTrigger>
               <SelectContent>
@@ -62,10 +63,19 @@ export function AddMemberDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            className="border-input hover:bg-accent"
+          >
             Cancel
           </Button>
-          <Button onClick={onAddMember}>Add Member</Button>
+          <Button
+            onClick={onAddMember}
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            Add Member
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
