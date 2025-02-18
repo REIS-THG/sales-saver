@@ -700,6 +700,13 @@ export type Database = {
         }
         Returns: boolean
       }
+      can_access_team_member_row: {
+        Args: {
+          checking_user_id: string
+          checking_team_id: string
+        }
+        Returns: boolean
+      }
       get_team_member_role: {
         Args: {
           team_id: string
