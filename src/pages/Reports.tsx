@@ -1,26 +1,35 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { Plus, ArrowLeft, BarChart2, PieChart, LineChart, Table } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import * as XLSX from 'xlsx';
-import { Plus, BarChart2, PieChart, LineChart, Table, ArrowLeft } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useReports } from "@/hooks/use-reports";
+import { ReportsList } from "@/components/reports/ReportsList";
+import { ReportConfiguration } from "@/components/reports/ReportConfiguration";
+import type { ReportConfiguration as ReportConfigType } from "@/components/reports/types";
+import { useToast } from "@/hooks/use-toast";
 import type { CustomField, Deal, User, StandardField } from "@/types/types";
-import { ReportCard } from "@/components/reports/ReportCard";
-import { ReportConfiguration as ReportConfigComponent } from "@/components/reports/ReportConfiguration";
-import type { ReportConfiguration, ReportConfig, ReportVisualization } from "@/components/reports/types";
 
 const Reports = () => {
-  const [reports, setReports] = useState<ReportConfiguration[]>([]);
-  const [selectedReport, setSelectedReport] = useState<ReportConfiguration | null>(null);
-  const [customFields, setCustomFields] = useState<CustomField[]>([]);
-  const [deals, setDeals] = useState<Deal[]>([]);
-  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const {
+    reports,
+    loading,
+    fetchReports,
+    createReport,
+    updateReport,
+    deleteReport,
+    toggleFavorite,
+  } = useReports();
+
+  const [selectedReport, setSelectedReport] = useState<ReportConfigType | null>(null);
   const [editingReportId, setEditingReportId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
+  const [customFields, setCustomFields] = useState<CustomField[]>([]);
+  const [deals, setDeals] = useState<Deal[]>([]);
   const [userData, setUserData] = useState<User | null>(null);
-  const { toast } = useToast();
-  const navigate = useNavigate();
 
   const standardFields: StandardField[] = [
     { field: 'amount', field_name: 'Deal Amount', field_type: 'number' },
@@ -38,7 +47,7 @@ const Reports = () => {
     { value: 'max' as const, label: 'Maximum' },
   ];
 
-  const visualizationTypes: { value: ReportVisualization; label: string; icon: JSX.Element }[] = [
+  const visualizationTypes: { value: ReportConfigType["config"]["visualization"]; label: string; icon: JSX.Element }[] = [
     { value: 'bar', label: 'Bar Chart', icon: <BarChart2 className="h-4 w-4" /> },
     { value: 'line', label: 'Line Chart', icon: <LineChart className="h-4 w-4" /> },
     { value: 'pie', label: 'Pie Chart', icon: <PieChart className="h-4 w-4" /> },
@@ -46,11 +55,11 @@ const Reports = () => {
   ];
 
   useEffect(() => {
-    fetchUserData();
     fetchReports();
+    fetchUserData();
     fetchCustomFields();
     fetchDeals();
-  }, []);
+  }, [fetchReports]);
 
   const fetchUserData = async () => {
     try {
@@ -100,59 +109,6 @@ const Reports = () => {
       });
     } catch (err) {
       console.error("Error fetching user data:", err);
-    }
-  };
-
-  const fetchReports = async () => {
-    try {
-      const { data: authData } = await supabase.auth.getUser();
-      const userId = authData.user?.id;
-
-      if (!userId) {
-        navigate("/auth");
-        return;
-      }
-
-      const { data: reportsData, error } = await supabase
-        .from('report_configurations')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      const typedReports: ReportConfiguration[] = (reportsData || []).map(report => {
-        const config = typeof report.config === 'string' 
-          ? JSON.parse(report.config) 
-          : report.config;
-
-        return {
-          id: report.id,
-          user_id: report.user_id,
-          name: report.name,
-          description: report.description || undefined,
-          config: {
-            dimensions: config.dimensions || [],
-            metrics: config.metrics || [],
-            filters: config.filters || [],
-            visualization: (config.visualization || 'bar') as ReportVisualization
-          },
-          created_at: report.created_at,
-          updated_at: report.updated_at,
-          is_favorite: report.is_favorite
-        };
-      });
-
-      setReports(typedReports);
-    } catch (err) {
-      console.error('Error fetching reports:', err);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to fetch reports",
-      });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -214,7 +170,6 @@ const Reports = () => {
       }));
 
       setDeals(typedDeals);
-      setLoading(false);
     } catch (err) {
       console.error('Error fetching deals:', err);
       toast({
@@ -222,184 +177,21 @@ const Reports = () => {
         title: "Error",
         description: "Failed to fetch deals",
       });
-      setLoading(false);
     }
   };
 
-  const createReport = async () => {
-    try {
-      const { data: authData } = await supabase.auth.getUser();
-      const userId = authData.user?.id;
-
-      if (!userId) {
-        navigate("/auth");
-        return;
-      }
-
-      const initialConfig: ReportConfig = {
-        dimensions: [],
-        metrics: [],
-        filters: [],
-        visualization: 'bar'
-      };
-
-      const newReportData = {
-        name: "New Report",
-        description: "Custom report description",
-        user_id: userId,
-        config: initialConfig as unknown as Json
-      };
-
-      const { data, error } = await supabase
-        .from('report_configurations')
-        .insert(newReportData)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      const config = typeof data.config === 'string' 
-        ? JSON.parse(data.config) 
-        : data.config;
-
-      const newReport: ReportConfiguration = {
-        id: data.id,
-        user_id: data.user_id,
-        name: data.name,
-        description: data.description || undefined,
-        config: {
-          dimensions: config.dimensions || [],
-          metrics: config.metrics || [],
-          filters: config.filters || [],
-          visualization: (config.visualization || 'bar') as ReportVisualization
-        },
-        created_at: data.created_at,
-        updated_at: data.updated_at,
-        is_favorite: data.is_favorite
-      };
-
-      setReports(prev => [newReport, ...prev]);
+  const handleCreateReport = async () => {
+    const newReport = await createReport();
+    if (newReport) {
       setSelectedReport(newReport);
-      
       toast({
         title: "Success",
         description: "New report created",
       });
-    } catch (err) {
-      console.error('Error creating report:', err);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to create report",
-      });
     }
   };
 
-  const deleteReport = async (reportId: string) => {
-    try {
-      const { error } = await supabase
-        .from('report_configurations')
-        .delete()
-        .eq('id', reportId);
-
-      if (error) throw error;
-
-      setReports(prev => prev.filter(report => report.id !== reportId));
-      if (selectedReport?.id === reportId) {
-        setSelectedReport(null);
-      }
-
-      toast({
-        title: "Success",
-        description: "Report deleted successfully",
-      });
-    } catch (err) {
-      console.error('Error deleting report:', err);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to delete report",
-      });
-    }
-  };
-
-  const updateReport = async (reportId: string, updates: Partial<ReportConfiguration>) => {
-    try {
-      const { data, error } = await supabase
-        .from('report_configurations')
-        .update({
-          ...updates,
-          config: JSON.parse(JSON.stringify(updates.config))
-        })
-        .eq('id', reportId)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      const updatedReport: ReportConfiguration = {
-        ...data,
-        config: data.config as unknown as ReportConfig
-      };
-
-      setReports(prev => prev.map(report => 
-        report.id === reportId ? updatedReport : report
-      ));
-      setSelectedReport(updatedReport);
-
-      toast({
-        title: "Success",
-        description: "Report updated successfully",
-      });
-    } catch (err) {
-      console.error('Error updating report:', err);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to update report",
-      });
-    }
-  };
-
-  const toggleFavorite = async (reportId: string, currentStatus: boolean) => {
-    try {
-      const { data, error } = await supabase
-        .from('report_configurations')
-        .update({ 
-          is_favorite: !currentStatus,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', reportId)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      const updatedReport: ReportConfiguration = {
-        ...data,
-        config: data.config as unknown as ReportConfig,
-        is_favorite: !currentStatus
-      };
-
-      setReports(prev => prev.map(report => 
-        report.id === reportId ? updatedReport : report
-      ));
-
-      toast({
-        title: "Success",
-        description: `Report ${!currentStatus ? 'added to' : 'removed from'} favorites`,
-      });
-    } catch (err) {
-      console.error('Error toggling favorite:', err);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to update favorite status",
-      });
-    }
-  };
-
-  const startEditingName = (report: ReportConfiguration) => {
+  const startEditingName = (report: ReportConfigType) => {
     setEditingReportId(report.id);
     setEditingName(report.name);
   };
@@ -407,68 +199,14 @@ const Reports = () => {
   const saveReportName = async () => {
     if (!editingReportId) return;
 
-    try {
-      const { data, error } = await supabase
-        .from('report_configurations')
-        .update({ name: editingName })
-        .eq('id', editingReportId)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      const updatedReport: ReportConfiguration = {
-        ...data,
-        config: data.config as unknown as ReportConfig
-      };
-
-      setReports(prev => prev.map(report => 
-        report.id === editingReportId ? updatedReport : report
-      ));
-
+    const updatedReport = await updateReport(editingReportId, { name: editingName });
+    if (updatedReport) {
       setEditingReportId(null);
       setEditingName("");
-
-      toast({
-        title: "Success",
-        description: "Report name updated successfully",
-      });
-    } catch (err) {
-      console.error('Error updating report name:', err);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to update report name",
-      });
     }
   };
 
-  const generateReportData = (report: ReportConfiguration) => {
-    const formattedData = deals.map(deal => {
-      const row: Record<string, any> = {};
-      
-      report.config.dimensions.forEach(dim => {
-        if (dim.type === 'standard') {
-          row[dim.label] = deal[dim.field as keyof Deal];
-        } else if (dim.type === 'custom' && deal.custom_fields) {
-          row[dim.label] = deal.custom_fields[dim.field];
-        }
-      });
-
-      report.config.metrics.forEach(metric => {
-        const value = deal[metric.field as keyof Deal];
-        if (typeof value === 'number') {
-          row[metric.label] = value;
-        }
-      });
-
-      return row;
-    });
-
-    return formattedData;
-  };
-
-  const downloadExcel = async (report: ReportConfiguration) => {
+  const handleExportExcel = async (report: ReportConfigType) => {
     try {
       const { data: authData } = await supabase.auth.getUser();
       const userId = authData.user?.id;
@@ -513,16 +251,16 @@ const Reports = () => {
         description: "Report downloaded successfully",
       });
     } catch (err) {
-      console.error('Error downloading Excel:', err);
+      console.error('Error exporting to Excel:', err);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to download Excel file",
+        description: "Failed to export to Excel",
       });
     }
   };
 
-  const downloadGoogleSheets = async (report: ReportConfiguration) => {
+  const handleExportGoogleSheets = async (report: ReportConfigType) => {
     try {
       const { data: authData } = await supabase.auth.getUser();
       const userId = authData.user?.id;
@@ -570,37 +308,38 @@ const Reports = () => {
         description: "Opening report in Google Sheets",
       });
     } catch (err) {
-      console.error('Error exporting to Google Sheets:', err);
+      console.error('Error exporting to CSV:', err);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to export to Google Sheets",
+        description: "Failed to export to CSV",
       });
     }
   };
 
-  const handleExportExcel = async (report: ReportConfiguration) => {
-    if (userData?.subscription_status !== 'pro' && report.config.dimensions.some(d => d.type === 'custom')) {
-      toast({
-        title: "Pro Feature Required",
-        description: "Upgrade to Pro to export reports with custom fields",
-        variant: "destructive",
+  const generateReportData = (report: ReportConfigType) => {
+    const formattedData = deals.map(deal => {
+      const row: Record<string, any> = {};
+      
+      report.config.dimensions.forEach(dim => {
+        if (dim.type === 'standard') {
+          row[dim.label] = deal[dim.field as keyof Deal];
+        } else if (dim.type === 'custom' && deal.custom_fields) {
+          row[dim.label] = deal.custom_fields[dim.field];
+        }
       });
-      return;
-    }
-    await downloadExcel(report);
-  };
 
-  const handleExportGoogleSheets = async (report: ReportConfiguration) => {
-    if (userData?.subscription_status !== 'pro' && report.config.dimensions.some(d => d.type === 'custom')) {
-      toast({
-        title: "Pro Feature Required",
-        description: "Upgrade to Pro to export reports with custom fields",
-        variant: "destructive",
+      report.config.metrics.forEach(metric => {
+        const value = deal[metric.field as keyof Deal];
+        if (typeof value === 'number') {
+          row[metric.label] = value;
+        }
       });
-      return;
-    }
-    await downloadGoogleSheets(report);
+
+      return row;
+    });
+
+    return formattedData;
   };
 
   const favoriteReports = reports.filter(report => report.is_favorite);
@@ -629,66 +368,50 @@ const Reports = () => {
             </Button>
             <h1 className="text-3xl font-bold">Reports</h1>
           </div>
-          <Button onClick={createReport}>
+          <Button onClick={handleCreateReport}>
             <Plus className="h-4 w-4 mr-2" />
             New Report
           </Button>
         </div>
 
-        {favoriteReports.length > 0 && (
-          <>
-            <h2 className="text-xl font-semibold mb-4">Favorite Reports</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-              {favoriteReports.map((report) => (
-                <ReportCard
-                  key={report.id}
-                  report={report}
-                  onEdit={setSelectedReport}
-                  onDelete={deleteReport}
-                  onToggleFavorite={toggleFavorite}
-                  editingReportId={editingReportId}
-                  editingName={editingName}
-                  onEditNameChange={setEditingName}
-                  onSaveReportName={saveReportName}
-                  onExportExcel={handleExportExcel}
-                  onExportGoogleSheets={handleExportGoogleSheets}
-                />
-              ))}
-            </div>
-          </>
-        )}
+        <ReportsList
+          reports={favoriteReports}
+          onEdit={setSelectedReport}
+          onDelete={deleteReport}
+          onToggleFavorite={toggleFavorite}
+          editingReportId={editingReportId}
+          editingName={editingName}
+          onEditNameChange={setEditingName}
+          onSaveReportName={saveReportName}
+          onExportExcel={handleExportExcel}
+          onExportGoogleSheets={handleExportGoogleSheets}
+          isFavorites={true}
+        />
 
         <h2 className="text-xl font-semibold mb-4">All Reports</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {otherReports.map((report) => (
-            <ReportCard
-              key={report.id}
-              report={report}
-              onEdit={setSelectedReport}
-              onDelete={deleteReport}
-              onToggleFavorite={toggleFavorite}
-              editingReportId={editingReportId}
-              editingName={editingName}
-              onEditNameChange={setEditingName}
-              onSaveReportName={saveReportName}
-              onExportExcel={handleExportExcel}
-              onExportGoogleSheets={handleExportGoogleSheets}
-            />
-          ))}
-        </div>
+        <ReportsList
+          reports={otherReports}
+          onEdit={setSelectedReport}
+          onDelete={deleteReport}
+          onToggleFavorite={toggleFavorite}
+          editingReportId={editingReportId}
+          editingName={editingName}
+          onEditNameChange={setEditingName}
+          onSaveReportName={saveReportName}
+          onExportExcel={handleExportExcel}
+          onExportGoogleSheets={handleExportGoogleSheets}
+        />
 
         {selectedReport && (
-          <div className="mt-8">
-            <ReportConfigComponent
-              report={selectedReport}
-              onClose={() => setSelectedReport(null)}
-              onUpdate={updateReport}
-              standardFields={standardFields}
-              customFields={customFields}
-              aggregations={aggregations}
-              visualizationTypes={visualizationTypes}
-            />
-          </div>
+          <ReportConfiguration
+            report={selectedReport}
+            onClose={() => setSelectedReport(null)}
+            onUpdate={updateReport}
+            standardFields={standardFields}
+            customFields={customFields}
+            aggregations={aggregations}
+            visualizationTypes={visualizationTypes}
+          />
         )}
       </div>
     </div>
