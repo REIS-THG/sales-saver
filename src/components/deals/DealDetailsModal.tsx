@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { type Deal, type DealNote, type CustomField } from "@/types/types";
 import {
@@ -213,7 +212,13 @@ const DealDetailsModal = ({ deal, onClose, onDealUpdated, customFields }: DealDe
 
   return (
     <Dialog open={!!deal} onOpenChange={() => onClose()}>
-      <DialogContent className="sm:max-w-[600px] w-full max-h-[90vh] overflow-y-auto">
+      <DialogContent 
+        className="sm:max-w-[600px] w-full max-h-[90vh] overflow-y-auto"
+        aria-describedby="deal-details-content"
+      >
+        <div id="deal-details-content" className="sr-only">
+          Deal details and history for {deal?.deal_name}
+        </div>
         <DialogHeader className="space-y-4">
           <DialogTitle className="flex flex-col sm:flex-row sm:items-center gap-4">
             <span className="text-xl font-semibold break-all">{deal?.deal_name}</span>
