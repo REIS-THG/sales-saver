@@ -2,23 +2,40 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Team, TeamMember, User } from "@/types/types";
-import { UserPlus, X } from "lucide-react";
+import { UserPlus, X, Trash2 } from "lucide-react";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface TeamCardProps {
   team: Team;
   members: (TeamMember & { user: User })[];
   onAddMember: (teamId: string) => void;
   onRemoveMember: (teamId: string, memberId: string) => void;
+  onDeleteTeam: (teamId: string) => void;
+  currentUserIsOwner: boolean;
 }
 
-export function TeamCard({ team, members, onAddMember, onRemoveMember }: TeamCardProps) {
+export function TeamCard({ team, members, onAddMember, onRemoveMember, onDeleteTeam, currentUserIsOwner }: TeamCardProps) {
   return (
     <Card key={team.id}>
-      <CardHeader>
-        <CardTitle>{team.name}</CardTitle>
-        <CardDescription>
-          Created {new Date(team.created_at!).toLocaleDateString()}
-        </CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <div className="space-y-1">
+          <CardTitle>{team.name}</CardTitle>
+          <CardDescription>
+            Created {new Date(team.created_at!).toLocaleDateString()}
+          </CardDescription>
+        </div>
+        {currentUserIsOwner && (
+          <ConfirmDialog
+            title="Delete Team"
+            description="Are you sure you want to delete this team? This action cannot be undone."
+            onConfirm={() => onDeleteTeam(team.id)}
+            triggerButton={
+              <Button variant="ghost" size="icon">
+                <Trash2 className="h-4 w-4 text-destructive" />
+              </Button>
+            }
+          />
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between">
@@ -44,7 +61,7 @@ export function TeamCard({ team, members, onAddMember, onRemoveMember }: TeamCar
                   {member.user.email} • {member.role}
                 </p>
               </div>
-              {member.role !== "owner" && (
+              {member.role !== "owner" && currentUserIsOwner && (
                 <Button
                   variant="ghost"
                   size="icon"

@@ -8,15 +8,17 @@ import { AddMemberDialog } from "./team/AddMemberDialog";
 import { TeamCard } from "./team/TeamCard";
 import { useTeams } from "./team/useTeams";
 import { TeamMember } from "@/types/types";
+import { useAuth } from "@/hooks/useAuth";
 
 export function TeamSettings() {
-  const { teams, teamMembers, loading, createTeam, addTeamMember, removeTeamMember, fetchTeams } = useTeams();
+  const { teams, teamMembers, loading, createTeam, deleteTeam, addTeamMember, removeTeamMember, fetchTeams } = useTeams();
   const [createTeamOpen, setCreateTeamOpen] = useState(false);
   const [newTeamName, setNewTeamName] = useState("");
   const [addMemberEmail, setAddMemberEmail] = useState("");
   const [addMemberRole, setAddMemberRole] = useState<TeamMember["role"]>("member");
   const [addMemberTeamId, setAddMemberTeamId] = useState<string | null>(null);
   const [addMemberDialogOpen, setAddMemberDialogOpen] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchTeams();
@@ -76,6 +78,8 @@ export function TeamSettings() {
                 setAddMemberDialogOpen(true);
               }}
               onRemoveMember={removeTeamMember}
+              onDeleteTeam={deleteTeam}
+              currentUserIsOwner={team.owner_id === user?.user_id}
             />
           ))}
         </div>

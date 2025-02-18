@@ -120,20 +120,72 @@ export function useTeams() {
     }
   };
 
+  const deleteTeam = async (teamId: string) => {
+    try {
+      // First delete all team members
+      const { error: membersError } = await supabase
+        .from("team_members")
+        .delete()
+        .eq("team_id", teamId);
+
+      if (membersError) throw membersError;
+
+      // Then delete the team
+      const { error: teamError } = await supabase
+        .from("teams")
+        .delete()
+        .eq("id", teamId);
+
+      if (teamError) throw teamError;
+
+      toast({
+        title: "Success",
+        description: "Team deleted successfully.",
+      });
+      fetchTeams();
+      return true;
+    } catch (error) {
+      console.error("Error deleting team:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete team. Please try again.",
+      });
+      return false;
+    }
+  };
+
   const addTeamMember = async (email: string, teamId: string, role: TeamMember["role"]) => {
     try {
       // First, fetch the user by email
       const { data: userData, error: userError } = await supabase
         .from("users")
-        .select("user_id")
+        .select("id, user_id")
         .eq("email", email.trim())
-        .maybeSingle();
+        .single();
 
-      if (!userData) {
+      if (userError || !userData) {
         toast({
           variant: "destructive",
           title: "Error",
           description: "User not found. Please check the email address.",
+        });
+        return false;
+      }
+
+      // Check if user is already a member
+      const { data: existingMember } = await supabase
+        .from("team_members")
+        .select("id")
+        .eq("team_id", teamId)
+        .eq("user_id", userData.user_id)
+        .maybeSingle();
+
+      if (existingMember) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "User is already a member of this team.",
         });
         return false;
       }
@@ -200,6 +252,7 @@ export function useTeams() {
     loading,
     fetchTeams,
     createTeam,
+    deleteTeam,
     addTeamMember,
     removeTeamMember,
   };
