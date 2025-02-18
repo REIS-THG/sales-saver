@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,6 +5,20 @@ import { Pencil, Save, Star, StarOff, Trash2 } from "lucide-react";
 import { ReportCardProps } from "./types";
 import { ReportExportButton } from "./ReportExportButton";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+
+interface ReportCardProps {
+  report: ReportConfiguration;
+  onEdit: (report: ReportConfiguration) => void;
+  onDelete: (reportId: string) => void;
+  onToggleFavorite: (reportId: string, currentStatus: boolean) => void;
+  editingReportId: string | null;
+  editingName: string;
+  onEditNameChange: (name: string) => void;
+  onSaveReportName: () => void;
+  onExportExcel: (report: ReportConfiguration) => Promise<void>;
+  onExportGoogleSheets: (report: ReportConfiguration) => Promise<void>;
+  isLoading?: boolean;
+}
 
 export const ReportCard = ({
   report,
@@ -17,10 +30,16 @@ export const ReportCard = ({
   onEditNameChange,
   onSaveReportName,
   onExportExcel,
-  onExportGoogleSheets
+  onExportGoogleSheets,
+  isLoading = false
 }: ReportCardProps) => {
   return (
-    <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+    <Card className={`cursor-pointer hover:shadow-lg transition-shadow relative ${isLoading ? 'opacity-50' : ''}`}>
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-10 z-10">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        </div>
+      )}
       <CardHeader>
         <div className="flex justify-between items-start">
           <div className="flex-1">

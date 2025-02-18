@@ -17,6 +17,9 @@ const Reports = () => {
   const {
     reports,
     loading,
+    actionLoading,
+    currentPage,
+    totalPages,
     fetchReports,
     createReport,
     updateReport,
@@ -386,6 +389,10 @@ const Reports = () => {
           onExportExcel={handleExportExcel}
           onExportGoogleSheets={handleExportGoogleSheets}
           isFavorites={true}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={(page) => fetchReports(page)}
+          actionLoading={actionLoading}
         />
 
         <h2 className="text-xl font-semibold mb-4">All Reports</h2>
@@ -400,6 +407,10 @@ const Reports = () => {
           onSaveReportName={saveReportName}
           onExportExcel={handleExportExcel}
           onExportGoogleSheets={handleExportGoogleSheets}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={(page) => fetchReports(page)}
+          actionLoading={actionLoading}
         />
 
         {selectedReport && (

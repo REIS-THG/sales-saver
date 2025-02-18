@@ -1,18 +1,20 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import type { ReportConfiguration, ReportConfig, ReportVisualization } from "@/components/reports/types";
 import type { Json } from "@/integrations/supabase/types";
 
-export async function fetchUserReports(userId: string) {
-  const { data: reportsData, error } = await supabase
+const PAGE_SIZE = 9;
+
+export async function fetchUserReports(userId: string, page = 1) {
+  const { data: reportsData, error, count } = await supabase
     .from('report_configurations')
-    .select('*')
+    .select('*', { count: 'exact' })
     .eq('user_id', userId)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
 
   if (error) throw error;
 
-  return (reportsData || []).map(report => {
+  const reports = (reportsData || []).map(report => {
     const config = typeof report.config === 'string' 
       ? JSON.parse(report.config) 
       : report.config;
@@ -33,6 +35,8 @@ export async function fetchUserReports(userId: string) {
       is_favorite: report.is_favorite
     };
   });
+
+  return { reports, totalCount: count || 0 };
 }
 
 export async function createUserReport(userId: string, initialConfig: ReportConfig) {

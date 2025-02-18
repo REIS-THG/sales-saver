@@ -15,10 +15,13 @@ import {
 export function useReports() {
   const [reports, setReports] = useState<ReportConfiguration[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [actionLoading, setActionLoading] = useState<{[key: string]: boolean}>({});
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const fetchReports = async () => {
+  const fetchReports = async (page = currentPage) => {
     try {
       const { data: authData } = await supabase.auth.getUser();
       const userId = authData.user?.id;
@@ -28,8 +31,10 @@ export function useReports() {
         return;
       }
 
-      const reportsData = await fetchUserReports(userId);
+      const { reports: reportsData, totalCount } = await fetchUserReports(userId, page);
       setReports(reportsData);
+      setTotalPages(Math.ceil(totalCount / 9)); // 9 items per page
+      setCurrentPage(page);
     } catch (err) {
       console.error('Error fetching reports:', err);
       toast({
@@ -74,6 +79,7 @@ export function useReports() {
   };
 
   const updateReport = async (reportId: string, updates: Partial<ReportConfiguration>) => {
+    setActionLoading(prev => ({ ...prev, [reportId]: true }));
     try {
       const updatedReport = await updateUserReport(reportId, updates);
       setReports(prev => prev.map(report => 
@@ -94,10 +100,13 @@ export function useReports() {
         description: "Failed to update report",
       });
       return null;
+    } finally {
+      setActionLoading(prev => ({ ...prev, [reportId]: false }));
     }
   };
 
   const deleteReport = async (reportId: string) => {
+    setActionLoading(prev => ({ ...prev, [reportId]: true }));
     try {
       await deleteUserReport(reportId);
       setReports(prev => prev.filter(report => report.id !== reportId));
@@ -115,10 +124,13 @@ export function useReports() {
         description: "Failed to delete report",
       });
       return false;
+    } finally {
+      setActionLoading(prev => ({ ...prev, [reportId]: false }));
     }
   };
 
   const toggleFavorite = async (reportId: string, currentStatus: boolean) => {
+    setActionLoading(prev => ({ ...prev, [reportId]: true }));
     try {
       const updatedReport = await toggleReportFavorite(reportId, currentStatus);
       setReports(prev => prev.map(report => 
@@ -138,12 +150,17 @@ export function useReports() {
         description: "Failed to update favorite status",
       });
       return false;
+    } finally {
+      setActionLoading(prev => ({ ...prev, [reportId]: false }));
     }
   };
 
   return {
     reports,
     loading,
+    actionLoading,
+    currentPage,
+    totalPages,
     fetchReports,
     createReport,
     updateReport,
