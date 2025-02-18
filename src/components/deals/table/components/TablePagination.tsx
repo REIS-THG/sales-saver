@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/pagination";
 import { Table } from "@tanstack/react-table";
 import { Deal } from "@/types/types";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface TablePaginationProps {
   table: Table<Deal>;
@@ -14,42 +15,41 @@ interface TablePaginationProps {
 }
 
 export function TablePagination({ table, totalDeals }: TablePaginationProps) {
+  const currentPage = table.getState().pagination.pageIndex + 1;
+  const totalPages = table.getPageCount();
+
   return (
-    <div className="flex items-center justify-between">
-      <div className="text-sm text-gray-500">
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 w-full">
+      <div className="text-sm text-muted-foreground order-2 sm:order-1">
         Showing {table.getRowModel().rows.length} of {totalDeals} deals
       </div>
-      <Pagination>
+      <Pagination className="order-1 sm:order-2">
         <PaginationContent>
           <PaginationItem>
             <Button
               variant="ghost"
-              size="sm"
+              size="icon"
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
+              aria-label="Previous page"
             >
-              Previous
+              <ChevronLeft className="h-4 w-4" />
             </Button>
           </PaginationItem>
-          {Array.from({ length: table.getPageCount() }, (_, i) => (
-            <PaginationItem key={i}>
-              <Button
-                variant={table.getState().pagination.pageIndex === i ? "default" : "ghost"}
-                size="sm"
-                onClick={() => table.setPageIndex(i)}
-              >
-                {i + 1}
-              </Button>
-            </PaginationItem>
-          ))}
+          <PaginationItem className="flex items-center">
+            <span className="text-sm">
+              Page {currentPage} of {totalPages}
+            </span>
+          </PaginationItem>
           <PaginationItem>
             <Button
               variant="ghost"
-              size="sm"
+              size="icon"
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
+              aria-label="Next page"
             >
-              Next
+              <ChevronRight className="h-4 w-4" />
             </Button>
           </PaginationItem>
         </PaginationContent>

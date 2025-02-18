@@ -1,5 +1,4 @@
 
-import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 
@@ -9,26 +8,16 @@ interface TableSearchProps {
 }
 
 export function TableSearch({ value, onChange }: TableSearchProps) {
-  const [searchTerm, setSearchTerm] = useState(value);
-
-  useEffect(() => {
-    const debounceTimeout = setTimeout(() => {
-      if (searchTerm !== value) {
-        onChange(searchTerm);
-      }
-    }, 300); // 300ms debounce delay
-
-    return () => clearTimeout(debounceTimeout);
-  }, [searchTerm, onChange, value]);
-
   return (
-    <div className="flex items-center space-x-2">
-      <Search className="h-4 w-4 text-gray-500" />
+    <div className="relative w-full sm:w-72">
+      <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
       <Input
-        placeholder="Search all columns..."
-        value={searchTerm}
-        onChange={(event) => setSearchTerm(event.target.value)}
-        className="max-w-sm"
+        placeholder="Search deals..."
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="pl-8 w-full"
+        type="search"
+        aria-label="Search deals"
       />
     </div>
   );
