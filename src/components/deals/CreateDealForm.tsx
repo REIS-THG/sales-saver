@@ -1,4 +1,3 @@
-
 import type { CustomField } from "@/types/types";
 import {
   Sheet,
@@ -19,11 +18,12 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
-import { formatAmount } from "./utils/form-validation";
+import { formatAmount, validateEmail, validateDates } from "./utils/form-validation";
 import { CustomFieldsSection } from "./components/CustomFieldsSection";
 import { ContactSection } from "./components/ContactSection";
 import { useCreateDeal } from "./hooks/useCreateDeal";
 import type { Deal } from "@/types/types";
+import { useState } from "react";
 
 interface CreateDealFormProps {
   onDealCreated: () => void;
@@ -35,15 +35,60 @@ interface CreateDealFormProps {
 const CreateDealForm = ({ onDealCreated, customFields, onBeforeCreate, trigger }: CreateDealFormProps) => {
   const {
     isSubmitting,
+    error,
     teams,
     newDeal,
     setNewDeal,
     handleSubmit
   } = useCreateDeal(onDealCreated, onBeforeCreate);
 
+  const [validationErrors, setValidationErrors] = useState<{
+    amount?: string;
+    email?: string;
+    dates?: string;
+  }>({});
+
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatAmount(e.target.value);
     setNewDeal({ ...newDeal, amount: formatted });
+    
+    // Clear amount error when user types
+    setValidationErrors(prev => ({ ...prev, amount: undefined }));
+    
+    // Validate amount format
+    if (e.target.value && !formatted) {
+      setValidationErrors(prev => ({ 
+        ...prev, 
+        amount: "Please enter a valid amount" 
+      }));
+    }
+  };
+
+  const handleEmailChange = (value: string) => {
+    setNewDeal({ ...newDeal, contact_email: value });
+    setValidationErrors(prev => ({ ...prev, email: undefined }));
+    
+    if (value && !validateEmail(value)) {
+      setValidationErrors(prev => ({
+        ...prev,
+        email: "Please enter a valid email address"
+      }));
+    }
+  };
+
+  const handleDateChange = (field: 'start_date' | 'expected_close_date', value: string) => {
+    setNewDeal({ ...newDeal, [field]: value });
+    setValidationErrors(prev => ({ ...prev, dates: undefined }));
+    
+    if (field === 'expected_close_date' && newDeal.start_date) {
+      const dateError = validateDates(newDeal.start_date, value);
+      if (dateError) {
+        setValidationErrors(prev => ({
+          ...prev,
+          dates: dateError
+        }));
+      }
+    }
   };
 
   const handleCustomFieldChange = (fieldName: string, value: string | number | boolean) => {
@@ -72,7 +117,9 @@ const CreateDealForm = ({ onDealCreated, customFields, onBeforeCreate, trigger }
         </SheetHeader>
         <div className="space-y-4 mt-4">
           <div className="space-y-2">
-            <Label htmlFor="deal_name">Deal Name</Label>
+            <Label htmlFor="deal_name">
+              Deal Name <span className="text-red-500">*</span>
+            </Label>
             <Input
               id="deal_name"
               value={newDeal.deal_name}
@@ -108,7 +155,9 @@ const CreateDealForm = ({ onDealCreated, customFields, onBeforeCreate, trigger }
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="company_name">Company Name</Label>
+            <Label htmlFor="company_name">
+              Company Name <span className="text-red-500">*</span>
+            </Label>
             <Input
               id="company_name"
               value={newDeal.company_name}
@@ -133,28 +182,34 @@ const CreateDealForm = ({ onDealCreated, customFields, onBeforeCreate, trigger }
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="amount">Amount ($)</Label>
+            <Label htmlFor="amount">
+              Amount ($) <span className="text-red-500">*</span>
+            </Label>
             <Input
               id="amount"
               value={newDeal.amount}
               onChange={handleAmountChange}
               placeholder="Enter deal amount"
+              className={validationErrors.amount ? "border-red-500" : ""}
             />
+            {validationErrors.amount && (
+              <p className="text-sm text-red-500">{validationErrors.amount}</p>
+            )}
           </div>
 
           <ContactSection
             firstName={newDeal.contact_first_name}
             lastName={newDeal.contact_last_name}
             email={newDeal.contact_email}
+            emailError={validationErrors.email}
             onFirstNameChange={(value) =>
               setNewDeal({ ...newDeal, contact_first_name: value })
             }
             onLastNameChange={(value) =>
               setNewDeal({ ...newDeal, contact_last_name: value })
             }
-            onEmailChange={(value) =>
-              setNewDeal({ ...newDeal, contact_email: value })
-            }
+            onEmailChange={handleEmailChange}
+            required={true}
           />
 
           <div className="space-y-2">
@@ -172,27 +227,32 @@ const CreateDealForm = ({ onDealCreated, customFields, onBeforeCreate, trigger }
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="start_date">Start Date</Label>
+              <Label htmlFor="start_date">
+                Start Date <span className="text-red-500">*</span>
+              </Label>
               <Input
                 id="start_date"
                 type="date"
                 value={newDeal.start_date}
-                onChange={(e) =>
-                  setNewDeal({ ...newDeal, start_date: e.target.value })
-                }
+                onChange={(e) => handleDateChange('start_date', e.target.value)}
+                className={validationErrors.dates ? "border-red-500" : ""}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="expected_close_date">Expected Close Date</Label>
+              <Label htmlFor="expected_close_date">
+                Expected Close Date <span className="text-red-500">*</span>
+              </Label>
               <Input
                 id="expected_close_date"
                 type="date"
                 value={newDeal.expected_close_date}
-                onChange={(e) =>
-                  setNewDeal({ ...newDeal, expected_close_date: e.target.value })
-                }
+                onChange={(e) => handleDateChange('expected_close_date', e.target.value)}
+                className={validationErrors.dates ? "border-red-500" : ""}
               />
             </div>
+            {validationErrors.dates && (
+              <p className="text-sm text-red-500 col-span-2">{validationErrors.dates}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -224,10 +284,23 @@ const CreateDealForm = ({ onDealCreated, customFields, onBeforeCreate, trigger }
           <Button
             className="w-full mt-4"
             onClick={handleSubmit}
-            disabled={isSubmitting || !newDeal.deal_name || !newDeal.company_name || !newDeal.amount}
+            disabled={
+              isSubmitting || 
+              !newDeal.deal_name || 
+              !newDeal.company_name || 
+              !newDeal.amount ||
+              !newDeal.expected_close_date ||
+              !!validationErrors.amount ||
+              !!validationErrors.email ||
+              !!validationErrors.dates
+            }
           >
-            Create Deal
+            {isSubmitting ? "Creating..." : "Create Deal"}
           </Button>
+
+          {error && (
+            <p className="text-sm text-red-500 text-center">{error}</p>
+          )}
         </div>
       </SheetContent>
     </Sheet>
