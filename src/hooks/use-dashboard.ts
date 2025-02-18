@@ -81,11 +81,10 @@ export function useDashboard() {
         return;
       }
 
+      // Fetch both personal deals and team deals
       const { data: dealsData, error: fetchError } = await supabase
         .from("deals")
-        .select("*")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false });
+        .select("*");
 
       if (fetchError) {
         throw fetchError;
@@ -99,6 +98,7 @@ export function useDashboard() {
         status: (deal.status || 'open') as Deal['status'],
         health_score: deal.health_score || 50,
         user_id: deal.user_id,
+        team_id: deal.team_id,
         created_at: deal.created_at,
         updated_at: deal.updated_at,
         start_date: deal.start_date,

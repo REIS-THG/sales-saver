@@ -679,6 +679,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_access_team: {
+        Args: {
+          team_id: string
+          checking_user_id: string
+        }
+        Returns: boolean
+      }
       get_team_member_role: {
         Args: {
           team_id: string
