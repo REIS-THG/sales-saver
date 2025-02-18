@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,7 +20,6 @@ export function useTeams() {
       const teams = teamsData as Team[];
       setTeams(teams);
 
-      // Fetch members for each team
       const membersPromises = teams.map(async (team) => {
         const { data: membersData, error: membersError } = await supabase
           .from("team_members")
@@ -36,7 +34,6 @@ export function useTeams() {
           throw membersError;
         }
 
-        // Transform the data to ensure proper typing
         const transformedMembers = (membersData || []).map(member => ({
           id: member.id,
           team_id: member.team_id,
@@ -90,7 +87,6 @@ export function useTeams() {
 
       if (teamError) throw teamError;
 
-      // Add creator as owner member
       const { error: memberError } = await supabase
         .from("team_members")
         .insert([
@@ -122,7 +118,6 @@ export function useTeams() {
 
   const deleteTeam = async (teamId: string) => {
     try {
-      // First delete all team members
       const { error: membersError } = await supabase
         .from("team_members")
         .delete()
@@ -130,7 +125,6 @@ export function useTeams() {
 
       if (membersError) throw membersError;
 
-      // Then delete the team
       const { error: teamError } = await supabase
         .from("teams")
         .delete()
@@ -159,15 +153,14 @@ export function useTeams() {
     try {
       console.log('Attempting to add team member:', { email: email.trim(), teamId, role });
 
-      // First get the auth user
-      const { data: authData, error: authError } = await supabase
-        .from('auth.users')
-        .select('id, email')
-        .eq('email', email.trim())
+      const { data: userData, error: userError } = await supabase
+        .from("users")
+        .select("*")
+        .eq("email", email.trim())
         .maybeSingle();
 
-      if (authError) {
-        console.error('Error fetching auth user:', authError);
+      if (userError) {
+        console.error('Error fetching user:', userError);
         toast({
           variant: "destructive",
           title: "Error",
@@ -176,8 +169,8 @@ export function useTeams() {
         return false;
       }
 
-      if (!authData) {
-        console.log('No auth user found with email:', email.trim());
+      if (!userData) {
+        console.log('No user found with email:', email.trim());
         toast({
           variant: "destructive",
           title: "Error",
@@ -186,27 +179,8 @@ export function useTeams() {
         return false;
       }
 
-      // Then get the public user record
-      const { data: userData, error: userError } = await supabase
-        .from("users")
-        .select("*")
-        .eq("user_id", authData.id)
-        .maybeSingle();
-
-      if (userError || !userData) {
-        console.error('Error fetching public user:', userError);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to lookup user. Please try again.",
-        });
-        return false;
-      }
-
       console.log('User lookup result:', userData);
 
-      // Check if user is already a member
-      console.log('Checking existing membership for user:', userData.user_id);
       const { data: existingMember, error: existingMemberError } = await supabase
         .from("team_members")
         .select("id")
@@ -234,7 +208,6 @@ export function useTeams() {
         return false;
       }
 
-      // Add team member
       console.log('Adding new team member:', { 
         team_id: teamId, 
         user_id: userData.user_id, 
