@@ -282,6 +282,155 @@ export type Database = {
           },
         ]
       }
+      drip_campaign_executions: {
+        Row: {
+          campaign_id: string
+          created_at: string | null
+          deal_id: string | null
+          executed_at: string | null
+          id: string
+          scheduled_for: string | null
+          status: string
+          step_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string | null
+          deal_id?: string | null
+          executed_at?: string | null
+          id?: string
+          scheduled_for?: string | null
+          status?: string
+          step_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string | null
+          deal_id?: string | null
+          executed_at?: string | null
+          id?: string
+          scheduled_for?: string | null
+          status?: string
+          step_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drip_campaign_executions_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "drip_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drip_campaign_executions_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drip_campaign_executions_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "drip_campaign_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      drip_campaign_steps: {
+        Row: {
+          campaign_id: string
+          content: string
+          created_at: string | null
+          delay_after: unknown | null
+          id: string
+          message_type: string
+          status: string | null
+          step_order: number
+          updated_at: string | null
+        }
+        Insert: {
+          campaign_id: string
+          content: string
+          created_at?: string | null
+          delay_after?: unknown | null
+          id?: string
+          message_type: string
+          status?: string | null
+          step_order: number
+          updated_at?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          content?: string
+          created_at?: string | null
+          delay_after?: unknown | null
+          id?: string
+          message_type?: string
+          status?: string | null
+          step_order?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drip_campaign_steps_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "drip_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      drip_campaigns: {
+        Row: {
+          created_at: string | null
+          deal_id: string | null
+          description: string | null
+          id: string
+          name: string
+          status: string
+          trigger_delay: unknown | null
+          trigger_type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          deal_id?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          status?: string
+          trigger_delay?: unknown | null
+          trigger_type?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          deal_id?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          status?: string
+          trigger_delay?: unknown | null
+          trigger_type?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_deal"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       engagement: {
         Row: {
           created_at: string | null

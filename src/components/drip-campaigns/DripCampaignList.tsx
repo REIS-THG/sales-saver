@@ -30,7 +30,22 @@ export function DripCampaignList() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setCampaigns(data);
+      
+      // Ensure the data matches our DripCampaign interface
+      const typedCampaigns = (data || []).map(campaign => ({
+        id: campaign.id,
+        name: campaign.name,
+        description: campaign.description,
+        user_id: campaign.user_id,
+        deal_id: campaign.deal_id,
+        status: campaign.status as DripCampaign['status'],
+        created_at: campaign.created_at,
+        updated_at: campaign.updated_at,
+        trigger_type: campaign.trigger_type as DripCampaign['trigger_type'],
+        trigger_delay: campaign.trigger_delay
+      }));
+
+      setCampaigns(typedCampaigns);
     } catch (error) {
       console.error('Error fetching campaigns:', error);
       toast({
@@ -54,7 +69,7 @@ export function DripCampaignList() {
       if (error) throw error;
 
       setCampaigns(campaigns.map(c => 
-        c.id === campaign.id ? { ...c, status: newStatus } : c
+        c.id === campaign.id ? { ...c, status: newStatus as DripCampaign['status'] } : c
       ));
 
       toast({
@@ -131,9 +146,11 @@ export function DripCampaignList() {
                   }`}>
                     {campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}
                   </span>
-                  <span className="ml-4">
-                    Created {new Date(campaign.created_at!).toLocaleDateString()}
-                  </span>
+                  {campaign.created_at && (
+                    <span className="ml-4">
+                      Created {new Date(campaign.created_at).toLocaleDateString()}
+                    </span>
+                  )}
                 </div>
               </CardContent>
             </Card>
