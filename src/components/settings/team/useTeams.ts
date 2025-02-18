@@ -73,7 +73,14 @@ export function useTeams() {
   const createTeam = async (teamName: string) => {
     try {
       const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) return;
+      if (!userData.user) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "You must be logged in to create a team.",
+        });
+        return false;
+      }
 
       const { data: teamData, error: teamError } = await supabase
         .from("teams")
@@ -117,6 +124,95 @@ export function useTeams() {
     }
   };
 
+  const addTeamMember = async (email: string, teamId: string, role: TeamMember["role"]) => {
+    try {
+      const normalizedEmail = email.trim().toLowerCase();
+      console.log('Adding team member:', { email: normalizedEmail, teamId, role });
+      
+      // Query users table with case-insensitive comparison
+      const { data: userData, error: userError } = await supabase
+        .from("users")
+        .select("id, user_id, email")
+        .ilike("email", normalizedEmail)
+        .maybeSingle();
+
+      if (userError) {
+        console.error('Error fetching user:', userError);
+        throw userError;
+      }
+
+      if (!userData) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "User not found. Please check the email address.",
+        });
+        return false;
+      }
+
+      console.log('Found user:', userData);
+
+      // Check for existing membership
+      const { data: existingMember, error: existingMemberError } = await supabase
+        .from("team_members")
+        .select("id")
+        .eq("team_id", teamId)
+        .eq("user_id", userData.user_id)
+        .maybeSingle();
+
+      if (existingMemberError) {
+        console.error('Error checking existing membership:', existingMemberError);
+        throw existingMemberError;
+      }
+
+      if (existingMember) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "User is already a member of this team.",
+        });
+        return false;
+      }
+
+      // Add team member
+      console.log('Adding new team member:', { 
+        team_id: teamId, 
+        user_id: userData.user_id,
+        role 
+      });
+      
+      const { error: memberError } = await supabase
+        .from("team_members")
+        .insert([
+          {
+            team_id: teamId,
+            user_id: userData.user_id,
+            role: role,
+          },
+        ]);
+
+      if (memberError) {
+        console.error('Error adding team member:', memberError);
+        throw memberError;
+      }
+
+      toast({
+        title: "Success",
+        description: "Team member added successfully.",
+      });
+      fetchTeams();
+      return true;
+    } catch (error) {
+      console.error('Error in addTeamMember:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to add team member. Please try again.",
+      });
+      return false;
+    }
+  };
+
   const deleteTeam = async (teamId: string) => {
     try {
       const { error: membersError } = await supabase
@@ -145,124 +241,6 @@ export function useTeams() {
         variant: "destructive",
         title: "Error",
         description: "Failed to delete team. Please try again.",
-      });
-      return false;
-    }
-  };
-
-  const addTeamMember = async (email: string, teamId: string, role: TeamMember["role"]) => {
-    try {
-      const normalizedEmail = email.trim().toLowerCase();
-      console.log('Step 1: Looking up user by email:', normalizedEmail);
-      
-      // First, log all users to see what we have
-      const { data: allUsers, error: allUsersError } = await supabase
-        .from("users")
-        .select("id, user_id, email, full_name");
-      
-      console.log('All users in the database:', allUsers);
-      
-      // Query users table with case-insensitive comparison
-      const { data: userData, error: userError } = await supabase
-        .from("users")
-        .select("id, user_id, email, full_name")
-        .ilike("email", normalizedEmail)
-        .maybeSingle();
-
-      if (userError) {
-        console.error('Step 1 Error - Failed to fetch user:', userError);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to lookup user. Please try again.",
-        });
-        return false;
-      }
-
-      if (!userData) {
-        console.log('Step 1 Error - No user found with email:', normalizedEmail);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "User not found. Please check the email address.",
-        });
-        return false;
-      }
-
-      console.log('Step 2: Found user:', userData);
-
-      // Check for existing membership using user_id
-      console.log('Step 3: Checking if user is already a team member. User ID:', userData.user_id);
-      const { data: existingMember, error: existingMemberError } = await supabase
-        .from("team_members")
-        .select("id")
-        .eq("team_id", teamId)
-        .eq("user_id", userData.user_id)
-        .maybeSingle();
-
-      if (existingMemberError) {
-        console.error('Step 3 Error - Failed to check existing membership:', existingMemberError);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to verify team membership. Please try again.",
-        });
-        return false;
-      }
-
-      if (existingMember) {
-        console.log('Step 3 Error - User is already a team member:', existingMember);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "User is already a member of this team.",
-        });
-        return false;
-      }
-
-      // Add team member
-      console.log('Step 4: Adding new team member:', { 
-        team_id: teamId, 
-        user_id: userData.user_id,
-        role 
-      });
-      
-      const { data: newMember, error: memberError } = await supabase
-        .from("team_members")
-        .insert([
-          {
-            team_id: teamId,
-            user_id: userData.user_id,
-            role: role,
-          },
-        ])
-        .select()
-        .single();
-
-      if (memberError) {
-        console.error('Step 4 Error - Failed to add team member:', memberError);
-        throw memberError;
-      }
-
-      console.log('Success! Added new team member:', newMember);
-      toast({
-        title: "Success",
-        description: "Team member added successfully.",
-      });
-      fetchTeams();
-      return true;
-    } catch (error) {
-      console.error('Unexpected error in addTeamMember:', error);
-      console.error('Error details:', {
-        message: error.message,
-        code: error.code,
-        details: error.details,
-        hint: error.hint
-      });
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to add team member. Please try again.",
       });
       return false;
     }
