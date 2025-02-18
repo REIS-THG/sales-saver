@@ -37,7 +37,7 @@ const Dashboard = () => {
   }, [userData]);
 
   const handleCreateDeal = async () => {
-    if (userData?.subscription_status === 'free' && deals.length >= FREE_DEAL_LIMIT) {
+    if (!userData?.subscription_status && deals.length >= FREE_DEAL_LIMIT) {
       setShowUpgradeDialog(true);
       return false;
     }

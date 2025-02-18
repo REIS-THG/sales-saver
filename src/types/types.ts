@@ -24,7 +24,7 @@ export interface User {
   default_deal_view?: string;
   custom_views: Record<string, any>[];
   email?: string;
-  subscription_status?: 'free' | 'pro' | 'enterprise';
+  subscription_status?: boolean; // Updated from 'free' | 'pro' | 'enterprise' to boolean
   subscription_end_date?: string;
   successful_deals_count: number;
   billing_address?: {
