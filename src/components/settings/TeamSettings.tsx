@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,30 +36,22 @@ export function TeamSettings() {
       const teams = teamsData as Team[];
       setTeams(teams);
 
-      // Fetch members for each team with proper join syntax
+      // Fetch members for each team
       const membersPromises = teams.map(async (team) => {
         const { data: membersData, error: membersError } = await supabase
           .from("team_members")
           .select(`
-            id,
-            team_id,
-            user_id,
-            role,
-            created_at,
-            updated_at,
-            user:users!user_id(*)
+            *,
+            user:users(*)
           `)
           .eq("team_id", team.id);
 
-        if (membersError) throw membersError;
+        if (membersError) {
+          console.error("Error fetching team members:", membersError);
+          throw membersError;
+        }
 
-        // Transform the data to match our types
-        const typedMembers = (membersData || []).map(member => ({
-          ...member,
-          user: member.user as User
-        })) as (TeamMember & { user: User })[];
-
-        return { teamId: team.id, members: typedMembers };
+        return { teamId: team.id, members: membersData || [] };
       });
 
       const membersResults = await Promise.all(membersPromises);
