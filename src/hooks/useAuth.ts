@@ -56,11 +56,6 @@ export function useAuth() {
       // Ensure role is either 'sales_rep' or 'manager'
       const role = data.role === 'manager' ? 'manager' : 'sales_rep';
       
-      // Ensure subscription_status is a valid value
-      const subscription_status = ['free', 'pro', 'enterprise'].includes(data.subscription_status) 
-        ? data.subscription_status as 'free' | 'pro' | 'enterprise'
-        : 'free';
-
       // Ensure custom_views is an array
       const custom_views = Array.isArray(data.custom_views) 
         ? data.custom_views as Record<string, any>[]
@@ -90,10 +85,12 @@ export function useAuth() {
         default_deal_view: data.default_deal_view,
         custom_views: custom_views,
         email: data.email,
-        subscription_status: subscription_status,
+        subscription_status: Boolean(data.subscription_status),
         subscription_end_date: data.subscription_end_date,
         successful_deals_count: Number(data.successful_deals_count) || 0,
-        billing_address: billing_address
+        billing_address: billing_address,
+        stripe_customer_id: data.stripe_customer_id,
+        stripe_subscription_id: data.stripe_subscription_id
       };
 
       console.log('Processed user data:', userData);

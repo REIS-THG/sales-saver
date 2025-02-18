@@ -72,7 +72,7 @@ export default function Settings() {
           <h1 className="text-3xl font-bold">Settings</h1>
         </div>
         
-        {user.subscription_status === 'free' && (
+        {user.subscription_status === false && (
           <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border border-purple-100 dark:border-purple-800 rounded-lg p-4 mb-8 flex items-center justify-between">
             <div>
               <h3 className="font-semibold text-purple-900 dark:text-purple-100">You're on the Free Plan</h3>

@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { Spinner } from "@/components/ui/spinner";
@@ -59,7 +58,7 @@ export default function Subscription() {
 
   const plans: Plan[] = subscriptionPlans.map(plan => ({
     ...plan,
-    current: user.subscription_status === plan.name.toLowerCase()
+    current: plan.name.toLowerCase() === (user.subscription_status ? 'pro' : 'free')
   }));
 
   const handleUpgrade = async (planType: "free" | "pro" | "enterprise") => {

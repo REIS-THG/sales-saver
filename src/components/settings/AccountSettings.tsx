@@ -98,9 +98,9 @@ export function AccountSettings({ userData }: AccountSettingsProps) {
             <div className="flex-1">
               <Label>Subscription & Billing</Label>
               <div className="flex items-center justify-between mt-2">
-                <span className="capitalize">{userData?.subscription_status || 'free'}</span>
+                <span>{userData?.subscription_status ? 'Pro' : 'Free'}</span>
                 <div className="space-x-2">
-                  {userData?.subscription_status === 'pro' ? (
+                  {userData?.subscription_status ? (
                     <>
                       <a href="https://billing.stripe.com/p/login/3cseWi90FfLW98I9AA" target="_blank" rel="noopener noreferrer">
                         <Button variant="outline">

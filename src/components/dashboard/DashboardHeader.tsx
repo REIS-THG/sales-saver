@@ -35,7 +35,7 @@ export function DashboardHeader({
             </Button>
           }
         />
-        {userData?.subscription_status === 'pro' && (
+        {userData?.subscription_status && (
           <BulkImportDeals 
             onImportComplete={onDealCreated}
             trigger={
