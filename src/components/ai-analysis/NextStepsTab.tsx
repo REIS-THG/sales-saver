@@ -2,7 +2,7 @@
 import * as React from "react";
 import { Deal, Insight } from "@/types/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { InsightsDisplay } from "./InsightsDisplay";
 import { MessageGenerator } from "./MessageGenerator";
@@ -38,13 +38,7 @@ export function NextStepsTab({ deals, selectedDeal, onDealSelect, insights = [] 
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Analysis Options</CardTitle>
-          <CardDescription>
-            Configure additional analysis outputs
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 py-6">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <label className="text-sm font-medium">Generate Drip Campaign</label>
