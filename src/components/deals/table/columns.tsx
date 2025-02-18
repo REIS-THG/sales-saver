@@ -1,3 +1,4 @@
+
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -70,13 +71,13 @@ export const getColumns = (
         
         if (score >= 70) {
           color = "bg-green-100 text-green-800";
-          healthStatus = "Healthy - This deal is progressing well with positive indicators";
+          healthStatus = "Healthy - This deal is progressing well";
         } else if (score >= 40) {
           color = "bg-yellow-100 text-yellow-800";
-          healthStatus = "Moderate - This deal needs attention but has potential";
+          healthStatus = "Moderate - Needs attention";
         } else {
           color = "bg-red-100 text-red-800";
-          healthStatus = "At Risk - This deal requires immediate attention";
+          healthStatus = "At Risk - Immediate attention required";
         }
         
         return (
@@ -90,13 +91,23 @@ export const getColumns = (
                   </Badge>
                 </div>
               </TooltipTrigger>
-              <TooltipContent className="max-w-xs">
-                <div className="space-y-2">
+              <TooltipContent className="max-w-md">
+                <div className="space-y-3 p-1">
                   <p className="font-medium">{healthStatus}</p>
-                  <p className="text-sm text-muted-foreground">
-                    Deal health is automatically calculated based on AI analysis of risks, 
-                    opportunities, and overall deal progress. The score updates with each new analysis.
-                  </p>
+                  <div className="text-sm space-y-2">
+                    <p className="font-semibold">Score Factors:</p>
+                    <ul className="space-y-1 list-disc ml-4">
+                      <li>Risks: competitor (-15), budget (-12), delays (-10)</li>
+                      <li>Opportunities: immediate needs (+15), expansion (+12)</li>
+                      <li>Actions: completed (+5), pending (-3)</li>
+                      <li>Engagement: recent activity (up to +10)</li>
+                      <li>Timeline: past due (-15), near deadline (-5)</li>
+                      <li>Status: won (+25), stalled (-15), lost (-40)</li>
+                    </ul>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      All factors are weighted by AI confidence scores and updated automatically with new insights.
+                    </p>
+                  </div>
                 </div>
               </TooltipContent>
             </Tooltip>
