@@ -152,13 +152,21 @@ export function useTeams() {
 
   const addTeamMember = async (email: string, teamId: string, role: TeamMember["role"]) => {
     try {
-      console.log('Step 1: Looking up user by email:', email.trim());
+      const normalizedEmail = email.trim().toLowerCase();
+      console.log('Step 1: Looking up user by email:', normalizedEmail);
       
-      // Query users table
+      // First, log all users to see what we have
+      const { data: allUsers, error: allUsersError } = await supabase
+        .from("users")
+        .select("id, user_id, email, full_name");
+      
+      console.log('All users in the database:', allUsers);
+      
+      // Query users table with case-insensitive comparison
       const { data: userData, error: userError } = await supabase
         .from("users")
         .select("id, user_id, email, full_name")
-        .eq("email", email.trim())
+        .ilike("email", normalizedEmail)
         .maybeSingle();
 
       if (userError) {
@@ -172,7 +180,7 @@ export function useTeams() {
       }
 
       if (!userData) {
-        console.log('Step 1 Error - No user found with email:', email.trim());
+        console.log('Step 1 Error - No user found with email:', normalizedEmail);
         toast({
           variant: "destructive",
           title: "Error",
@@ -215,7 +223,7 @@ export function useTeams() {
       // Add team member
       console.log('Step 4: Adding new team member:', { 
         team_id: teamId, 
-        user_id: userData.user_id,  // Using user_id field
+        user_id: userData.user_id,
         role 
       });
       
@@ -224,7 +232,7 @@ export function useTeams() {
         .insert([
           {
             team_id: teamId,
-            user_id: userData.user_id,  // Using user_id field
+            user_id: userData.user_id,
             role: role,
           },
         ])
