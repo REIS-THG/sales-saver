@@ -247,12 +247,12 @@ const Reports = () => {
         name: "New Report",
         description: "Custom report description",
         user_id: userId,
-        config: initialConfig
+        config: initialConfig as unknown as Json
       };
 
       const { data, error } = await supabase
         .from('report_configurations')
-        .insert([newReportData])
+        .insert(newReportData)
         .select()
         .single();
 
