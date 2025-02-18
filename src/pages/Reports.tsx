@@ -14,7 +14,7 @@ import type { CustomField, Deal, User } from "@/types/types";
 interface StandardField {
   field: string;
   field_name: string;
-  field_type: string;
+  field_type: "number" | "boolean" | "text" | "date";
 }
 
 const standardFields: StandardField[] = [
@@ -63,7 +63,7 @@ const Reports = () => {
     { value: 'table', label: 'Table', icon: <Table className="h-4 w-4" /> },
   ];
 
-  const isFreePlan = userData?.subscription_status === false;
+  const isFreePlan = userData?.subscription_status === 'free';
   const upgradeButton = isFreePlan ? (
     <Link to="/subscription" className="w-full sm:w-auto">
       <Button className="w-full">

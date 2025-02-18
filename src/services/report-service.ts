@@ -18,10 +18,24 @@ export async function fetchUserReports(userId: string, page = 1) {
   console.log('Fetching reports for user:', userId);
   console.log('Fetching reports for page:', page);
   
-  const { data: reportsData, error, count } = await supabase
+  // First fetch the user's team IDs
+  const { data: teamIds } = await supabase
+    .from('team_members')
+    .select('team_id')
+    .eq('user_id', userId);
+
+  // Then fetch reports
+  const query = supabase
     .from('report_configurations')
     .select('*', { count: 'exact' })
-    .or('user_id.eq.' + '.auth.uid(),team_id.not.is.null')
+    .eq('user_id', userId);
+
+  // Add team filter if user is part of any teams
+  if (teamIds && teamIds.length > 0) {
+    query.or(`team_id.in.(${teamIds.map(t => t.team_id).join(',')}),user_id.eq.${userId}`);
+  }
+
+  const { data: reportsData, error, count } = await query
     .order('created_at', { ascending: false })
     .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
 
