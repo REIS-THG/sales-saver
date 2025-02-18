@@ -159,15 +159,42 @@ export function useTeams() {
     try {
       console.log('Attempting to add team member:', { email: email.trim(), teamId, role });
 
-      // First, fetch the user by email
+      // First get the auth user
+      const { data: authData, error: authError } = await supabase
+        .from('auth.users')
+        .select('id, email')
+        .eq('email', email.trim())
+        .maybeSingle();
+
+      if (authError) {
+        console.error('Error fetching auth user:', authError);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to lookup user. Please try again.",
+        });
+        return false;
+      }
+
+      if (!authData) {
+        console.log('No auth user found with email:', email.trim());
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "User not found. Please check the email address.",
+        });
+        return false;
+      }
+
+      // Then get the public user record
       const { data: userData, error: userError } = await supabase
         .from("users")
         .select("*")
-        .eq("email", email.trim())
+        .eq("user_id", authData.id)
         .maybeSingle();
 
-      if (userError) {
-        console.error('Error fetching user:', userError);
+      if (userError || !userData) {
+        console.error('Error fetching public user:', userError);
         toast({
           variant: "destructive",
           title: "Error",
@@ -177,16 +204,6 @@ export function useTeams() {
       }
 
       console.log('User lookup result:', userData);
-
-      if (!userData) {
-        console.log('No user found with email:', email.trim());
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "User not found. Please check the email address.",
-        });
-        return false;
-      }
 
       // Check if user is already a member
       console.log('Checking existing membership for user:', userData.user_id);
