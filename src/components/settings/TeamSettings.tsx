@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 
 export function TeamSettings() {
   const [teams, setTeams] = useState<Team[]>([]);
-  const [teamMembers, setTeamMembers] = useState<Record<string, TeamMember[]>>({});
+  const [teamMembers, setTeamMembers] = useState<Record<string, (TeamMember & { user: User })[]>>({});
   const [loading, setLoading] = useState(true);
   const [createTeamOpen, setCreateTeamOpen] = useState(false);
   const [newTeamName, setNewTeamName] = useState("");
@@ -41,7 +41,10 @@ export function TeamSettings() {
       const membersPromises = teams.map(async (team) => {
         const { data: membersData, error: membersError } = await supabase
           .from("team_members")
-          .select("*, users!inner(*)")
+          .select(`
+            *,
+            user:users(*)
+          `)
           .eq("team_id", team.id);
 
         if (membersError) throw membersError;
@@ -49,7 +52,7 @@ export function TeamSettings() {
       });
 
       const membersResults = await Promise.all(membersPromises);
-      const membersMap: Record<string, TeamMember[]> = {};
+      const membersMap: Record<string, (TeamMember & { user: User })[]> = {};
       membersResults.forEach(({ teamId, members }) => {
         membersMap[teamId] = members;
       });
@@ -63,6 +66,7 @@ export function TeamSettings() {
         title: "Error",
         description: "Failed to fetch teams. Please try again.",
       });
+      setLoading(false);
     }
   };
 
@@ -125,9 +129,16 @@ export function TeamSettings() {
         .from("users")
         .select("user_id")
         .eq("email", addMemberEmail.trim())
-        .single();
+        .maybeSingle();
 
-      if (userError) throw new Error("User not found");
+      if (!userData) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "User not found. Please check the email address.",
+        });
+        return;
+      }
 
       // Add team member
       const { error: memberError } = await supabase
@@ -156,7 +167,7 @@ export function TeamSettings() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to add team member. Please ensure the email is correct.",
+        description: "Failed to add team member. Please try again.",
       });
     }
   };
@@ -241,9 +252,9 @@ export function TeamSettings() {
                       className="flex items-center justify-between p-2 rounded-md bg-muted/50"
                     >
                       <div>
-                        <p className="font-medium">{(member as any).users?.full_name}</p>
+                        <p className="font-medium">{member.user.full_name}</p>
                         <p className="text-sm text-muted-foreground">
-                          {(member as any).users?.email} • {member.role}
+                          {member.user.email} • {member.role}
                         </p>
                       </div>
                       {member.role !== "owner" && (
