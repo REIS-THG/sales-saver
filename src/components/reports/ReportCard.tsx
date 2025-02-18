@@ -1,8 +1,9 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Pencil, Save, Star, StarOff, Trash2 } from "lucide-react";
-import { ReportCardProps } from "./types";
+import type { ReportConfiguration } from "@/components/reports/types";
 import { ReportExportButton } from "./ReportExportButton";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
