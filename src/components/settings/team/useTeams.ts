@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -151,16 +152,17 @@ export function useTeams() {
 
   const addTeamMember = async (email: string, teamId: string, role: TeamMember["role"]) => {
     try {
-      console.log('Attempting to add team member:', { email: email.trim(), teamId, role });
-
+      console.log('Step 1: Looking up user by email:', email.trim());
+      
+      // Query users table
       const { data: userData, error: userError } = await supabase
         .from("users")
-        .select("*")
+        .select("id, user_id, email, full_name")
         .eq("email", email.trim())
         .maybeSingle();
 
       if (userError) {
-        console.error('Error fetching user:', userError);
+        console.error('Step 1 Error - Failed to fetch user:', userError);
         toast({
           variant: "destructive",
           title: "Error",
@@ -170,7 +172,7 @@ export function useTeams() {
       }
 
       if (!userData) {
-        console.log('No user found with email:', email.trim());
+        console.log('Step 1 Error - No user found with email:', email.trim());
         toast({
           variant: "destructive",
           title: "Error",
@@ -179,8 +181,10 @@ export function useTeams() {
         return false;
       }
 
-      console.log('User lookup result:', userData);
+      console.log('Step 2: Found user:', userData);
 
+      // Check for existing membership using user_id
+      console.log('Step 3: Checking if user is already a team member. User ID:', userData.user_id);
       const { data: existingMember, error: existingMemberError } = await supabase
         .from("team_members")
         .select("id")
@@ -189,7 +193,7 @@ export function useTeams() {
         .maybeSingle();
 
       if (existingMemberError) {
-        console.error('Error checking existing membership:', existingMemberError);
+        console.error('Step 3 Error - Failed to check existing membership:', existingMemberError);
         toast({
           variant: "destructive",
           title: "Error",
@@ -199,7 +203,7 @@ export function useTeams() {
       }
 
       if (existingMember) {
-        console.log('User is already a team member:', existingMember);
+        console.log('Step 3 Error - User is already a team member:', existingMember);
         toast({
           variant: "destructive",
           title: "Error",
@@ -208,28 +212,31 @@ export function useTeams() {
         return false;
       }
 
-      console.log('Adding new team member:', { 
+      // Add team member
+      console.log('Step 4: Adding new team member:', { 
         team_id: teamId, 
-        user_id: userData.user_id, 
+        user_id: userData.user_id,  // Using user_id field
         role 
       });
       
-      const { error: memberError } = await supabase
+      const { data: newMember, error: memberError } = await supabase
         .from("team_members")
         .insert([
           {
             team_id: teamId,
-            user_id: userData.user_id,
+            user_id: userData.user_id,  // Using user_id field
             role: role,
           },
-        ]);
+        ])
+        .select()
+        .single();
 
       if (memberError) {
-        console.error('Error adding team member:', memberError);
+        console.error('Step 4 Error - Failed to add team member:', memberError);
         throw memberError;
       }
 
-      console.log('Successfully added team member');
+      console.log('Success! Added new team member:', newMember);
       toast({
         title: "Success",
         description: "Team member added successfully.",
