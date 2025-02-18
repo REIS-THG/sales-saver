@@ -41,19 +41,25 @@ export const useCreateDeal = (onDealCreated: () => void, onBeforeCreate?: () => 
         return;
       }
 
+      // First get team memberships
+      const { data: memberTeams, error: memberError } = await supabase
+        .from("team_members")
+        .select("team_id")
+        .eq("user_id", userData.user.id);
+
+      if (memberError) {
+        console.error("Error fetching team memberships:", memberError);
+        throw memberError;
+      }
+
+      // Extract team IDs from memberships
+      const teamIds = memberTeams?.map(tm => tm.team_id) || [];
+
+      // Then fetch the actual teams
       const { data: teamData, error: teamsError } = await supabase
         .from("teams")
-        .select(`
-          id,
-          name,
-          owner_id
-        `)
-        .in('id', 
-          supabase
-            .from('team_members')
-            .select('team_id')
-            .eq('user_id', userData.user.id)
-        );
+        .select("id, name, owner_id")
+        .in("id", teamIds);
 
       if (teamsError) {
         console.error("Error fetching teams:", teamsError);
