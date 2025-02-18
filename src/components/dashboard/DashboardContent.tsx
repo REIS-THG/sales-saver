@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { DealsTable } from "@/components/deals/DealsTable";
@@ -9,10 +10,16 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Settings2 } from "lucide-react";
+import { Settings2, ListFilter } from "lucide-react";
 import type { Deal, CustomField, User } from "@/types/types";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface DashboardContentProps {
   deals: Deal[];
@@ -31,6 +38,13 @@ export function DashboardContent({
   setShowCustomFields,
   userData
 }: DashboardContentProps) {
+  const [selectedDeals, setSelectedDeals] = useState<Deal[]>([]);
+
+  const handleBulkAction = (action: 'won' | 'lost' | 'stalled' | 'delete') => {
+    // Handle bulk actions here
+    console.log(`Bulk action ${action} for deals:`, selectedDeals);
+  };
+
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-6">
@@ -90,12 +104,46 @@ export function DashboardContent({
             </span>
           )}
         </div>
+
+        {selectedDeals.length > 0 && (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-500">
+              {selectedDeals.length} {selectedDeals.length === 1 ? 'deal' : 'deals'} selected
+            </span>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <ListFilter className="h-4 w-4 mr-2" />
+                  Bulk Actions
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => handleBulkAction('won')}>
+                  Mark as Won
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleBulkAction('lost')}>
+                  Mark as Lost
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleBulkAction('stalled')}>
+                  Mark as Stalled
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => handleBulkAction('delete')}
+                  className="text-red-600"
+                >
+                  Delete Deals
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )}
       </div>
       
       <DealsTable 
         initialDeals={deals} 
         customFields={customFields}
         showCustomFields={showCustomFields}
+        onSelectionChange={setSelectedDeals}
       />
     </main>
   );

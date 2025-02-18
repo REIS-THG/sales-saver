@@ -23,18 +23,33 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useState } from "react";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface SortableTableRowProps {
   row: Row<Deal>;
   onClick: () => void;
+  onSelection?: (selectedDeals: Deal[]) => void;
 }
 
 export function SortableTableRow({ 
   row, 
-  onClick
+  onClick,
+  onSelection
 }: SortableTableRowProps) {
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
+  const [isSelected, setIsSelected] = useState(false);
   const { toast } = useToast();
   
   const {
@@ -90,14 +105,31 @@ export function SortableTableRow({
     }
   };
 
+  const handleCheckboxChange = (checked: boolean) => {
+    setIsSelected(checked);
+    if (onSelection) {
+      onSelection(checked ? [row.original] : []);
+    }
+  };
+
   return (
     <TableRow
       ref={setNodeRef}
       style={style}
       className={`group transition-all duration-200 ease-in-out hover:bg-gray-50 
         ${isDragging ? "animate-pulse ring-2 ring-primary ring-offset-2 shadow-lg scale-[1.02]" : ""}
-        ${isUpdating ? "opacity-80" : ""}`}
+        ${isUpdating ? "opacity-80" : ""}
+        ${isSelected ? "bg-blue-50" : ""}`}
     >
+      {onSelection && (
+        <TableCell className="w-12">
+          <Checkbox
+            checked={isSelected}
+            onCheckedChange={handleCheckboxChange}
+            aria-label={`Select ${row.original.deal_name}`}
+          />
+        </TableCell>
+      )}
       <TableCell>
         <TooltipProvider>
           <Tooltip>
@@ -149,28 +181,44 @@ export function SortableTableRow({
               </Tooltip>
             </TooltipProvider>
           ) : null}
-          <Select
-            value={row.original.status}
-            onValueChange={handleStatusChange}
-            disabled={isUpdating}
-          >
-            <SelectTrigger className="w-[130px]">
-              {isUpdating ? (
-                <div className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Updating...</span>
-                </div>
-              ) : (
-                <SelectValue />
-              )}
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="open">Open</SelectItem>
-              <SelectItem value="won">Won</SelectItem>
-              <SelectItem value="lost">Lost</SelectItem>
-              <SelectItem value="stalled">Stalled</SelectItem>
-            </SelectContent>
-          </Select>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Select
+                value={row.original.status}
+                onValueChange={handleStatusChange}
+                disabled={isUpdating}
+              >
+                <SelectTrigger className="w-[130px]">
+                  {isUpdating ? (
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Updating...</span>
+                    </div>
+                  ) : (
+                    <SelectValue />
+                  )}
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="open">Open</SelectItem>
+                  <SelectItem value="won">Won</SelectItem>
+                  <SelectItem value="lost">Lost</SelectItem>
+                  <SelectItem value="stalled">Stalled</SelectItem>
+                </SelectContent>
+              </Select>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Change Deal Status</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to change the status of this deal? This action will update the deal's health score and analytics.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction>Confirm</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </TableCell>
       <TableCell onClick={(e) => e.stopPropagation()}>
