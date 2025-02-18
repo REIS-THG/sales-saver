@@ -4,26 +4,17 @@ import { CSS } from "@dnd-kit/utilities";
 import { Row } from "@tanstack/react-table";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { flexRender } from "@tanstack/react-table";
-import { GripVertical, Loader2, AlertCircle } from "lucide-react";
+import { GripVertical } from "lucide-react";
 import { type Deal } from "@/types/types";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useState } from "react";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,6 +25,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { StatusSelect } from "./components/StatusSelect";
+import { useDealStatus } from "@/hooks/use-deal-status";
 
 interface SortableTableRowProps {
   row: Row<Deal>;
@@ -46,12 +39,16 @@ export function SortableTableRow({
   onClick,
   onSelection
 }: SortableTableRowProps) {
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [updateError, setUpdateError] = useState<string | null>(null);
   const [isSelected, setIsSelected] = useState(false);
-  const [showStatusDialog, setShowStatusDialog] = useState(false);
-  const [pendingStatus, setPendingStatus] = useState<Deal["status"]>(row.original.status);
-  const { toast } = useToast();
+  const {
+    isUpdating,
+    updateError,
+    showStatusDialog,
+    pendingStatus,
+    setShowStatusDialog,
+    handleStatusChange,
+    handleStatusConfirm,
+  } = useDealStatus(row.original.status);
   
   const {
     attributes,
@@ -75,47 +72,16 @@ export function SortableTableRow({
     boxShadow: isDragging ? "0 8px 24px rgba(0, 0, 0, 0.15)" : undefined,
   };
 
-  const handleStatusChange = async (newStatus: Deal["status"]) => {
-    setPendingStatus(newStatus);
-    setShowStatusDialog(true);
-  };
-
-  const handleStatusConfirm = async () => {
-    setIsUpdating(true);
-    setUpdateError(null);
-
-    const { error } = await supabase
-      .from("deals")
-      .update({ status: pendingStatus })
-      .eq("id", row.original.id);
-
-    if (error) {
-      setUpdateError("Failed to update status");
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to update status. Please try again.",
-      });
-    } else {
-      toast({
-        title: "Success",
-        description: "Status updated successfully.",
-      });
+  const handleCheckboxChange = (checked: boolean) => {
+    setIsSelected(checked);
+    if (onSelection) {
+      onSelection(checked ? [row.original] : []);
     }
-    setIsUpdating(false);
-    setShowStatusDialog(false);
   };
 
   const handleRetry = () => {
     if (updateError) {
       handleStatusChange(row.original.status);
-    }
-  };
-
-  const handleCheckboxChange = (checked: boolean) => {
-    setIsSelected(checked);
-    if (onSelection) {
-      onSelection(checked ? [row.original] : []);
     }
   };
 
@@ -168,49 +134,13 @@ export function SortableTableRow({
         </TableCell>
       ))}
       <TableCell onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center gap-2">
-          {updateError ? (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleRetry}
-                    className="text-destructive hover:text-destructive/90"
-                  >
-                    <AlertCircle className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Click to retry updating status</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          ) : null}
-          <Select
-            value={row.original.status}
-            onValueChange={handleStatusChange}
-            disabled={isUpdating}
-          >
-            <SelectTrigger className="w-[130px]">
-              {isUpdating ? (
-                <div className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Updating...</span>
-                </div>
-              ) : (
-                <SelectValue />
-              )}
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="open">Open</SelectItem>
-              <SelectItem value="won">Won</SelectItem>
-              <SelectItem value="lost">Lost</SelectItem>
-              <SelectItem value="stalled">Stalled</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <StatusSelect
+          status={row.original.status}
+          isUpdating={isUpdating}
+          updateError={updateError}
+          onStatusChange={handleStatusChange}
+          onRetry={handleRetry}
+        />
       </TableCell>
       <TableCell onClick={(e) => e.stopPropagation()}>
         <Button
@@ -233,7 +163,9 @@ export function SortableTableRow({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleStatusConfirm}>Confirm</AlertDialogAction>
+            <AlertDialogAction onClick={() => handleStatusConfirm(row.original.id)}>
+              Confirm
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
