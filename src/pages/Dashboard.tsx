@@ -93,6 +93,7 @@ const Dashboard = () => {
         customFields={customFields}
         onBeforeCreate={handleCreateDeal}
         onSignOut={handleSignOut}
+        userData={userData}
       />
       <DashboardContent
         deals={deals}
