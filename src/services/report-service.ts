@@ -21,7 +21,7 @@ export async function fetchUserReports(userId: string, page = 1) {
   const { data: reportsData, error, count } = await supabase
     .from('report_configurations')
     .select('*', { count: 'exact' })
-    .or(`user_id.eq.${userId},team_id.not.is.null`)
+    .or('user_id.eq.' + '.auth.uid(),team_id.not.is.null')
     .order('created_at', { ascending: false })
     .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
 
