@@ -3,7 +3,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import type { ReportConfiguration, ReportConfig } from "@/components/reports/types";
+import type { ReportConfiguration, ReportConfig, ReportVisualization } from "@/components/reports/types";
+import type { Json } from "@/integrations/supabase/types";
 
 export function useReports() {
   const [reports, setReports] = useState<ReportConfiguration[]>([]);
@@ -85,7 +86,7 @@ export function useReports() {
         name: "New Report",
         description: "Custom report description",
         user_id: userId,
-        config: initialConfig
+        config: initialConfig as unknown as Json
       };
 
       const { data, error } = await supabase
@@ -131,21 +132,32 @@ export function useReports() {
 
   const updateReport = async (reportId: string, updates: Partial<ReportConfiguration>) => {
     try {
+      const updateData = {
+        ...updates,
+        config: updates.config ? (updates.config as unknown as Json) : undefined
+      };
+
       const { data, error } = await supabase
         .from('report_configurations')
-        .update({
-          ...updates,
-          config: updates.config
-        })
+        .update(updateData)
         .eq('id', reportId)
         .select()
         .single();
 
       if (error) throw error;
 
+      const config = typeof data.config === 'string' 
+        ? JSON.parse(data.config) 
+        : data.config;
+
       const updatedReport: ReportConfiguration = {
         ...data,
-        config: data.config as unknown as ReportConfig
+        config: {
+          dimensions: config.dimensions || [],
+          metrics: config.metrics || [],
+          filters: config.filters || [],
+          visualization: (config.visualization || 'bar') as ReportVisualization
+        }
       };
 
       setReports(prev => prev.map(report => 
@@ -210,10 +222,18 @@ export function useReports() {
 
       if (error) throw error;
 
+      const config = typeof data.config === 'string' 
+        ? JSON.parse(data.config) 
+        : data.config;
+
       const updatedReport: ReportConfiguration = {
         ...data,
-        config: data.config as unknown as ReportConfig,
-        is_favorite: !currentStatus
+        config: {
+          dimensions: config.dimensions || [],
+          metrics: config.metrics || [],
+          filters: config.filters || [],
+          visualization: (config.visualization || 'bar') as ReportVisualization
+        }
       };
 
       setReports(prev => prev.map(report => 
