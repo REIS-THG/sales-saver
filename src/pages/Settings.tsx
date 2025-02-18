@@ -2,6 +2,7 @@
 import { AccountSettings } from "@/components/settings/AccountSettings";
 import { UserPreferences } from "@/components/settings/UserPreferences";
 import { CustomFieldsManager } from "@/components/settings/CustomFieldsManager";
+import { TeamSettings } from "@/components/settings/TeamSettings";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
@@ -14,10 +15,8 @@ export default function Settings() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [theme, setTheme] = useState(() => {
-    // Check localStorage first
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme) return savedTheme;
-    // Then check system preference
     if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
       return 'dark';
     }
@@ -26,17 +25,14 @@ export default function Settings() {
   const [defaultView, setDefaultView] = useState("table");
 
   useEffect(() => {
-    // Only redirect if we're not loading and there's no user
     if (!loading && !user) {
       navigate("/auth");
     }
   }, [user, loading, navigate]);
 
   useEffect(() => {
-    // Apply theme to document
     document.documentElement.classList.remove('light', 'dark');
     document.documentElement.classList.add(theme);
-    // Save theme preference
     localStorage.setItem('theme', theme);
   }, [theme]);
 
@@ -46,10 +42,8 @@ export default function Settings() {
 
   const handleDefaultViewChange = async (newView: string) => {
     setDefaultView(newView);
-    // Implement default view change logic
   };
 
-  // Show loading spinner while checking auth status
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -58,7 +52,6 @@ export default function Settings() {
     );
   }
 
-  // Don't render anything if there's no user
   if (!user) {
     return null;
   }
@@ -92,6 +85,7 @@ export default function Settings() {
           <TabsTrigger value="account">Account</TabsTrigger>
           <TabsTrigger value="preferences">Preferences</TabsTrigger>
           <TabsTrigger value="custom-fields">Custom Fields</TabsTrigger>
+          <TabsTrigger value="teams">Teams</TabsTrigger>
         </TabsList>
 
         <TabsContent value="account" className="space-y-8">
@@ -109,6 +103,10 @@ export default function Settings() {
 
         <TabsContent value="custom-fields" className="space-y-8">
           <CustomFieldsManager />
+        </TabsContent>
+
+        <TabsContent value="teams" className="space-y-8">
+          <TeamSettings />
         </TabsContent>
       </Tabs>
     </div>

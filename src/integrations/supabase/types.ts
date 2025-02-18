@@ -223,6 +223,7 @@ export type Database = {
           notes_count: number | null
           start_date: string | null
           status: string | null
+          team_id: string | null
           updated_at: string | null
           user_id: string
         }
@@ -246,6 +247,7 @@ export type Database = {
           notes_count?: number | null
           start_date?: string | null
           status?: string | null
+          team_id?: string | null
           updated_at?: string | null
           user_id: string
         }
@@ -269,10 +271,18 @@ export type Database = {
           notes_count?: number | null
           start_date?: string | null
           status?: string | null
+          team_id?: string | null
           updated_at?: string | null
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "deals_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "deals_user_id_fkey"
             columns: ["user_id"]
@@ -512,6 +522,7 @@ export type Database = {
           id: string
           is_favorite: boolean | null
           name: string
+          team_id: string | null
           updated_at: string | null
           user_id: string
         }
@@ -522,6 +533,7 @@ export type Database = {
           id?: string
           is_favorite?: boolean | null
           name: string
+          team_id?: string | null
           updated_at?: string | null
           user_id: string
         }
@@ -532,8 +544,76 @@ export type Database = {
           id?: string
           is_favorite?: boolean | null
           name?: string
+          team_id?: string | null
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_configurations_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_members: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["team_member_role"]
+          team_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["team_member_role"]
+          team_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["team_member_role"]
+          team_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teams: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          owner_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          owner_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          owner_id?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -599,7 +679,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_team_member_role: {
+        Args: {
+          team_id: string
+          user_id: string
+        }
+        Returns: Database["public"]["Enums"]["team_member_role"]
+      }
+      is_team_member: {
+        Args: {
+          team_id: string
+          user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       communication_channel_type: "f2f" | "email" | "social_media"
@@ -608,6 +701,7 @@ export type Database = {
         | "solution_selling"
         | "transactional_selling"
         | "value_based_selling"
+      team_member_role: "owner" | "admin" | "member"
     }
     CompositeTypes: {
       [_ in never]: never

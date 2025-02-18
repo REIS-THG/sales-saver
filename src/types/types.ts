@@ -45,6 +45,7 @@ export interface Deal {
   status: 'open' | 'won' | 'lost' | 'stalled';
   health_score: number;
   user_id: string;
+  team_id?: string;
   created_at?: string;
   updated_at?: string;
   start_date?: string;
@@ -161,6 +162,23 @@ export interface DripCampaignExecution {
   status: 'pending' | 'completed' | 'failed';
   scheduled_for?: string;
   executed_at?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface Team {
+  id: string;
+  name: string;
+  owner_id: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface TeamMember {
+  id: string;
+  team_id: string;
+  user_id: string;
+  role: 'owner' | 'admin' | 'member';
   created_at?: string;
   updated_at?: string;
 }
