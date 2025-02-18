@@ -1,3 +1,4 @@
+import * as React from "react";
 import { FileText, Mail, FileIcon, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
