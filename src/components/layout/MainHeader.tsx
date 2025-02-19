@@ -2,6 +2,8 @@
 import { Link, useLocation } from "react-router-dom";
 import { UserButton } from "@/components/dashboard/UserButton";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { DealSourcingForm } from "@/components/deals/DealSourcingForm";
 import type { User } from "@/types/types";
 
 interface MainHeaderProps {
@@ -30,13 +32,25 @@ export function MainHeader({ onSignOut, userData, children }: MainHeaderProps) {
               >
                 <Link to="/dashboard">Deals</Link>
               </Button>
-              <Button
-                asChild
-                variant={isActivePath('/deal-desk') ? "default" : "ghost"}
-                className="font-medium"
-              >
-                <Link to="/deal-desk">Deal Desk</Link>
-              </Button>
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="font-medium"
+                  >
+                    Sourcing
+                  </Button>
+                </SheetTrigger>
+                <SheetContent className="w-[400px] sm:w-[540px]">
+                  <SheetHeader>
+                    <SheetTitle>Deal Sourcing</SheetTitle>
+                    <SheetDescription>
+                      Use AI to find potential deals based on your criteria.
+                    </SheetDescription>
+                  </SheetHeader>
+                  <DealSourcingForm />
+                </SheetContent>
+              </Sheet>
               <Button
                 asChild
                 variant={isActivePath('/reports') ? "default" : "ghost"}
