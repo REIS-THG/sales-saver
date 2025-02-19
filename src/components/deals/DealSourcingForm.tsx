@@ -50,10 +50,18 @@ export function DealSourcingForm() {
 
       if (error) throw error;
       
-      // Cast the source_type to SourceType when setting configs
+      // Cast both source_type and source_filters when mapping
       setConfigs(configs?.map(config => ({
         ...config,
-        source_type: config.source_type as SourceType
+        source_type: config.source_type as SourceType,
+        source_filters: config.source_filters ? JSON.parse(JSON.stringify(config.source_filters)) : {
+          industry: [],
+          minRevenue: undefined,
+          maxRevenue: undefined,
+          location: [],
+          dealTypes: [],
+          excludeKeywords: []
+        }
       })) || []);
     } catch (error) {
       console.error('Error fetching configs:', error);
@@ -151,10 +159,15 @@ export function DealSourcingForm() {
         source_urls: sourceUrls,
         source_keywords: keywords,
         source_filters: {
-          excludeKeywords,
+          industry: [],
+          minRevenue: undefined,
+          maxRevenue: undefined,
+          location: [],
+          dealTypes: [],
+          excludeKeywords
         },
         is_active: true,
-        user_id: userData.user.id // Add the user_id field
+        user_id: userData.user.id
       };
 
       const { error } = await supabase

@@ -213,7 +213,7 @@ export interface DealSourceConfig {
     maxRevenue?: number;
     location?: string[];
     dealTypes?: string[];
-    excludeKeywords?: string[];
+    excludeKeywords: string[];
   };
   is_active: boolean;
   user_id: string;
