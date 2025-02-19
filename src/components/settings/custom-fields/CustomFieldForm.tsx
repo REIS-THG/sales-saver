@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import type { FieldType } from "@/types/types";
 
 const CustomFieldSchema = z.object({
   field_name: z.string().min(1, "Field name is required"),
@@ -31,7 +32,10 @@ export function CustomFieldForm({ onSubmit }: CustomFieldFormProps) {
   });
 
   const handleSubmit = (values: CustomFieldFormData) => {
-    onSubmit(values);
+    onSubmit({
+      ...values,
+      field_type: values.field_type as FieldType, // Ensure type matches database constraint
+    });
     form.reset();
   };
 
