@@ -1,3 +1,8 @@
+export type FieldType = "text" | "number" | "boolean" | "date" | "product";
+export type DealStatus = "open" | "won" | "lost" | "stalled";
+export type UserRole = "sales_rep" | "manager";
+export type SubscriptionStatus = "free" | "pro" | "enterprise";
+
 export interface StandardField {
   field_name: string;
   field: string;
@@ -7,23 +12,25 @@ export interface StandardField {
 export interface CustomField {
   id: string;
   field_name: string;
-  field_type: "text" | "number" | "boolean" | "date" | "product";
+  field_type: FieldType;
   is_required: boolean;
   user_id?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface User {
   id: string;
   user_id: string;
   full_name: string;
-  role: 'sales_rep' | 'manager';
+  role: UserRole;
   created_at?: string;
   updated_at?: string;
   theme?: string;
   default_deal_view?: string;
   custom_views: Record<string, any>[];
   email?: string;
-  subscription_status: 'free' | 'pro' | 'enterprise';  // Changed from boolean to string enum
+  subscription_status: SubscriptionStatus;
   subscription_end_date?: string;
   successful_deals_count: number;
   billing_address?: {
@@ -42,7 +49,7 @@ export interface Deal {
   deal_name: string;
   company_name: string;
   amount: number;
-  status: 'open' | 'won' | 'lost' | 'stalled';
+  status: DealStatus;
   health_score: number;
   user_id: string;
   team_id?: string;

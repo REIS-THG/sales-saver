@@ -1,8 +1,7 @@
-
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Trash2 } from "lucide-react";
-import type { ReportConfiguration, ReportDimension, ReportMetric } from "../types";
+import type { ReportConfiguration, ReportVisualization } from "../types";
 
 interface AxisFieldSelectorProps {
   type: "dimension" | "metric";
@@ -10,12 +9,12 @@ interface AxisFieldSelectorProps {
   standardFields: { 
     field_name: string; 
     field: string; 
-    field_type: "text" | "number" | "boolean" | "date"; 
+    field_type: "text" | "number" | "boolean" | "date" | "product"; 
   }[];
   customFields: { 
     id: string; 
     field_name: string; 
-    field_type: "text" | "number" | "boolean" | "date"; 
+    field_type: "text" | "number" | "boolean" | "date" | "product"; 
     is_required: boolean; 
     user_id?: string; 
   }[];

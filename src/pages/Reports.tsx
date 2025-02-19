@@ -49,65 +49,72 @@ const Reports = () => {
     }
   }, [user, loading, navigate]);
 
+  const fetchUserData = async () => {
+    if (!user?.id) return;
+
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('user_id', user.id)
+      .single();
+
+    if (!error && data) {
+      const role = data.role as UserRole;
+      const subscriptionStatus = data.subscription_status ? 'pro' as const : 'free' as const;
+      
+      setUserData({
+        ...data,
+        role,
+        subscription_status: subscriptionStatus,
+        custom_views: data.custom_views as Record<string, any>[]
+      } as User);
+    }
+  };
+
+  const fetchCustomFields = async () => {
+    if (!user?.id) return;
+
+    const { data: fieldsData, error } = await supabase
+      .from('custom_fields')
+      .select('*')
+      .eq('user_id', user.id);
+
+    if (!error && fieldsData) {
+      const typedFields = fieldsData.map(field => ({
+        ...field,
+        field_type: field.field_type as FieldType
+      }));
+      setCustomFields(typedFields);
+    }
+  };
+
+  const fetchDeals = async () => {
+    if (!user?.id) return;
+
+    const { data: dealsData, error } = await supabase
+      .from('deals')
+      .select('*')
+      .eq('user_id', user.id);
+
+    if (!error && dealsData) {
+      const typedDeals = dealsData.map(deal => ({
+        ...deal,
+        status: (deal.status || 'open') as DealStatus,
+        custom_fields: deal.custom_fields as Record<string, any>
+      }));
+      setDeals(typedDeals);
+    }
+  };
+
   useEffect(() => {
-    const fetchUserData = async () => {
-      if (!user?.id) return;
-
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!error && data) {
-        setUserData({
-          ...data,
-          role: data.role as 'sales_rep' | 'manager',
-          subscription_status: data.subscription_status ? 'pro' : 'free'
-        } as User);
-      }
-    };
-
     fetchUserData();
   }, [user?.id]);
 
   useEffect(() => {
-    const fetchCustomFields = async () => {
-      if (!user?.id) return;
-
-      const { data: fieldsData, error } = await supabase
-        .from('custom_fields')
-        .select('*')
-        .eq('user_id', user.id);
-
-      if (!error && fieldsData) {
-        setCustomFields(fieldsData.map(field => ({
-          ...field,
-          field_type: field.field_type as "text" | "number" | "boolean" | "date" | "product"
-        })));
-      }
-    };
-
     fetchCustomFields();
   }, [user?.id]);
 
   useEffect(() => {
-    const fetchDeals = async () => {
-      if (!user?.id) return;
-
-      const { data: dealsData, error } = await supabase
-        .from('deals')
-        .select('*')
-        .eq('user_id', user.id);
-
-      if (!error && dealsData) {
-        setDeals(dealsData.map(deal => ({
-          ...deal,
-          status: (deal.status || 'open') as 'open' | 'won' | 'lost' | 'stalled',
-        })));
-      }
-    };
-
     fetchDeals();
   }, [user?.id]);
 
@@ -281,7 +288,7 @@ const Reports = () => {
 
         <ReportsList
           reports={reports.filter(report => report.is_favorite)}
-          onEdit={handleEditReport}
+          onEdit={(report) => handleEditReport(report)}
           onDelete={deleteReport}
           onToggleFavorite={toggleFavorite}
           editingReportId={editingReportId}
@@ -300,7 +307,7 @@ const Reports = () => {
         <h2 className="text-xl font-semibold mb-4 dark:text-white">All Reports</h2>
         <ReportsList
           reports={reports.filter(report => !report.is_favorite)}
-          onEdit={handleEditReport}
+          onEdit={(report) => handleEditReport(report)}
           onDelete={deleteReport}
           onToggleFavorite={toggleFavorite}
           editingReportId={editingReportId}
