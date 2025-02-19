@@ -1,7 +1,8 @@
+
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Trash2 } from "lucide-react";
-import type { ReportConfiguration, ReportVisualization } from "../types";
+import type { ReportConfiguration, ReportVisualization, ReportDimension, ReportMetric } from "../types";
 
 interface AxisFieldSelectorProps {
   type: "dimension" | "metric";

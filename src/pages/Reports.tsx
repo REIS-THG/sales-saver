@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, ArrowLeft, BarChart2, PieChart, LineChart, Table } from "lucide-react";
@@ -9,7 +10,7 @@ import { ReportsList } from "@/components/reports/ReportsList";
 import { ReportConfiguration } from "@/components/reports/ReportConfiguration";
 import type { ReportConfiguration as ReportConfigType } from "@/components/reports/types";
 import { useToast } from "@/hooks/use-toast";
-import type { CustomField, Deal, User } from "@/types/types";
+import type { CustomField, Deal, User, UserRole, FieldType, DealStatus } from "@/types/types";
 import { useAuth } from "@/hooks/useAuth";
 
 const standardFields: { field_name: string; field: string; field_type: "text" | "number" | "boolean" | "date" | "product"; }[] = [
