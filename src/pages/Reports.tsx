@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, ArrowLeft, BarChart2, PieChart, LineChart, Table } from "lucide-react";
@@ -12,7 +11,6 @@ import type { ReportConfiguration as ReportConfigType } from "@/components/repor
 import { useToast } from "@/hooks/use-toast";
 import type { CustomField, Deal, User } from "@/types/types";
 import { useAuth } from "@/hooks/useAuth";
-import { MainHeader } from "@/components/layout/MainHeader";
 
 const standardFields: { field_name: string; field: string; field_type: "text" | "number" | "boolean" | "date" | "product"; }[] = [
   { field: 'amount', field_name: 'Deal Amount', field_type: 'number' },
@@ -62,7 +60,11 @@ const Reports = () => {
         .single();
 
       if (!error && data) {
-        setUserData(data);
+        setUserData({
+          ...data,
+          role: data.role as 'sales_rep' | 'manager',
+          subscription_status: data.subscription_status ? 'pro' : 'free'
+        } as User);
       }
     };
 
@@ -79,7 +81,10 @@ const Reports = () => {
         .eq('user_id', user.id);
 
       if (!error && fieldsData) {
-        setCustomFields(fieldsData);
+        setCustomFields(fieldsData.map(field => ({
+          ...field,
+          field_type: field.field_type as "text" | "number" | "boolean" | "date" | "product"
+        })));
       }
     };
 
@@ -96,7 +101,10 @@ const Reports = () => {
         .eq('user_id', user.id);
 
       if (!error && dealsData) {
-        setDeals(dealsData);
+        setDeals(dealsData.map(deal => ({
+          ...deal,
+          status: (deal.status || 'open') as 'open' | 'won' | 'lost' | 'stalled',
+        })));
       }
     };
 
@@ -147,9 +155,13 @@ const Reports = () => {
     }
   };
 
-  const startEditingName = (report: ReportConfigType) => {
+  const handleEditReport = (report: ReportConfigType) => {
     setEditingReportId(report.id);
     setEditingName(report.name);
+  };
+
+  const handleEditNameChange = (newName: string) => {
+    setEditingName(newName);
   };
 
   const saveReportName = async () => {
@@ -269,12 +281,12 @@ const Reports = () => {
 
         <ReportsList
           reports={reports.filter(report => report.is_favorite)}
-          onEdit={setEditingReportId}
+          onEdit={handleEditReport}
           onDelete={deleteReport}
           onToggleFavorite={toggleFavorite}
           editingReportId={editingReportId}
           editingName={editingName}
-          onEditNameChange={setEditingName}
+          onEditNameChange={handleEditNameChange}
           onSaveReportName={saveReportName}
           onExportExcel={handleExportExcel}
           onExportGoogleSheets={handleExportGoogleSheets}
@@ -288,12 +300,12 @@ const Reports = () => {
         <h2 className="text-xl font-semibold mb-4 dark:text-white">All Reports</h2>
         <ReportsList
           reports={reports.filter(report => !report.is_favorite)}
-          onEdit={setEditingReportId}
+          onEdit={handleEditReport}
           onDelete={deleteReport}
           onToggleFavorite={toggleFavorite}
           editingReportId={editingReportId}
           editingName={editingName}
-          onEditNameChange={setEditingName}
+          onEditNameChange={handleEditNameChange}
           onSaveReportName={saveReportName}
           onExportExcel={handleExportExcel}
           onExportGoogleSheets={handleExportGoogleSheets}
