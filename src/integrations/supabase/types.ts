@@ -202,6 +202,102 @@ export type Database = {
           },
         ]
       }
+      deal_source_configurations: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          last_run_at: string | null
+          name: string
+          source_filters: Json | null
+          source_keywords: string[] | null
+          source_type: string
+          source_urls: string[] | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_run_at?: string | null
+          name: string
+          source_filters?: Json | null
+          source_keywords?: string[] | null
+          source_type: string
+          source_urls?: string[] | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_run_at?: string | null
+          name?: string
+          source_filters?: Json | null
+          source_keywords?: string[] | null
+          source_type?: string
+          source_urls?: string[] | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      deal_source_results: {
+        Row: {
+          confidence_score: number | null
+          config_id: string | null
+          created_at: string | null
+          deal_id: string | null
+          id: string
+          matched_keywords: string[] | null
+          source_data: Json | null
+          source_type: string
+          source_url: string | null
+        }
+        Insert: {
+          confidence_score?: number | null
+          config_id?: string | null
+          created_at?: string | null
+          deal_id?: string | null
+          id?: string
+          matched_keywords?: string[] | null
+          source_data?: Json | null
+          source_type: string
+          source_url?: string | null
+        }
+        Update: {
+          confidence_score?: number | null
+          config_id?: string | null
+          created_at?: string | null
+          deal_id?: string | null
+          id?: string
+          matched_keywords?: string[] | null
+          source_data?: Json | null
+          source_type?: string
+          source_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_source_results_config_id_fkey"
+            columns: ["config_id"]
+            isOneToOne: false
+            referencedRelation: "deal_source_configurations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deal_source_results_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deals: {
         Row: {
           amount: number

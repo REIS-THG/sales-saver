@@ -2,6 +2,7 @@ export type FieldType = "text" | "number" | "boolean" | "date" | "product";
 export type DealStatus = "open" | "won" | "lost" | "stalled";
 export type UserRole = "sales_rep" | "manager";
 export type SubscriptionStatus = "free" | "pro" | "enterprise";
+export type SourceType = 'website' | 'marketplace' | 'api' | 'manual';
 
 export interface StandardField {
   field_name: string;
@@ -197,4 +198,37 @@ export interface Product {
   user_id: string;
   created_at?: string;
   updated_at?: string;
+}
+
+export interface DealSourceConfig {
+  id: string;
+  name: string;
+  description?: string;
+  source_type: SourceType;
+  source_urls: string[];
+  source_keywords: string[];
+  source_filters: {
+    industry?: string[];
+    minRevenue?: number;
+    maxRevenue?: number;
+    location?: string[];
+    dealTypes?: string[];
+    excludeKeywords?: string[];
+  };
+  is_active: boolean;
+  last_run_at?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface DealSourceResult {
+  id: string;
+  config_id: string;
+  deal_id?: string;
+  source_url?: string;
+  source_type: SourceType;
+  source_data: Record<string, any>;
+  confidence_score?: number;
+  matched_keywords: string[];
+  created_at?: string;
 }
