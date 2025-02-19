@@ -216,6 +216,7 @@ export interface DealSourceConfig {
     excludeKeywords?: string[];
   };
   is_active: boolean;
+  user_id: string;
   last_run_at?: string;
   created_at?: string;
   updated_at?: string;

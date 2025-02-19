@@ -49,7 +49,12 @@ export function DealSourcingForm() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setConfigs(configs || []);
+      
+      // Cast the source_type to SourceType when setting configs
+      setConfigs(configs?.map(config => ({
+        ...config,
+        source_type: config.source_type as SourceType
+      })) || []);
     } catch (error) {
       console.error('Error fetching configs:', error);
       toast({
@@ -132,6 +137,13 @@ export function DealSourcingForm() {
 
   const handleSaveConfig = async () => {
     try {
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      
+      if (!userData.user?.id) {
+        throw new Error('User not authenticated');
+      }
+
       const newConfig = {
         name: `Source Config ${configs.length + 1}`,
         description: `Configuration for ${sourceType} sourcing`,
@@ -142,6 +154,7 @@ export function DealSourcingForm() {
           excludeKeywords,
         },
         is_active: true,
+        user_id: userData.user.id // Add the user_id field
       };
 
       const { error } = await supabase
