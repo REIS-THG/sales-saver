@@ -1,9 +1,12 @@
 
+import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import type { CustomField } from "@/types/types";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import type { CustomField, Product } from "@/types/types";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CustomFieldsSectionProps {
   customFields: CustomField[];
@@ -16,6 +19,22 @@ export const CustomFieldsSection = ({
   values,
   onChange,
 }: CustomFieldsSectionProps) => {
+  const [products, setProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const { data: productsData, error } = await supabase
+        .from('products')
+        .select('*');
+      
+      if (!error && productsData) {
+        setProducts(productsData);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
   if (customFields.length === 0) return null;
 
   return (
@@ -52,6 +71,23 @@ export const CustomFieldsSection = ({
                 checked={values[field.field_name] as boolean || false}
                 onCheckedChange={(checked) => onChange(field.field_name, checked)}
               />
+            )}
+            {field.field_type === "product" && (
+              <Select
+                value={values[field.field_name] as string || ""}
+                onValueChange={(value) => onChange(field.field_name, value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a product" />
+                </SelectTrigger>
+                <SelectContent>
+                  {products.map((product) => (
+                    <SelectItem key={product.id} value={product.id}>
+                      {product.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
           </div>
         ))}

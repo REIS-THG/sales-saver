@@ -1,14 +1,13 @@
-
 export interface StandardField {
   field_name: string;
   field: string;
-  field_type: "text" | "number" | "boolean" | "date";
+  field_type: "text" | "number" | "boolean" | "date" | "product";
 }
 
 export interface CustomField {
   id: string;
   field_name: string;
-  field_type: "text" | "number" | "boolean" | "date";
+  field_type: "text" | "number" | "boolean" | "date" | "product";
   is_required: boolean;
   user_id?: string;
 }
@@ -180,6 +179,15 @@ export interface TeamMember {
   team_id: string;
   user_id: string;
   role: 'owner' | 'admin' | 'member';
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface Product {
+  id: string;
+  name: string;
+  description?: string;
+  user_id: string;
   created_at?: string;
   updated_at?: string;
 }

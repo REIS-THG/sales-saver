@@ -514,6 +514,33 @@ export type Database = {
           },
         ]
       }
+      products: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       report_configurations: {
         Row: {
           config: Json
@@ -737,6 +764,7 @@ export type Database = {
     }
     Enums: {
       communication_channel_type: "f2f" | "email" | "social_media"
+      custom_field_type: "text" | "number" | "boolean" | "date" | "product"
       sales_approach_type:
         | "consultative_selling"
         | "solution_selling"

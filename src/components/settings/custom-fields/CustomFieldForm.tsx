@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 
 const CustomFieldSchema = z.object({
   field_name: z.string().min(1, "Field name is required"),
-  field_type: z.enum(["text", "number", "boolean", "date"] as const),
+  field_type: z.enum(["text", "number", "boolean", "date", "product"] as const),
   is_required: z.boolean().default(false),
 });
 
@@ -69,6 +69,7 @@ export function CustomFieldForm({ onSubmit }: CustomFieldFormProps) {
                   <SelectItem value="number">Number</SelectItem>
                   <SelectItem value="boolean">Yes/No</SelectItem>
                   <SelectItem value="date">Date</SelectItem>
+                  <SelectItem value="product">Product</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
