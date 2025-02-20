@@ -15,6 +15,7 @@ export async function fetchUserReports(userId: string, page = 1) {
   const { data: reportsData, error, count } = await supabase
     .from('report_configurations')
     .select('*', { count: 'exact' })
+    .eq('user_id', userId)
     .order('created_at', { ascending: false })
     .range(start, end);
 
@@ -36,8 +37,7 @@ export async function fetchUserReports(userId: string, page = 1) {
     },
     created_at: report.created_at,
     updated_at: report.updated_at,
-    is_favorite: report.is_favorite || false,
-    team_id: report.team_id
+    is_favorite: report.is_favorite || false
   }));
 
   return { reports, totalCount: count || 0 };
@@ -50,8 +50,7 @@ export async function createUserReport(userId: string, initialConfig: ReportConf
     name: "New Report",
     description: "Custom report description",
     user_id: userId,
-    config: initialConfig as unknown as Json,
-    team_id: null // Setting team_id as null for personal reports
+    config: initialConfig as unknown as Json
   };
 
   const { data, error } = await supabase
@@ -78,8 +77,7 @@ export async function createUserReport(userId: string, initialConfig: ReportConf
     },
     created_at: data.created_at,
     updated_at: data.updated_at,
-    is_favorite: data.is_favorite || false,
-    team_id: data.team_id
+    is_favorite: data.is_favorite || false
   };
 }
 
@@ -99,13 +97,19 @@ export async function updateUserReport(reportId: string, updates: Partial<Report
   if (error) throw error;
 
   return {
-    ...data,
+    id: data.id,
+    user_id: data.user_id,
+    name: data.name,
+    description: data.description || undefined,
     config: {
       dimensions: (data.config as any)?.dimensions || [],
       metrics: (data.config as any)?.metrics || [],
       filters: (data.config as any)?.filters || [],
       visualization: ((data.config as any)?.visualization || 'bar') as ReportVisualization
-    }
+    },
+    created_at: data.created_at,
+    updated_at: data.updated_at,
+    is_favorite: data.is_favorite || false
   };
 }
 
@@ -133,12 +137,18 @@ export async function toggleReportFavorite(reportId: string, currentStatus: bool
   if (error) throw error;
 
   return {
-    ...data,
+    id: data.id,
+    user_id: data.user_id,
+    name: data.name,
+    description: data.description || undefined,
     config: {
       dimensions: (data.config as any)?.dimensions || [],
       metrics: (data.config as any)?.metrics || [],
       filters: (data.config as any)?.filters || [],
       visualization: ((data.config as any)?.visualization || 'bar') as ReportVisualization
-    }
+    },
+    created_at: data.created_at,
+    updated_at: data.updated_at,
+    is_favorite: data.is_favorite || false
   };
 }
