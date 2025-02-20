@@ -18,40 +18,36 @@ export async function fetchUserReports(userId: string, page = 1) {
   console.log('Fetching reports for user:', userId);
   console.log('Fetching reports for page:', page);
   
-  // Simplified query that relies on RLS policies
+  const start = (page - 1) * PAGE_SIZE;
+  const end = start + PAGE_SIZE - 1;
+
   const { data: reportsData, error, count } = await supabase
     .from('report_configurations')
     .select('*', { count: 'exact' })
-    .eq('user_id', userId)
     .order('created_at', { ascending: false })
-    .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
+    .range(start, end);
 
   if (error) {
     console.error('Error in fetchUserReports:', error);
     throw error;
   }
 
-  const reports = (reportsData || []).map(report => {
-    const config = typeof report.config === 'string' 
-      ? JSON.parse(report.config) 
-      : report.config;
-
-    return {
-      id: report.id,
-      user_id: report.user_id,
-      name: report.name,
-      description: report.description || undefined,
-      config: {
-        dimensions: config.dimensions || [],
-        metrics: config.metrics || [],
-        filters: config.filters || [],
-        visualization: (config.visualization || 'bar') as ReportVisualization
-      },
-      created_at: report.created_at,
-      updated_at: report.updated_at,
-      is_favorite: report.is_favorite
-    };
-  });
+  const reports = (reportsData || []).map(report => ({
+    id: report.id,
+    user_id: report.user_id,
+    name: report.name || 'Untitled Report',
+    description: report.description || undefined,
+    config: {
+      dimensions: (report.config as any)?.dimensions || [],
+      metrics: (report.config as any)?.metrics || [],
+      filters: (report.config as any)?.filters || [],
+      visualization: ((report.config as any)?.visualization || 'bar') as ReportVisualization
+    },
+    created_at: report.created_at,
+    updated_at: report.updated_at,
+    is_favorite: report.is_favorite || false,
+    team_id: report.team_id
+  }));
 
   return { reports, totalCount: count || 0 };
 }
@@ -64,7 +60,8 @@ export async function createUserReport(userId: string, initialConfig: ReportConf
     name: "New Report",
     description: "Custom report description",
     user_id: userId,
-    config: initialConfig as unknown as Json
+    config: initialConfig as unknown as Json,
+    team_id: null // Setting team_id as null for personal reports
   };
 
   const { data, error } = await supabase
@@ -78,29 +75,27 @@ export async function createUserReport(userId: string, initialConfig: ReportConf
     throw error;
   }
 
-  const config = typeof data.config === 'string' 
-    ? JSON.parse(data.config) 
-    : data.config;
-
   return {
     id: data.id,
     user_id: data.user_id,
     name: data.name,
     description: data.description || undefined,
     config: {
-      dimensions: config.dimensions || [],
-      metrics: config.metrics || [],
-      filters: config.filters || [],
-      visualization: (config.visualization || 'bar') as ReportVisualization
+      dimensions: (data.config as any)?.dimensions || [],
+      metrics: (data.config as any)?.metrics || [],
+      filters: (data.config as any)?.filters || [],
+      visualization: ((data.config as any)?.visualization || 'bar') as ReportVisualization
     },
     created_at: data.created_at,
     updated_at: data.updated_at,
-    is_favorite: data.is_favorite
+    is_favorite: data.is_favorite || false,
+    team_id: data.team_id
   };
 }
 
 export async function updateUserReport(reportId: string, updates: Partial<ReportConfiguration>) {
   await checkAuth();
+  
   const updateData = {
     ...updates,
     config: updates.config ? (updates.config as unknown as Json) : undefined
@@ -115,17 +110,13 @@ export async function updateUserReport(reportId: string, updates: Partial<Report
 
   if (error) throw error;
 
-  const config = typeof data.config === 'string' 
-    ? JSON.parse(data.config) 
-    : data.config;
-
   return {
     ...data,
     config: {
-      dimensions: config.dimensions || [],
-      metrics: config.metrics || [],
-      filters: config.filters || [],
-      visualization: (config.visualization || 'bar') as ReportVisualization
+      dimensions: (data.config as any)?.dimensions || [],
+      metrics: (data.config as any)?.metrics || [],
+      filters: (data.config as any)?.filters || [],
+      visualization: ((data.config as any)?.visualization || 'bar') as ReportVisualization
     }
   };
 }
@@ -143,6 +134,7 @@ export async function deleteUserReport(reportId: string) {
 
 export async function toggleReportFavorite(reportId: string, currentStatus: boolean) {
   await checkAuth();
+  
   const { data, error } = await supabase
     .from('report_configurations')
     .update({ 
@@ -155,18 +147,13 @@ export async function toggleReportFavorite(reportId: string, currentStatus: bool
 
   if (error) throw error;
 
-  const config = typeof data.config === 'string' 
-    ? JSON.parse(data.config) 
-    : data.config;
-
   return {
     ...data,
     config: {
-      dimensions: config.dimensions || [],
-      metrics: config.metrics || [],
-      filters: config.filters || [],
-      visualization: (config.visualization || 'bar') as ReportVisualization
+      dimensions: (data.config as any)?.dimensions || [],
+      metrics: (data.config as any)?.metrics || [],
+      filters: (data.config as any)?.filters || [],
+      visualization: ((data.config as any)?.visualization || 'bar') as ReportVisualization
     }
   };
 }
-

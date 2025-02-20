@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useApiError } from "@/hooks/use-api-error";
 import { useReportManagement } from "@/hooks/use-report-management";
 import { useReportFavorites } from "@/hooks/use-report-favorites";
@@ -9,19 +9,25 @@ import { fetchUserReports } from "@/services/report-service";
 export function useReports() {
   const [reports, setReports] = useState<ReportConfiguration[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   
-  const { handleAuthCheck, handleError } = useApiError();
+  const { handleAuthCheck, handleError, handleSuccess } = useApiError();
   const { actionLoading: managementLoading, createReport, updateReport, deleteReport } = useReportManagement();
   const { actionLoading: favoritesLoading, toggleFavorite: toggleFavoriteBase } = useReportFavorites();
 
   const actionLoading = { ...managementLoading, ...favoritesLoading };
 
-  const fetchReports = async (page = currentPage) => {
+  const fetchReports = useCallback(async (page = currentPage) => {
+    setLoading(true);
+    setError(null);
     try {
       const userId = await handleAuthCheck();
-      if (!userId) return;
+      if (!userId) {
+        setLoading(false);
+        return;
+      }
 
       console.log('Fetching reports for page:', page);
       const { reports: reportsData, totalCount } = await fetchUserReports(userId, page);
@@ -32,11 +38,13 @@ export function useReports() {
       setTotalPages(Math.ceil(totalCount / 9)); // 9 items per page
       setCurrentPage(page);
     } catch (err) {
+      console.error('Error fetching reports:', err);
       handleError(err, "Failed to fetch reports");
+      setError("Failed to fetch reports. Please try again.");
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, handleAuthCheck, handleError]);
 
   const toggleFavorite = async (reportId: string, currentStatus: boolean) => {
     const updatedReport = await toggleFavoriteBase(reportId, currentStatus);
@@ -63,6 +71,7 @@ export function useReports() {
     const newReport = await createReport();
     if (newReport) {
       setReports(prev => [newReport, ...prev]);
+      handleSuccess("Report created successfully");
     }
     return newReport;
   };
@@ -71,6 +80,7 @@ export function useReports() {
     const success = await deleteReport(reportId);
     if (success) {
       setReports(prev => prev.filter(report => report.id !== reportId));
+      handleSuccess("Report deleted successfully");
     }
     return success;
   };
@@ -78,6 +88,7 @@ export function useReports() {
   return {
     reports,
     loading,
+    error,
     actionLoading,
     currentPage,
     totalPages,
