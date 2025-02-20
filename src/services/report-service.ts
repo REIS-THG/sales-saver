@@ -5,16 +5,7 @@ import type { Json } from "@/integrations/supabase/types";
 
 const PAGE_SIZE = 9;
 
-async function checkAuth() {
-  const { data: { session }, error } = await supabase.auth.getSession();
-  if (error || !session?.user) {
-    throw new Error('Authentication required');
-  }
-  return session.user;
-}
-
 export async function fetchUserReports(userId: string, page = 1) {
-  await checkAuth();
   console.log('Fetching reports for user:', userId);
   console.log('Fetching reports for page:', page);
   
@@ -53,7 +44,6 @@ export async function fetchUserReports(userId: string, page = 1) {
 }
 
 export async function createUserReport(userId: string, initialConfig: ReportConfig) {
-  await checkAuth();
   console.log('Creating report for user:', userId);
   
   const newReportData = {
@@ -94,8 +84,6 @@ export async function createUserReport(userId: string, initialConfig: ReportConf
 }
 
 export async function updateUserReport(reportId: string, updates: Partial<ReportConfiguration>) {
-  await checkAuth();
-  
   const updateData = {
     ...updates,
     config: updates.config ? (updates.config as unknown as Json) : undefined
@@ -122,7 +110,6 @@ export async function updateUserReport(reportId: string, updates: Partial<Report
 }
 
 export async function deleteUserReport(reportId: string) {
-  await checkAuth();
   const { error } = await supabase
     .from('report_configurations')
     .delete()
@@ -133,8 +120,6 @@ export async function deleteUserReport(reportId: string) {
 }
 
 export async function toggleReportFavorite(reportId: string, currentStatus: boolean) {
-  await checkAuth();
-  
   const { data, error } = await supabase
     .from('report_configurations')
     .update({ 
