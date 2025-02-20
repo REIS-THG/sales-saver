@@ -32,6 +32,13 @@ export function MainHeader({ onSignOut, userData, children }: MainHeaderProps) {
               </Button>
               <Button
                 asChild
+                variant={isActivePath('/deal-sourcing') ? "default" : "ghost"}
+                className="font-medium"
+              >
+                <Link to="/deal-sourcing">Deal Sourcing</Link>
+              </Button>
+              <Button
+                asChild
                 variant={isActivePath('/deal-desk') ? "default" : "ghost"}
                 className="font-medium"
               >
