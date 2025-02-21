@@ -60,7 +60,7 @@ export function TableContainer({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
         <TableFilters table={table} />
         <ExportMenu deals={deals} />
       </div>
@@ -100,9 +100,10 @@ export function TableContainer({
         </div>
       </div>
 
-      <div className="mt-4 flex justify-center sm:justify-end">
+      <div className="flex justify-center sm:justify-end">
         <TablePagination table={table} totalDeals={deals.length} />
       </div>
     </div>
   );
-}
+};
+
