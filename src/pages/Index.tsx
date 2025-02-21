@@ -1,4 +1,3 @@
-
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, ShieldCheck, Sparkles, BarChart } from "lucide-react";
@@ -41,9 +40,6 @@ const Index = () => {
                 className="h-32 w-auto animate-fade-in"
               />
             </div>
-            <Badge variant="secondary" className="px-4 py-1 animate-fade-in">
-              ⚡️ Trusted by 10,000+ sales professionals
-            </Badge>
             <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent sm:text-6xl animate-fade-in">
               Maximize Your Sales Potential
             </h1>
