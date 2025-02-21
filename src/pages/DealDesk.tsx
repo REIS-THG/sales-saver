@@ -3,7 +3,7 @@ import { MainHeader } from "@/components/layout/MainHeader";
 import { Button } from "@/components/ui/button";
 import { FileText, FileCheck, Receipt, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -17,7 +17,7 @@ const DealDesk = () => {
   const { toast } = useToast();
 
   // Fetch deals when component mounts
-  useState(() => {
+  useEffect(() => {
     fetchDeals();
   }, []);
 
@@ -36,7 +36,13 @@ const DealDesk = () => {
       return;
     }
 
-    setDeals(dealsData);
+    // Cast the status to DealStatus type as we know the values from the database match our type
+    const typedDeals = dealsData?.map(deal => ({
+      ...deal,
+      status: deal.status as Deal['status']
+    })) ?? [];
+
+    setDeals(typedDeals);
   };
 
   const handleGenerate = async (type: 'sow' | 'contract' | 'invoice') => {
