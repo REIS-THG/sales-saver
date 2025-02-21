@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -65,18 +66,18 @@ const AIAnalysis = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center mb-8">
-          <div className="flex items-center gap-4">
+        <div className="flex items-center justify-between space-x-4 mb-6">
+          <div className="flex items-center gap-3">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => navigate("/dashboard")}
-              className="hover:bg-gray-100"
+              className="shrink-0"
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">AI Analysis</h1>
+              <h1 className="text-2xl font-semibold text-gray-900">AI Analysis</h1>
               <p className="text-sm text-gray-500">
                 Analyze your deals with advanced AI insights
               </p>
@@ -87,10 +88,10 @@ const AIAnalysis = () => {
             <Button
               variant="outline"
               onClick={() => navigate("/settings/subscription")}
-              className="gap-2"
+              className="shrink-0"
             >
-              Upgrade to Pro
-              <span className="px-2 py-0.5 text-xs bg-purple-100 text-purple-700 rounded-full">
+              <span>Upgrade to Pro</span>
+              <span className="ml-2 px-2 py-0.5 text-xs bg-purple-100 text-purple-700 rounded-full">
                 Get Unlimited Analysis
               </span>
             </Button>
