@@ -12,9 +12,19 @@ export async function fetchUserReports(userId: string, page = 1) {
   const start = (page - 1) * PAGE_SIZE;
   const end = start + PAGE_SIZE - 1;
 
+  // Remove any references to team-related data
   const { data: reportsData, error, count } = await supabase
     .from('report_configurations')
-    .select('*', { count: 'exact' })
+    .select(`
+      id,
+      user_id,
+      name,
+      description,
+      config,
+      created_at,
+      updated_at,
+      is_favorite
+    `, { count: 'exact' })
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
     .range(start, end);
@@ -55,8 +65,17 @@ export async function createUserReport(userId: string, initialConfig: ReportConf
 
   const { data, error } = await supabase
     .from('report_configurations')
-    .insert(newReportData)
-    .select()
+    .insert([newReportData])
+    .select(`
+      id,
+      user_id,
+      name,
+      description,
+      config,
+      created_at,
+      updated_at,
+      is_favorite
+    `)
     .single();
 
   if (error) {
@@ -91,7 +110,16 @@ export async function updateUserReport(reportId: string, updates: Partial<Report
     .from('report_configurations')
     .update(updateData)
     .eq('id', reportId)
-    .select()
+    .select(`
+      id,
+      user_id,
+      name,
+      description,
+      config,
+      created_at,
+      updated_at,
+      is_favorite
+    `)
     .single();
 
   if (error) throw error;
@@ -131,7 +159,16 @@ export async function toggleReportFavorite(reportId: string, currentStatus: bool
       updated_at: new Date().toISOString()
     })
     .eq('id', reportId)
-    .select()
+    .select(`
+      id,
+      user_id,
+      name,
+      description,
+      config,
+      created_at,
+      updated_at,
+      is_favorite
+    `)
     .single();
 
   if (error) throw error;
