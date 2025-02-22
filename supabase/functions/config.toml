@@ -3,3 +3,9 @@ project_id = "fawdeexfzrfquhmxiaae"
 
 [generate-contract]
 verify_jwt = true
+
+[generate-sow]
+verify_jwt = true
+
+[generate-invoice]
+verify_jwt = true
