@@ -1,4 +1,3 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -19,9 +18,8 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { dealId, dealData } = await req.json();
+    const { dealId, dealData, language = 'en' } = await req.json();
 
-    // First, verify the user's subscription status
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser(
       req.headers.get('Authorization')?.split('Bearer ')[1] ?? ''
     );
@@ -30,7 +28,6 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    // Get user's subscription status
     const { data: userData, error: userDataError } = await supabaseClient
       .from('users')
       .select('subscription_status')
@@ -41,13 +38,11 @@ serve(async (req) => {
       throw new Error('This feature requires a Pro subscription');
     }
 
-    // Get the OpenAI API key from environment variables
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openAIApiKey) {
       throw new Error('OpenAI API key not configured');
     }
 
-    // Generate contract using GPT-4o-mini
     const prompt = `Generate a professional contract for the following deal:
     Deal Name: ${dealData.deal_name}
     Company: ${dealData.company_name}
@@ -66,7 +61,10 @@ serve(async (req) => {
     6. Signatures
     Make it detailed but concise.`;
 
-    // Call OpenAI API
+    const systemMessage = language === 'en' 
+      ? 'You are a legal document assistant that generates professional contracts. Keep the language formal and legally sound.'
+      : `You are a legal document assistant that generates professional contracts. Generate the content in ${language}. Keep the language formal and legally sound.`;
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -76,10 +74,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: 'gpt-4o-mini',
         messages: [
-          { 
-            role: 'system', 
-            content: 'You are a legal document assistant that generates professional contracts. Keep the language formal and legally sound.'
-          },
+          { role: 'system', content: systemMessage },
           { role: 'user', content: prompt }
         ],
       }),
@@ -88,7 +83,6 @@ serve(async (req) => {
     const result = await response.json();
     const contractText = result.choices[0].message.content;
 
-    // Store the generated contract in the database
     const { error: insertError } = await supabaseClient
       .from('generated_documents')
       .insert({

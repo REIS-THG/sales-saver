@@ -1,0 +1,27 @@
+
+{
+  "preferences": {
+    "title": "User Preferences",
+    "description": "Customize your experience",
+    "theme": "Theme",
+    "themeDescription": "Choose between light and dark mode",
+    "language": "Language",
+    "selectLanguage": "Select a language",
+    "languageDescription": "Choose your preferred language for the interface"
+  },
+  "settings": {
+    "title": "Settings",
+    "tabs": {
+      "account": "Account",
+      "preferences": "Preferences",
+      "customFields": "Custom Fields",
+      "teams": "Teams"
+    }
+  },
+  "subscription": {
+    "manage": "Manage Subscription",
+    "freePlan": "You're on the Free Plan",
+    "upgradePrompt": "Upgrade to Pro to unlock all features",
+    "upgradeToPro": "Upgrade to Pro"
+  }
+}

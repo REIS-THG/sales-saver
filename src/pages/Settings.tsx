@@ -11,10 +11,12 @@ import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { CreditCard } from "lucide-react";
 import { MainHeader } from "@/components/layout/MainHeader";
+import { useTranslation } from "react-i18next";
 
 export default function Settings() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
   const [theme, setTheme] = useState(() => {
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme) return savedTheme;
@@ -24,6 +26,9 @@ export default function Settings() {
     return 'light';
   });
   const [defaultView, setDefaultView] = useState("table");
+  const [language, setLanguage] = useState(() => {
+    return localStorage.getItem('language') || 'en';
+  });
 
   useEffect(() => {
     if (!loading && !user) {
@@ -37,12 +42,21 @@ export default function Settings() {
     localStorage.setItem('theme', theme);
   }, [theme]);
 
+  useEffect(() => {
+    i18n.changeLanguage(language);
+    localStorage.setItem('language', language);
+  }, [language, i18n]);
+
   const handleThemeChange = async (newTheme: string) => {
     setTheme(newTheme);
   };
 
   const handleDefaultViewChange = async (newView: string) => {
     setDefaultView(newView);
+  };
+
+  const handleLanguageChange = async (newLanguage: string) => {
+    setLanguage(newLanguage);
   };
 
   if (loading) {
@@ -63,34 +77,34 @@ export default function Settings() {
         <Link to="/subscription">
           <Button variant="outline" className="gap-2">
             <CreditCard className="h-4 w-4" />
-            Manage Subscription
+            {t('subscription.manage')}
           </Button>
         </Link>
       </MainHeader>
       
       <div className="container py-10 max-w-5xl">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Settings</h1>
+          <h1 className="text-3xl font-bold">{t('settings.title')}</h1>
         </div>
         
         {user.subscription_status === 'free' && (
           <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border border-purple-100 dark:border-purple-800 rounded-lg p-4 mb-8 flex items-center justify-between">
             <div>
-              <h3 className="font-semibold text-purple-900 dark:text-purple-100">You're on the Free Plan</h3>
-              <p className="text-sm text-purple-700 dark:text-purple-300">Upgrade to Pro to unlock all features</p>
+              <h3 className="font-semibold text-purple-900 dark:text-purple-100">{t('subscription.freePlan')}</h3>
+              <p className="text-sm text-purple-700 dark:text-purple-300">{t('subscription.upgradePrompt')}</p>
             </div>
             <Link to="/subscription">
-              <Button>Upgrade to Pro</Button>
+              <Button>{t('subscription.upgradeToPro')}</Button>
             </Link>
           </div>
         )}
         
         <Tabs defaultValue="account" className="space-y-8">
           <TabsList>
-            <TabsTrigger value="account">Account</TabsTrigger>
-            <TabsTrigger value="preferences">Preferences</TabsTrigger>
-            <TabsTrigger value="custom-fields">Custom Fields</TabsTrigger>
-            <TabsTrigger value="teams">Teams</TabsTrigger>
+            <TabsTrigger value="account">{t('settings.tabs.account')}</TabsTrigger>
+            <TabsTrigger value="preferences">{t('settings.tabs.preferences')}</TabsTrigger>
+            <TabsTrigger value="custom-fields">{t('settings.tabs.customFields')}</TabsTrigger>
+            <TabsTrigger value="teams">{t('settings.tabs.teams')}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="account" className="space-y-8">
@@ -101,8 +115,10 @@ export default function Settings() {
             <UserPreferences
               theme={theme}
               defaultView={defaultView}
+              language={language}
               onThemeChange={handleThemeChange}
               onDefaultViewChange={handleDefaultViewChange}
+              onLanguageChange={handleLanguageChange}
             />
           </TabsContent>
 
