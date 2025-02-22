@@ -1,0 +1,5 @@
+
+project_id = "fawdeexfzrfquhmxiaae"
+
+[generate-contract]
+verify_jwt = true
