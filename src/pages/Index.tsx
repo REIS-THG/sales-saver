@@ -98,10 +98,6 @@ const Index = () => {
             <div className="rounded-2xl bg-gradient-to-r from-indigo-50 to-purple-50 p-8 shadow-sm">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
                 <div className="p-4 rounded-lg bg-white/50 backdrop-blur-sm">
-                  <div className="text-indigo-600 font-semibold text-2xl">99.9%</div>
-                  <div className="text-sm text-gray-600 mt-1">Uptime</div>
-                </div>
-                <div className="p-4 rounded-lg bg-white/50 backdrop-blur-sm">
                   <div className="text-indigo-600 font-semibold text-2xl">24/7</div>
                   <div className="text-sm text-gray-600 mt-1">Support</div>
                 </div>
