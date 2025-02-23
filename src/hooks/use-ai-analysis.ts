@@ -4,6 +4,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Deal, Insight } from "@/types/types";
 
+interface AnalysisParams {
+  salesApproach: 'consultative_selling' | 'solution_selling' | 'transactional_selling' | 'value_based_selling';
+  industry: string;
+  purposeNotes: string;
+  toneAnalysis: {
+    formality: number;
+    persuasiveness: number;
+    urgency: number;
+  };
+  communicationChannel: 'f2f' | 'email' | 'social_media';
+  piiFilter: boolean;
+  retainAnalysis: boolean;
+}
+
 export function useAIAnalysis() {
   const [deals, setDeals] = useState<Deal[]>([]);
   const [selectedDeal, setSelectedDeal] = useState<string | null>(null);
@@ -104,25 +118,10 @@ export function useAIAnalysis() {
   };
 
   const handleFileUpload = async (file: File, type: 'transcript' | 'email' | 'voice') => {
-    // Implementation for file upload
     console.log('File upload:', file, type);
-    // Add your file upload logic here
   };
 
-  const analyzeDeal = async (
-    dealId: string,
-    analysisParams: {
-      salesApproach: Insight['sales_approach'];
-      industry: string;
-      purposeNotes: string;
-      toneAnalysis: {
-        formality: number;
-        persuasiveness: number;
-        urgency: number;
-      };
-      communicationChannel: 'f2f' | 'email' | 'social_media';
-    }
-  ) => {
+  const analyzeDeal = async (dealId: string, params: AnalysisParams) => {
     setIsAnalyzing(true);
     setError(null);
     
@@ -130,7 +129,7 @@ export function useAIAnalysis() {
       const response = await supabase.functions.invoke("analyze-deals", {
         body: {
           dealId,
-          analysisParams,
+          analysisParams: params,
         },
       });
 
