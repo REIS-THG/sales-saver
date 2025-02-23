@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { type Deal, type CustomField } from "@/types/types";
 import { TableContainer } from "./table/TableContainer";
@@ -153,13 +154,12 @@ export function DealsTable({
     },
   });
 
-  const handleBulkStatusUpdate = async (selectedDeals: Deal[], newStatus: Deal["status"]): Promise<void> => {
+  const handleBulkStatusUpdate = async (selectedDeals: Deal[], newStatus: Deal["status"]) => {
     try {
-      await Promise.all(
-        selectedDeals.map(deal => 
-          updateStatusMutation.mutateAsync({ dealId: deal.id, newStatus })
-        )
+      const updatePromises = selectedDeals.map(deal => 
+        updateStatusMutation.mutateAsync({ dealId: deal.id, newStatus })
       );
+      await Promise.all(updatePromises);
       setSelectedDeals([]);
       onSelectionChange?.([]);
     } catch (error) {
