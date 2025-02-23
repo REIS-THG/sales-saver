@@ -90,6 +90,8 @@ export interface DealInsight {
   purpose_notes?: string;
   priority?: 'low' | 'medium' | 'high';
   status?: 'open' | 'acknowledged' | 'resolved';
+  pii_filter?: boolean;
+  retain_analysis?: boolean;
 }
 
 export interface DealNote {

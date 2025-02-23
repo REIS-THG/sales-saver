@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { useAIAnalysis } from "@/hooks/use-ai-analysis";
 import { useNavigate } from "react-router-dom";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -11,6 +11,9 @@ import { Separator } from "@/components/ui/separator";
 import { DealAnalysisTab } from "@/components/ai-analysis/DealAnalysisTab";
 import { NextStepsTab } from "@/components/ai-analysis/NextStepsTab";
 import { AnalysisHistoryTab } from "@/components/ai-analysis/AnalysisHistoryTab";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { InfoIcon } from "lucide-react";
 
 const AIAnalysis = () => {
   const [searchParams] = useSearchParams();
@@ -32,6 +35,8 @@ const AIAnalysis = () => {
   } = useAIAnalysis();
 
   const [activeTab, setActiveTab] = useState<string>("analysis");
+  const [piiFilter, setPiiFilter] = useState(true);
+  const [retainAnalysis, setRetainAnalysis] = useState(subscriptionTier === 'pro');
 
   useEffect(() => {
     fetchDeals();
@@ -60,28 +65,26 @@ const AIAnalysis = () => {
         urgency: 0.5,
       },
       communicationChannel: 'email',
+      piiFilter,
+      retainAnalysis,
     });
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50">
+      <DashboardHeader
+        onDealCreated={fetchDeals}
+        customFields={[]}
+        userData={null}
+      />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-between space-x-4 mb-6">
-          <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate("/dashboard")}
-              className="shrink-0"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div>
-              <h1 className="text-2xl font-semibold text-gray-900">AI Analysis</h1>
-              <p className="text-sm text-gray-500">
-                Analyze your deals with advanced AI insights
-              </p>
-            </div>
+          <div>
+            <h1 className="text-2xl font-semibold text-gray-900">AI Analysis</h1>
+            <p className="text-sm text-gray-500">
+              Analyze your deals with advanced AI insights
+            </p>
           </div>
           
           {subscriptionTier === 'free' && (
@@ -114,6 +117,42 @@ const AIAnalysis = () => {
         )}
 
         <div className="bg-white rounded-lg shadow">
+          <div className="p-6 border-b">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="pii-filter"
+                    checked={piiFilter}
+                    onCheckedChange={setPiiFilter}
+                  />
+                  <Label htmlFor="pii-filter" className="text-sm font-medium">
+                    PII Data Filter
+                  </Label>
+                  <InfoIcon className="h-4 w-4 text-gray-400" />
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="retain-analysis"
+                    checked={retainAnalysis}
+                    onCheckedChange={setRetainAnalysis}
+                    disabled={subscriptionTier === 'free'}
+                  />
+                  <Label htmlFor="retain-analysis" className="text-sm font-medium">
+                    Retain Analysis History
+                  </Label>
+                  <InfoIcon className="h-4 w-4 text-gray-400" />
+                  {subscriptionTier === 'free' && (
+                    <span className="text-xs text-gray-500 ml-2">
+                      Information used in analysis is not retained (Pro feature)
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <div className="p-6">
               <TabsList className="w-full justify-start">
