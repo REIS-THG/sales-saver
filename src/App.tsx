@@ -11,6 +11,16 @@ import Subscription from "@/pages/Subscription";
 import DealDesk from "@/pages/DealDesk";
 import DealSourcing from "@/pages/DealSourcing";
 import { Toaster } from "@/components/ui/toaster";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      retry: 1,
+    },
+  },
+});
 
 const Breadcrumbs = () => {
   const location = useLocation();
@@ -64,22 +74,24 @@ const Breadcrumbs = () => {
 
 function App() {
   return (
-    <Router>
-      <Breadcrumbs />
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/auth" element={<Auth />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/reports" element={<Reports />} />
-        <Route path="/ai-analysis" element={<AIAnalysis />} />
-        <Route path="/subscription" element={<Subscription />} />
-        <Route path="/deal-desk" element={<DealDesk />} />
-        <Route path="/deal-sourcing" element={<DealSourcing />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-      <Toaster />
-    </Router>
+    <QueryClientProvider client={queryClient}>
+      <Router>
+        <Breadcrumbs />
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/reports" element={<Reports />} />
+          <Route path="/ai-analysis" element={<AIAnalysis />} />
+          <Route path="/subscription" element={<Subscription />} />
+          <Route path="/deal-desk" element={<DealDesk />} />
+          <Route path="/deal-sourcing" element={<DealSourcing />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+        <Toaster />
+      </Router>
+    </QueryClientProvider>
   );
 }
 

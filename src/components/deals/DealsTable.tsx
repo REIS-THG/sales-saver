@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { type Deal, type CustomField } from "@/types/types";
 import { TableContainer } from "./table/TableContainer";
@@ -31,7 +30,6 @@ export function DealsTable({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch deals with React Query
   const { data: deals = [], isLoading } = useQuery({
     queryKey: ['deals'],
     queryFn: async () => {
@@ -63,7 +61,6 @@ export function DealsTable({
     initialData: initialDeals,
   });
 
-  // Update deal status mutation
   const updateStatusMutation = useMutation({
     mutationFn: async ({ dealId, newStatus }: { dealId: string; newStatus: Deal["status"] }) => {
       const { error } = await supabase
@@ -95,7 +92,6 @@ export function DealsTable({
     },
   });
 
-  // Delete deal mutation
   const deleteMutation = useMutation({
     mutationFn: async (dealId: string) => {
       const { error } = await supabase
@@ -126,7 +122,6 @@ export function DealsTable({
     },
   });
 
-  // Bulk delete mutation
   const bulkDeleteMutation = useMutation({
     mutationFn: async (dealsToDelete: Deal[]) => {
       const { error } = await supabase
@@ -158,12 +153,13 @@ export function DealsTable({
     },
   });
 
-  const handleBulkStatusUpdate = async (selectedDeals: Deal[], newStatus: Deal["status"]) => {
+  const handleBulkStatusUpdate = async (selectedDeals: Deal[], newStatus: Deal["status"]): Promise<void> => {
     try {
-      const promises = selectedDeals.map(deal => 
-        updateStatusMutation.mutateAsync({ dealId: deal.id, newStatus })
+      await Promise.all(
+        selectedDeals.map(deal => 
+          updateStatusMutation.mutateAsync({ dealId: deal.id, newStatus })
+        )
       );
-      await Promise.all(promises);
       setSelectedDeals([]);
       onSelectionChange?.([]);
     } catch (error) {
