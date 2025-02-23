@@ -7,7 +7,7 @@ import { flexRender } from "@tanstack/react-table";
 import { GripVertical } from "lucide-react";
 import { type Deal } from "@/types/types";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Tooltip,
@@ -31,15 +31,17 @@ import { useDealStatus } from "@/hooks/use-deal-status";
 interface SortableTableRowProps {
   row: Row<Deal>;
   onClick: () => void;
-  onSelection?: (selectedDeals: Deal[]) => void;
+  onSelection?: (selected: boolean) => void;
+  isSelected?: boolean;
 }
 
 export function SortableTableRow({ 
   row, 
   onClick,
-  onSelection
+  onSelection,
+  isSelected = false
 }: SortableTableRowProps) {
-  const [isSelected, setIsSelected] = useState(false);
+  const [isChecked, setIsChecked] = useState(isSelected);
   const {
     isUpdating,
     updateError,
@@ -61,6 +63,10 @@ export function SortableTableRow({
     id: row.original.id,
   });
 
+  useEffect(() => {
+    setIsChecked(isSelected);
+  }, [isSelected]);
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition: isDragging ? undefined : transition,
@@ -73,10 +79,8 @@ export function SortableTableRow({
   };
 
   const handleCheckboxChange = (checked: boolean) => {
-    setIsSelected(checked);
-    if (onSelection) {
-      onSelection(checked ? [row.original] : []);
-    }
+    setIsChecked(checked);
+    onSelection?.(checked);
   };
 
   const handleRetry = () => {
@@ -92,12 +96,12 @@ export function SortableTableRow({
       className={`group transition-all duration-200 ease-in-out hover:bg-gray-50 
         ${isDragging ? "animate-pulse ring-2 ring-primary ring-offset-2 shadow-lg scale-[1.02]" : ""}
         ${isUpdating ? "opacity-80" : ""}
-        ${isSelected ? "bg-blue-50" : ""}`}
+        ${isChecked ? "bg-blue-50" : ""}`}
     >
       {onSelection && (
         <TableCell className="w-12">
           <Checkbox
-            checked={isSelected}
+            checked={isChecked}
             onCheckedChange={handleCheckboxChange}
             aria-label={`Select ${row.original.deal_name}`}
           />

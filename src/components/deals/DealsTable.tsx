@@ -27,40 +27,70 @@ export function DealsTable({
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
   const [dealToDelete, setDealToDelete] = useState<Deal | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [selectedDeals, setSelectedDeals] = useState<Deal[]>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const updateDealStatus = async (dealId: string, newStatus: Deal["status"]) => {
-    const { error } = await supabase
-      .from("deals")
-      .update({ status: newStatus })
-      .eq("id", dealId);
+    try {
+      const { error } = await supabase
+        .from("deals")
+        .update({ status: newStatus })
+        .eq("id", dealId);
 
-    if (error) {
-      throw error;
+      if (error) {
+        throw error;
+      }
+
+      // Update local state
+      setDeals(currentDeals => 
+        currentDeals.map(deal => 
+          deal.id === dealId ? { ...deal, status: newStatus } : deal
+        )
+      );
+
+      return true;
+    } catch (error) {
+      console.error("Error updating deal status:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update deal status. Please try again.",
+      });
+      return false;
     }
-
-    // Update local state
-    setDeals(currentDeals => 
-      currentDeals.map(deal => 
-        deal.id === dealId ? { ...deal, status: newStatus } : deal
-      )
-    );
   };
 
   const handleBulkStatusUpdate = async (selectedDeals: Deal[], newStatus: Deal["status"]) => {
     setIsUpdating(true);
+    let successCount = 0;
+    let failCount = 0;
+
     try {
-      await Promise.all(
+      const results = await Promise.allSettled(
         selectedDeals.map(deal => updateDealStatus(deal.id, newStatus))
       );
-      toast({
-        title: "Success",
-        description: `Updated ${selectedDeals.length} deals to ${newStatus}`,
+
+      results.forEach((result) => {
+        if (result.status === 'fulfilled' && result.value) {
+          successCount++;
+        } else {
+          failCount++;
+        }
       });
-      // Clear selection after successful update
+
+      if (successCount > 0) {
+        toast({
+          title: "Success",
+          description: `Updated ${successCount} deals to ${newStatus}${failCount > 0 ? `. Failed: ${failCount}` : ''}`,
+        });
+      }
+
+      // Clear selection after update
+      setSelectedDeals([]);
       onSelectionChange?.([]);
     } catch (error) {
+      console.error("Bulk update error:", error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -75,26 +105,71 @@ export function DealsTable({
     if (!dealToDelete) return;
 
     setIsUpdating(true);
-    const { error } = await supabase
-      .from("deals")
-      .delete()
-      .eq("id", dealToDelete.id);
+    try {
+      const { error } = await supabase
+        .from("deals")
+        .delete()
+        .eq("id", dealToDelete.id);
 
-    if (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to delete deal. Please try again.",
-      });
-    } else {
+      if (error) {
+        throw error;
+      }
+
       toast({
         title: "Success",
         description: "Deal deleted successfully.",
       });
       setDeals(deals.filter(deal => deal.id !== dealToDelete.id));
+    } catch (error) {
+      console.error("Delete error:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete deal. Please try again.",
+      });
+    } finally {
+      setDealToDelete(null);
+      setIsUpdating(false);
     }
-    setDealToDelete(null);
-    setIsUpdating(false);
+  };
+
+  const handleBulkDelete = async (dealsToDelete: Deal[]) => {
+    setIsUpdating(true);
+    let successCount = 0;
+    let failCount = 0;
+
+    try {
+      const { error } = await supabase
+        .from("deals")
+        .delete()
+        .in("id", dealsToDelete.map(deal => deal.id));
+
+      if (error) {
+        throw error;
+      }
+
+      setDeals(currentDeals => 
+        currentDeals.filter(deal => !dealsToDelete.find(d => d.id === deal.id))
+      );
+
+      toast({
+        title: "Success",
+        description: `Successfully deleted ${dealsToDelete.length} deals`,
+      });
+
+      // Clear selection
+      setSelectedDeals([]);
+      onSelectionChange?.([]);
+    } catch (error) {
+      console.error("Bulk delete error:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete deals. Please try again.",
+      });
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const { table, globalFilter, setGlobalFilter } = useDealsTable(
@@ -131,6 +206,11 @@ export function DealsTable({
     setDeals(formattedDeals);
   }, [initialDeals]);
 
+  const handleSelectionChange = (selectedDeals: Deal[]) => {
+    setSelectedDeals(selectedDeals);
+    onSelectionChange?.(selectedDeals);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -142,8 +222,11 @@ export function DealsTable({
         deals={deals}
         onDealClick={(deal) => setSelectedDeal(deal)}
         onDealsReorder={setDeals}
-        onRowSelection={onSelectionChange}
+        onRowSelection={handleSelectionChange}
         isUpdating={isUpdating}
+        onBulkStatusUpdate={handleBulkStatusUpdate}
+        onBulkDelete={handleBulkDelete}
+        selectedDeals={selectedDeals}
       />
       
       <DealDetailsModal
