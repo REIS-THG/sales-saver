@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { CreditCard } from "lucide-react";
 import { MainHeader } from "@/components/layout/MainHeader";
 import { useTranslation } from "react-i18next";
+import "@/i18n/config"; // Import i18n configuration
 
 export default function Settings() {
   const { user, loading } = useAuth();
@@ -43,8 +44,10 @@ export default function Settings() {
   }, [theme]);
 
   useEffect(() => {
-    i18n.changeLanguage(language);
-    localStorage.setItem('language', language);
+    if (i18n.isInitialized) {
+      i18n.changeLanguage(language);
+      localStorage.setItem('language', language);
+    }
   }, [language, i18n]);
 
   const handleThemeChange = async (newTheme: string) => {
