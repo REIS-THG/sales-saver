@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { type Deal, type CustomField } from "@/types/types";
 import { TableContainer } from "./table/TableContainer";
 import { TableSearch } from "./table/TableSearch";
@@ -60,7 +60,7 @@ export function DealsTable({
       }));
       return formattedDeals;
     },
-    initialData: [],
+    initialData: initialDeals,
   });
 
   // Update deal status mutation
@@ -75,7 +75,7 @@ export function DealsTable({
       return { dealId, newStatus };
     },
     onSuccess: ({ dealId, newStatus }) => {
-      queryClient.setQueryData(['deals'], (oldData: Deal[] = []) =>
+      queryClient.setQueryData(['deals'], (oldData: Deal[]) =>
         oldData.map(deal =>
           deal.id === dealId ? { ...deal, status: newStatus } : deal
         )
@@ -107,7 +107,7 @@ export function DealsTable({
       return dealId;
     },
     onSuccess: (dealId) => {
-      queryClient.setQueryData(['deals'], (oldData: Deal[] = []) =>
+      queryClient.setQueryData(['deals'], (oldData: Deal[]) =>
         oldData.filter(deal => deal.id !== dealId)
       );
       toast({
@@ -138,7 +138,7 @@ export function DealsTable({
       return dealsToDelete.map(deal => deal.id);
     },
     onSuccess: (deletedIds) => {
-      queryClient.setQueryData(['deals'], (oldData: Deal[] = []) =>
+      queryClient.setQueryData(['deals'], (oldData: Deal[]) =>
         oldData.filter(deal => !deletedIds.includes(deal.id))
       );
       toast({
@@ -160,11 +160,10 @@ export function DealsTable({
 
   const handleBulkStatusUpdate = async (selectedDeals: Deal[], newStatus: Deal["status"]) => {
     try {
-      await Promise.all(
-        selectedDeals.map(deal => 
-          updateStatusMutation.mutateAsync({ dealId: deal.id, newStatus })
-        )
+      const promises = selectedDeals.map(deal => 
+        updateStatusMutation.mutateAsync({ dealId: deal.id, newStatus })
       );
+      await Promise.all(promises);
       setSelectedDeals([]);
       onSelectionChange?.([]);
     } catch (error) {
@@ -194,10 +193,12 @@ export function DealsTable({
         table={table}
         deals={deals}
         onDealClick={(deal) => setSelectedDeal(deal)}
-        onDealsReorder={(newDeals) => queryClient.setQueryData(['deals'], newDeals)}
+        onDealsReorder={(newDeals) => {
+          queryClient.setQueryData(['deals'], newDeals);
+        }}
         onRowSelection={handleSelectionChange}
         loading={isLoading}
-        isUpdating={updateStatusMutation.isLoading || deleteMutation.isLoading || bulkDeleteMutation.isLoading}
+        isUpdating={updateStatusMutation.isPending || deleteMutation.isPending || bulkDeleteMutation.isPending}
         selectedDeals={selectedDeals}
         onBulkStatusUpdate={handleBulkStatusUpdate}
         onBulkDelete={(dealsToDelete) => bulkDeleteMutation.mutate(dealsToDelete)}
