@@ -1,218 +1,253 @@
-
-import { useState } from "react";
-import { type Deal, type CustomField } from "@/types/types";
-import { TableContainer } from "./table/TableContainer";
-import { TableSearch } from "./table/TableSearch";
+import {
+  ColumnDef,
+  flexRender,
+  getCoreRowModel,
+  getPaginationRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MoreHorizontal } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
+import { Deal } from "@/types/types";
 import { supabase } from "@/integrations/supabase/client";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import DealDetailsModal from "./DealDetailsModal";
-import { useDealsTable } from "@/hooks/use-deals-table";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useApiError } from "@/hooks/use-api-error";
 
 interface DealsTableProps {
-  initialDeals: Deal[];
-  customFields: CustomField[];
-  showCustomFields: boolean;
-  onSelectionChange?: (selectedDeals: Deal[]) => void;
+  deals: Deal[];
+  fetchDeals: () => Promise<void>;
 }
 
-export function DealsTable({ 
-  initialDeals, 
-  customFields, 
-  showCustomFields,
-  onSelectionChange 
-}: DealsTableProps) {
-  const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
-  const [dealToDelete, setDealToDelete] = useState<Deal | null>(null);
-  const [selectedDeals, setSelectedDeals] = useState<Deal[]>([]);
+export function DealsTable({ deals, fetchDeals }: DealsTableProps) {
+  const [rowSelection, setRowSelection] = useState({});
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const { handleAuthCheck, handleError, handleSuccess } = useApiError();
 
-  const { data: deals = [], isLoading } = useQuery({
-    queryKey: ['deals'],
-    queryFn: async () => {
-      const formattedDeals: Deal[] = initialDeals.map(deal => ({
-        id: deal.id,
-        deal_name: deal.deal_name,
-        company_name: deal.company_name,
-        amount: Number(deal.amount),
-        status: (deal.status || 'open') as Deal['status'],
-        health_score: deal.health_score || 50,
-        user_id: deal.user_id,
-        created_at: deal.created_at,
-        updated_at: deal.updated_at,
-        start_date: deal.start_date,
-        expected_close_date: deal.expected_close_date,
-        last_contacted: deal.last_contacted,
-        next_action: deal.next_action,
-        contact_email: deal.contact_email,
-        contact_first_name: deal.contact_first_name,
-        contact_last_name: deal.contact_last_name,
-        company_url: deal.company_url,
-        notes: typeof deal.notes === 'string' ? deal.notes : '',
-        custom_fields: typeof deal.custom_fields === 'object' ? deal.custom_fields : {},
-        last_note_at: deal.last_note_at,
-        notes_count: deal.notes_count
-      }));
-      return formattedDeals;
+  const columns: ColumnDef<Deal>[] = [
+    {
+      accessorKey: "deal_name",
+      header: "Deal Name",
     },
-    initialData: initialDeals,
-  });
+    {
+      accessorKey: "company_name",
+      header: "Company",
+    },
+    {
+      accessorKey: "amount",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Amount
+          </Button>
+        );
+      },
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+    },
+    {
+      accessorKey: "expected_close_date",
+      header: "Expected Close Date",
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => {
+        const deal = row.original;
 
-  const updateStatusMutation = useMutation({
-    mutationFn: async ({ dealId, newStatus }: { dealId: string; newStatus: Deal["status"] }) => {
-      const { error } = await supabase
-        .from("deals")
-        .update({ status: newStatus })
-        .eq("id", dealId);
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => navigate(`/deals/${deal.id}`)}>
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => navigate(`/ai-analysis?dealId=${deal.id}`)}
+              >
+                Analyze with AI
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <DropdownMenuItem>Delete</DropdownMenuItem>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete
+                      the deal from our servers.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={async () => {
+                        const userId = await handleAuthCheck();
+                        if (!userId) return;
 
-      if (error) throw error;
-      return { dealId, newStatus };
-    },
-    onSuccess: ({ dealId, newStatus }) => {
-      queryClient.setQueryData(['deals'], (oldData: Deal[]) =>
-        oldData.map(deal =>
-          deal.id === dealId ? { ...deal, status: newStatus } : deal
-        )
-      );
-      toast({
-        title: "Success",
-        description: "Deal status updated successfully.",
-      });
-    },
-    onError: (error) => {
-      console.error("Error updating deal status:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to update deal status. Please try again.",
-      });
-    },
-  });
+                        const { error } = await supabase
+                          .from("deals")
+                          .delete()
+                          .eq("id", deal.id)
+                          .eq("user_id", userId);
 
-  const deleteMutation = useMutation({
-    mutationFn: async (dealId: string) => {
-      const { error } = await supabase
-        .from("deals")
-        .delete()
-        .eq("id", dealId);
+                        if (error) {
+                          handleError(error, "Failed to delete deal");
+                        } else {
+                          handleSuccess("Deal deleted successfully");
+                          await fetchDeals();
+                        }
+                      }}
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ];
 
-      if (error) throw error;
-      return dealId;
-    },
-    onSuccess: (dealId) => {
-      queryClient.setQueryData(['deals'], (oldData: Deal[]) =>
-        oldData.filter(deal => deal.id !== dealId)
-      );
-      toast({
-        title: "Success",
-        description: "Deal deleted successfully.",
-      });
-      setDealToDelete(null);
-    },
-    onError: (error) => {
-      console.error("Delete error:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to delete deal. Please try again.",
-      });
-    },
-  });
-
-  const bulkDeleteMutation = useMutation({
-    mutationFn: async (dealsToDelete: Deal[]) => {
-      const { error } = await supabase
-        .from("deals")
-        .delete()
-        .in("id", dealsToDelete.map(deal => deal.id));
-
-      if (error) throw error;
-      return dealsToDelete.map(deal => deal.id);
-    },
-    onSuccess: (deletedIds) => {
-      queryClient.setQueryData(['deals'], (oldData: Deal[]) =>
-        oldData.filter(deal => !deletedIds.includes(deal.id))
-      );
-      toast({
-        title: "Success",
-        description: `Successfully deleted ${deletedIds.length} deals`,
-      });
-      setSelectedDeals([]);
-      onSelectionChange?.([]);
-    },
-    onError: (error) => {
-      console.error("Bulk delete error:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to delete deals. Please try again.",
-      });
+  const table = useReactTable({
+    data: deals,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    onRowSelectionChange: setRowSelection,
+    state: {
+      rowSelection,
     },
   });
 
-  const handleBulkStatusUpdate = async (selectedDeals: Deal[], newStatus: Deal["status"]) => {
-    try {
-      const updatePromises = selectedDeals.map(deal => 
-        updateStatusMutation.mutateAsync({ dealId: deal.id, newStatus })
-      );
-      await Promise.all(updatePromises);
-      setSelectedDeals([]);
-      onSelectionChange?.([]);
-    } catch (error) {
-      console.error("Bulk update error:", error);
-    }
-  };
-
-  const { table, globalFilter, setGlobalFilter } = useDealsTable(
-    deals,
-    customFields,
-    showCustomFields,
-    (deal: Deal) => setDealToDelete(deal)
-  );
-
-  const handleSelectionChange = (selectedDeals: Deal[]) => {
-    setSelectedDeals(selectedDeals);
-    onSelectionChange?.(selectedDeals);
+  const handleRefresh = () => {
+    void fetchDeals(); // Added void operator to handle the Promise
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <TableSearch value={globalFilter} onChange={setGlobalFilter} />
+    <div>
+      <div className="flex items-center justify-between">
+        <div className="flex-1 text-sm text-muted-foreground">
+          {table.getFilteredRowModel().rows.length} of {deals.length} deals
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button variant="outline" size="sm" onClick={handleRefresh}>
+            Refresh
+          </Button>
+        </div>
       </div>
-
-      <TableContainer
-        table={table}
-        deals={deals}
-        onDealClick={(deal) => setSelectedDeal(deal)}
-        onDealsReorder={(newDeals) => {
-          queryClient.setQueryData(['deals'], newDeals);
-        }}
-        onRowSelection={handleSelectionChange}
-        loading={isLoading}
-        isUpdating={updateStatusMutation.isPending || deleteMutation.isPending || bulkDeleteMutation.isPending}
-        selectedDeals={selectedDeals}
-        onBulkStatusUpdate={handleBulkStatusUpdate}
-        onBulkDelete={(dealsToDelete) => bulkDeleteMutation.mutate(dealsToDelete)}
-      />
-      
-      <DealDetailsModal
-        deal={selectedDeal}
-        onClose={() => setSelectedDeal(null)}
-        customFields={customFields}
-      />
-
-      <ConfirmDialog
-        title="Delete Deal"
-        description={`Are you sure you want to delete the deal "${dealToDelete?.deal_name}"? This action cannot be undone and will permanently remove all associated data.`}
-        onConfirm={() => dealToDelete && deleteMutation.mutate(dealToDelete.id)}
-        isOpen={!!dealToDelete}
-        onOpenChange={(open) => !open && setDealToDelete(null)}
-      />
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => {
+                  return (
+                    <TableHead key={header.id}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
+                  );
+                })}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id}>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
+                  No results.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      <div className="flex items-center justify-end space-x-2 py-4">
+        <div className="flex-1 text-sm text-muted-foreground">
+          {table.getFilteredRowModel().rows.length} of {deals.length} deals
+        </div>
+        <div className="space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+          >
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+          >
+            Next
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
