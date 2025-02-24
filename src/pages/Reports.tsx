@@ -1,24 +1,23 @@
 
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Plus, ArrowLeft, BarChart2, PieChart, LineChart, Table } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { BarChart2, PieChart, LineChart, Table } from "lucide-react";
 import { useReports } from "@/hooks/use-reports";
-import { ReportsList } from "@/components/reports/ReportsList";
 import { ReportConfiguration } from "@/components/reports/ReportConfiguration";
 import type { ReportConfiguration as ReportConfigType } from "@/components/reports/types";
 import { useToast } from "@/hooks/use-toast";
-import type { Deal, User } from "@/types/types";
+import type { User } from "@/types/types";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ReportsHeader } from "@/components/reports/ReportsHeader";
+import { ReportsLoadingState } from "@/components/reports/ReportsLoadingState";
+import { ReportsEmptyState } from "@/components/reports/ReportsEmptyState";
+import { ReportsContent } from "@/components/reports/ReportsContent";
 
 const Reports = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
   const [userData, setUserData] = useState<User | null>(null);
-  const [deals, setDeals] = useState<Deal[]>([]);
   const [editingReportId, setEditingReportId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
 
@@ -129,18 +128,7 @@ const Reports = () => {
   };
 
   if (authLoading || reportsLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
-        <div className="max-w-7xl mx-auto space-y-6">
-          <Skeleton className="h-12 w-48" />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-64" />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
+    return <ReportsLoadingState />;
   }
 
   const isFreePlan = userData?.subscription_status === 'free';
@@ -148,78 +136,31 @@ const Reports = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate('/dashboard')}
-              className="hover:bg-gray-100 dark:hover:bg-gray-800"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="text-3xl font-bold dark:text-white">Reports</h1>
-          </div>
-          <div className="flex gap-2">
-            <Button onClick={handleCreateReport} disabled={actionLoading['create']}>
-              <Plus className="h-4 w-4 mr-2" />
-              New Report
-            </Button>
-            {isFreePlan && (
-              <Button onClick={() => navigate("/subscription")}>
-                Upgrade to Pro
-              </Button>
-            )}
-          </div>
-        </div>
+        <ReportsHeader 
+          onCreateReport={handleCreateReport}
+          isLoading={actionLoading['create']}
+          isFreePlan={isFreePlan}
+        />
 
-        {reports.length === 0 && !reportsLoading ? (
-          <div className="text-center py-12">
-            <h3 className="text-lg font-semibold mb-2">No reports yet</h3>
-            <p className="text-gray-500 mb-4">Create your first report to get started</p>
-            <Button onClick={handleCreateReport}>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Report
-            </Button>
-          </div>
+        {reports.length === 0 ? (
+          <ReportsEmptyState onCreateReport={handleCreateReport} />
         ) : (
-          <>
-            <ReportsList
-              reports={reports.filter(report => report.is_favorite)}
-              onEdit={handleEditReport}
-              onDelete={deleteReport}
-              onToggleFavorite={toggleFavorite}
-              editingReportId={editingReportId}
-              editingName={editingName}
-              onEditNameChange={handleEditNameChange}
-              onSaveReportName={saveReportName}
-              onExportExcel={handleExportExcel}
-              onExportGoogleSheets={handleExportGoogleSheets}
-              isFavorites={true}
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={(page) => fetchReports(page)}
-              actionLoading={actionLoading}
-            />
-
-            <h2 className="text-xl font-semibold mb-4 dark:text-white mt-8">All Reports</h2>
-            <ReportsList
-              reports={reports.filter(report => !report.is_favorite)}
-              onEdit={handleEditReport}
-              onDelete={deleteReport}
-              onToggleFavorite={toggleFavorite}
-              editingReportId={editingReportId}
-              editingName={editingName}
-              onEditNameChange={handleEditNameChange}
-              onSaveReportName={saveReportName}
-              onExportExcel={handleExportExcel}
-              onExportGoogleSheets={handleExportGoogleSheets}
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={(page) => fetchReports(page)}
-              actionLoading={actionLoading}
-            />
-          </>
+          <ReportsContent
+            reports={reports}
+            onEdit={handleEditReport}
+            onDelete={deleteReport}
+            onToggleFavorite={toggleFavorite}
+            editingReportId={editingReportId}
+            editingName={editingName}
+            onEditNameChange={handleEditNameChange}
+            onSaveReportName={saveReportName}
+            onExportExcel={handleExportExcel}
+            onExportGoogleSheets={handleExportGoogleSheets}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={fetchReports}
+            actionLoading={actionLoading}
+          />
         )}
 
         {editingReportId && reports.find(r => r.id === editingReportId) && (
