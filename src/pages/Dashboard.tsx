@@ -101,9 +101,10 @@ const Dashboard = () => {
         showCustomFields={showCustomFields}
         setShowCustomFields={setShowCustomFields}
         userData={userData}
+        fetchDeals={fetchDeals}
       />
     </div>
   );
-}
+};
 
 export default Dashboard;

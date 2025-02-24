@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sun, Moon, Globe } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface UserPreferencesProps {
   theme: string;
@@ -13,6 +14,7 @@ interface UserPreferencesProps {
   onThemeChange: (theme: string) => Promise<void>;
   onDefaultViewChange: (view: string) => Promise<void>;
   onLanguageChange: (language: string) => Promise<void>;
+  isLoading?: boolean;
 }
 
 export function UserPreferences({
@@ -21,7 +23,8 @@ export function UserPreferences({
   language,
   onThemeChange,
   onDefaultViewChange,
-  onLanguageChange
+  onLanguageChange,
+  isLoading = false,
 }: UserPreferencesProps) {
   const { t } = useTranslation();
 
@@ -32,6 +35,27 @@ export function UserPreferences({
     { code: 'de', name: 'Deutsch' },
     { code: 'zh', name: '中文' },
   ];
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-7 w-40" />
+          <Skeleton className="h-5 w-64 mt-2" />
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-10 w-32" />
+            <Skeleton className="h-6 w-12" />
+          </div>
+          <div className="space-y-2">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-5 w-48" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
