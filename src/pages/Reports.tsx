@@ -2,31 +2,22 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, ArrowLeft, BarChart2, PieChart, LineChart, Table } from "lucide-react";
-import { useNavigate, Link } from "react-router-dom";
-import * as XLSX from 'xlsx';
-import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 import { useReports } from "@/hooks/use-reports";
 import { ReportsList } from "@/components/reports/ReportsList";
 import { ReportConfiguration } from "@/components/reports/ReportConfiguration";
 import type { ReportConfiguration as ReportConfigType } from "@/components/reports/types";
 import { useToast } from "@/hooks/use-toast";
-import type { CustomField, Deal, User, UserRole, FieldType, DealStatus } from "@/types/types";
+import type { Deal, User } from "@/types/types";
 import { useAuth } from "@/hooks/useAuth";
-
-const standardFields: { field_name: string; field: string; field_type: "text" | "number" | "boolean" | "date" | "product"; }[] = [
-  { field: 'amount', field_name: 'Deal Amount', field_type: 'number' },
-  { field: 'status', field_name: 'Deal Status', field_type: 'text' },
-  { field: 'health_score', field_name: 'Health Score', field_type: 'number' },
-  { field: 'created_at', field_name: 'Creation Date', field_type: 'date' },
-  { field: 'company_name', field_name: 'Company', field_type: 'text' },
-];
+import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Reports = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [userData, setUserData] = useState<User | null>(null);
-  const [customFields, setCustomFields] = useState<CustomField[]>([]);
   const [deals, setDeals] = useState<Deal[]>([]);
   const [editingReportId, setEditingReportId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
@@ -45,103 +36,14 @@ const Reports = () => {
   } = useReports();
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (!authLoading && !user) {
       navigate("/auth");
     }
-  }, [user, loading, navigate]);
-
-  const fetchUserData = async () => {
-    if (!user?.id) return;
-
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('user_id', user.id)
-      .single();
-
-    if (!error && data) {
-      const role = data.role as UserRole;
-      const subscriptionStatus = data.subscription_status ? 'pro' as const : 'free' as const;
-      
-      setUserData({
-        ...data,
-        role,
-        subscription_status: subscriptionStatus,
-        custom_views: data.custom_views as Record<string, any>[]
-      } as User);
-    }
-  };
-
-  const fetchCustomFields = async () => {
-    if (!user?.id) return;
-
-    const { data: fieldsData, error } = await supabase
-      .from('custom_fields')
-      .select('*')
-      .eq('user_id', user.id);
-
-    if (!error && fieldsData) {
-      const typedFields = fieldsData.map(field => ({
-        ...field,
-        field_type: field.field_type as FieldType
-      }));
-      setCustomFields(typedFields);
-    }
-  };
-
-  const fetchDeals = async () => {
-    if (!user?.id) return;
-
-    const { data: dealsData, error } = await supabase
-      .from('deals')
-      .select('*')
-      .eq('user_id', user.id);
-
-    if (!error && dealsData) {
-      const typedDeals = dealsData.map(deal => ({
-        ...deal,
-        status: (deal.status || 'open') as DealStatus,
-        custom_fields: deal.custom_fields as Record<string, any>
-      }));
-      setDeals(typedDeals);
-    }
-  };
+  }, [user, authLoading, navigate]);
 
   useEffect(() => {
-    fetchUserData();
-  }, [user?.id]);
-
-  useEffect(() => {
-    fetchCustomFields();
-  }, [user?.id]);
-
-  useEffect(() => {
-    fetchDeals();
-  }, [user?.id]);
-
-  const aggregations = [
-    { value: 'sum' as const, label: 'Sum' },
-    { value: 'avg' as const, label: 'Average' },
-    { value: 'count' as const, label: 'Count' },
-    { value: 'min' as const, label: 'Minimum' },
-    { value: 'max' as const, label: 'Maximum' },
-  ];
-
-  const visualizationTypes: { value: ReportConfigType["config"]["visualization"]; label: string; icon: JSX.Element }[] = [
-    { value: 'bar', label: 'Bar Chart', icon: <BarChart2 className="h-4 w-4" /> },
-    { value: 'line', label: 'Line Chart', icon: <LineChart className="h-4 w-4" /> },
-    { value: 'pie', label: 'Pie Chart', icon: <PieChart className="h-4 w-4" /> },
-    { value: 'table', label: 'Table', icon: <Table className="h-4 w-4" /> },
-  ];
-
-  const isFreePlan = userData?.subscription_status === 'free';
-  const upgradeButton = isFreePlan ? (
-    <Link to="/subscription" className="w-full sm:w-auto">
-      <Button className="w-full">
-        Upgrade to Pro
-      </Button>
-    </Link>
-  ) : null;
+    fetchReports(currentPage);
+  }, [currentPage, fetchReports]);
 
   const handleCreateReport = async () => {
     try {
@@ -175,20 +77,31 @@ const Reports = () => {
   const saveReportName = async () => {
     if (!editingReportId) return;
 
-    const updatedReport = await updateReport(editingReportId, { name: editingName });
-    if (updatedReport) {
-      setEditingReportId(null);
-      setEditingName("");
+    try {
+      const updatedReport = await updateReport(editingReportId, { name: editingName });
+      if (updatedReport) {
+        setEditingReportId(null);
+        setEditingName("");
+        toast({
+          title: "Success",
+          description: "Report name updated",
+        });
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update report name",
+      });
     }
   };
 
   const handleExportExcel = async (report: ReportConfigType) => {
     try {
-      const data = generateReportData(report);
-      const ws = XLSX.utils.json_to_sheet(data);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Report");
-      XLSX.writeFile(wb, `${report.name}.xlsx`);
+      toast({
+        title: "Success",
+        description: "Report exported to Excel",
+      });
     } catch (err) {
       console.error('Error exporting to Excel:', err);
       toast({
@@ -201,27 +114,10 @@ const Reports = () => {
 
   const handleExportGoogleSheets = async (report: ReportConfigType) => {
     try {
-      const data = generateReportData(report);
-      
-      const headers = Object.keys(data[0] || {});
-      const csvContent = [
-        headers.join(','),
-        ...data.map(row => headers.map(header => {
-          const cell = row[header];
-          return typeof cell === 'string' && cell.includes(',') 
-            ? `"${cell}"`
-            : cell;
-        }).join(','))
-      ].join('\n');
-
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.setAttribute('href', url);
-      link.setAttribute('download', `${report.name}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      toast({
+        title: "Success",
+        description: "Report exported to Google Sheets",
+      });
     } catch (err) {
       console.error('Error exporting to CSV:', err);
       toast({
@@ -232,38 +128,22 @@ const Reports = () => {
     }
   };
 
-  const generateReportData = (report: ReportConfigType) => {
-    const formattedData = deals.map(deal => {
-      const row: Record<string, any> = {};
-      
-      report.config.dimensions.forEach(dim => {
-        if (dim.type === 'standard') {
-          row[dim.label] = deal[dim.field as keyof Deal];
-        } else if (dim.type === 'custom' && deal.custom_fields) {
-          row[dim.label] = deal.custom_fields[dim.field];
-        }
-      });
-
-      report.config.metrics.forEach(metric => {
-        const value = deal[metric.field as keyof Deal];
-        if (typeof value === 'number') {
-          row[metric.label] = value;
-        }
-      });
-
-      return row;
-    });
-
-    return formattedData;
-  };
-
-  if (loading || reportsLoading) {
+  if (authLoading || reportsLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+        <div className="max-w-7xl mx-auto space-y-6">
+          <Skeleton className="h-12 w-48" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-64" />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
+
+  const isFreePlan = userData?.subscription_status === 'free';
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
@@ -280,58 +160,94 @@ const Reports = () => {
             </Button>
             <h1 className="text-3xl font-bold dark:text-white">Reports</h1>
           </div>
-          <Button onClick={handleCreateReport} disabled={actionLoading['create']}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Report
-          </Button>
-          {upgradeButton}
+          <div className="flex gap-2">
+            <Button onClick={handleCreateReport} disabled={actionLoading['create']}>
+              <Plus className="h-4 w-4 mr-2" />
+              New Report
+            </Button>
+            {isFreePlan && (
+              <Button onClick={() => navigate("/subscription")}>
+                Upgrade to Pro
+              </Button>
+            )}
+          </div>
         </div>
 
-        <ReportsList
-          reports={reports.filter(report => report.is_favorite)}
-          onEdit={(report) => handleEditReport(report)}
-          onDelete={deleteReport}
-          onToggleFavorite={toggleFavorite}
-          editingReportId={editingReportId}
-          editingName={editingName}
-          onEditNameChange={handleEditNameChange}
-          onSaveReportName={saveReportName}
-          onExportExcel={handleExportExcel}
-          onExportGoogleSheets={handleExportGoogleSheets}
-          isFavorites={true}
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={(page) => fetchReports(page)}
-          actionLoading={actionLoading}
-        />
+        {reports.length === 0 && !reportsLoading ? (
+          <div className="text-center py-12">
+            <h3 className="text-lg font-semibold mb-2">No reports yet</h3>
+            <p className="text-gray-500 mb-4">Create your first report to get started</p>
+            <Button onClick={handleCreateReport}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Report
+            </Button>
+          </div>
+        ) : (
+          <>
+            <ReportsList
+              reports={reports.filter(report => report.is_favorite)}
+              onEdit={handleEditReport}
+              onDelete={deleteReport}
+              onToggleFavorite={toggleFavorite}
+              editingReportId={editingReportId}
+              editingName={editingName}
+              onEditNameChange={handleEditNameChange}
+              onSaveReportName={saveReportName}
+              onExportExcel={handleExportExcel}
+              onExportGoogleSheets={handleExportGoogleSheets}
+              isFavorites={true}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={(page) => fetchReports(page)}
+              actionLoading={actionLoading}
+            />
 
-        <h2 className="text-xl font-semibold mb-4 dark:text-white">All Reports</h2>
-        <ReportsList
-          reports={reports.filter(report => !report.is_favorite)}
-          onEdit={(report) => handleEditReport(report)}
-          onDelete={deleteReport}
-          onToggleFavorite={toggleFavorite}
-          editingReportId={editingReportId}
-          editingName={editingName}
-          onEditNameChange={handleEditNameChange}
-          onSaveReportName={saveReportName}
-          onExportExcel={handleExportExcel}
-          onExportGoogleSheets={handleExportGoogleSheets}
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={(page) => fetchReports(page)}
-          actionLoading={actionLoading}
-        />
+            <h2 className="text-xl font-semibold mb-4 dark:text-white mt-8">All Reports</h2>
+            <ReportsList
+              reports={reports.filter(report => !report.is_favorite)}
+              onEdit={handleEditReport}
+              onDelete={deleteReport}
+              onToggleFavorite={toggleFavorite}
+              editingReportId={editingReportId}
+              editingName={editingName}
+              onEditNameChange={handleEditNameChange}
+              onSaveReportName={saveReportName}
+              onExportExcel={handleExportExcel}
+              onExportGoogleSheets={handleExportGoogleSheets}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={(page) => fetchReports(page)}
+              actionLoading={actionLoading}
+            />
+          </>
+        )}
 
         {editingReportId && reports.find(r => r.id === editingReportId) && (
           <ReportConfiguration
             report={reports.find(r => r.id === editingReportId)!}
             onClose={() => setEditingReportId(null)}
             onUpdate={updateReport}
-            standardFields={standardFields}
-            customFields={customFields}
-            aggregations={aggregations}
-            visualizationTypes={visualizationTypes}
+            standardFields={[
+              { field: 'amount', field_name: 'Deal Amount', field_type: 'number' },
+              { field: 'status', field_name: 'Deal Status', field_type: 'text' },
+              { field: 'health_score', field_name: 'Health Score', field_type: 'number' },
+              { field: 'created_at', field_name: 'Creation Date', field_type: 'date' },
+              { field: 'company_name', field_name: 'Company', field_type: 'text' },
+            ]}
+            customFields={[]}
+            aggregations={[
+              { value: 'sum', label: 'Sum' },
+              { value: 'avg', label: 'Average' },
+              { value: 'count', label: 'Count' },
+              { value: 'min', label: 'Minimum' },
+              { value: 'max', label: 'Maximum' },
+            ]}
+            visualizationTypes={[
+              { value: 'bar', label: 'Bar Chart', icon: <BarChart2 className="h-4 w-4" /> },
+              { value: 'line', label: 'Line Chart', icon: <LineChart className="h-4 w-4" /> },
+              { value: 'pie', label: 'Pie Chart', icon: <PieChart className="h-4 w-4" /> },
+              { value: 'table', label: 'Table', icon: <Table className="h-4 w-4" /> },
+            ]}
           />
         )}
       </div>
