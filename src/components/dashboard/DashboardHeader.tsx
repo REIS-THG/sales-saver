@@ -1,6 +1,6 @@
 
 import { MainHeader } from "@/components/layout/MainHeader";
-import CreateDealForm from "@/components/deals/CreateDealForm";
+import { CreateDealForm } from "@/components/deals/CreateDealForm"; // Fixed import
 import { BulkImportDeals } from "@/components/deals/BulkImportDeals";
 import { Plus, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";

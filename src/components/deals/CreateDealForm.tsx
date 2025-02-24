@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+
+import React, { useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -8,7 +9,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -70,23 +70,34 @@ export function CreateDealForm({ open, onClose, onSuccess }: CreateDealFormProps
       return;
     }
 
+    const { data: authData } = await supabase.auth.getUser();
+    if (!authData.user) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Not authenticated",
+      });
+      return;
+    }
+
     const dealData = {
       deal_name: dealName,
       company_name: companyName,
       amount: amount,
-      status: "open",
+      status: "open" as const,
       health_score: 50,
       notes: '',
       custom_fields: {},
+      user_id: authData.user.id, // Added user_id here
     };
 
-          await createDeal(dealData);
-          onSuccess?.(); // Changed from fetchDeals(true) to onSuccess?.()
-          handleClose();
-          toast({
-            title: "Success",
-            description: "Deal created successfully",
-          });
+    await createDeal(dealData);
+    onSuccess?.();
+    handleClose();
+    toast({
+      title: "Success",
+      description: "Deal created successfully",
+    });
   };
 
   const handleClose = () => {

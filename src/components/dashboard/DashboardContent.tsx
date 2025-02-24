@@ -15,6 +15,7 @@ interface DashboardContentProps {
   showCustomFields: boolean;
   setShowCustomFields: (show: boolean) => void;
   userData: User | null;
+  fetchDeals: () => Promise<void>;
 }
 const FREE_DEAL_LIMIT = 5;
 export function DashboardContent({
@@ -22,7 +23,8 @@ export function DashboardContent({
   customFields,
   showCustomFields,
   setShowCustomFields,
-  userData
+  userData,
+  fetchDeals
 }: DashboardContentProps) {
   const [selectedDeals, setSelectedDeals] = useState<Deal[]>([]);
   const handleBulkAction = (action: 'won' | 'lost' | 'stalled' | 'delete') => {
@@ -106,6 +108,9 @@ export function DashboardContent({
           </div>}
       </div>
       
-      <DealsTable initialDeals={deals} customFields={customFields} showCustomFields={showCustomFields} onSelectionChange={setSelectedDeals} />
+      <DealsTable 
+        deals={deals} // Changed from initialDeals to deals to match props
+        fetchDeals={fetchDeals} // Add required prop
+      />
     </main>;
 }
