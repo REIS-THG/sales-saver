@@ -25,9 +25,15 @@ export function DashboardHeader({
     <MainHeader onSignOut={onSignOut} userData={userData}>
       <div className="flex items-center gap-2">
         <CreateDealForm
-          open={false}
-          onClose={() => {}}
-          onSuccess={onDealCreated}
+          onDealCreated={onDealCreated}
+          customFields={customFields}
+          onBeforeCreate={onBeforeCreate}
+          trigger={
+            <Button className="shadow-sm">
+              <Plus className="mr-2 h-4 w-4" />
+              Create Deal
+            </Button>
+          }
         />
         {userData?.subscription_status && (
           <BulkImportDeals 
