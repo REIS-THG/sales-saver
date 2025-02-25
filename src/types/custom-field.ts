@@ -12,10 +12,12 @@ export type CustomFieldOption = {
   value: string;
 };
 
+export type CustomFieldType = "text" | "number" | "boolean" | "date" | "product" | "multi-select";
+
 export interface CustomField {
   id: string;
   field_name: string;
-  field_type: "text" | "number" | "boolean" | "date" | "product" | "multi-select";
+  field_type: CustomFieldType;
   is_required: boolean;
   user_id?: string;
   created_at?: string;

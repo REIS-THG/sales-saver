@@ -1,12 +1,11 @@
 
-import { useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { CustomFieldForm, CustomFieldFormData } from "./custom-fields/CustomFieldForm";
 import { CustomFieldsTable } from "./custom-fields/CustomFieldsTable";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { CustomField } from "@/types/custom-field";
+import type { CustomField, CustomFieldType } from "@/types/custom-field";
 import { ReportsLoadingState } from "@/components/reports/ReportsLoadingState";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -14,7 +13,7 @@ export function CustomFieldsManager() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: customFields = [], isLoading, error } = useQuery({
+  const { data: customFields = [], isLoading: isLoadingFields, error } = useQuery({
     queryKey: ['customFields'],
     queryFn: async () => {
       const { data: userData } = await supabase.auth.getUser();
@@ -26,11 +25,16 @@ export function CustomFieldsManager() {
         .eq("user_id", userData.user.id)
         .order("created_at", { ascending: true });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
-      return data || [];
+      return (data || []).map((field): CustomField => ({
+        ...field,
+        field_type: field.field_type as CustomFieldType,
+        is_required: field.is_required || false,
+        is_active: field.is_active || true,
+        options: field.options || [],
+        validation_rules: field.validation_rules || {},
+      }));
     },
   });
 
@@ -42,14 +46,17 @@ export function CustomFieldsManager() {
       const { data, error } = await supabase
         .from("custom_fields")
         .insert({
-          ...values,
+          field_name: values.field_name,
+          field_type: values.field_type,
+          is_required: values.is_required,
           user_id: userData.user.id,
-          is_active: true,
-          default_value: values.default_value || null,
-          validation_rules: values.validation_rules || {},
-          options: values.options || [],
-          help_text: values.help_text || null,
-          placeholder: values.placeholder || null
+          default_value: values.default_value,
+          allow_multiple: values.allow_multiple,
+          options: values.options,
+          validation_rules: values.validation_rules,
+          help_text: values.help_text,
+          placeholder: values.placeholder,
+          is_active: true
         })
         .select()
         .single();
@@ -123,7 +130,7 @@ export function CustomFieldsManager() {
     },
   });
 
-  if (isLoading) {
+  if (isLoadingFields) {
     return <ReportsLoadingState />;
   }
 
@@ -152,7 +159,7 @@ export function CustomFieldsManager() {
             fields={customFields}
             onDelete={(id) => deleteCustomFieldMutation.mutateAsync(id)}
             onUpdate={(field) => updateCustomFieldMutation.mutateAsync(field)}
-            isLoading={createCustomFieldMutation.isLoading || deleteCustomFieldMutation.isLoading}
+            isLoading={createCustomFieldMutation.isPending || deleteCustomFieldMutation.isPending}
           />
         </div>
       </CardContent>

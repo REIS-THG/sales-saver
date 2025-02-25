@@ -17,6 +17,7 @@ interface AnalysisTabsProps {
   onDealSelect: (dealId: string) => void;
   onAnalyze: (dealId: string) => void;
   onFileUpload: (file: File, type: 'transcript' | 'email' | 'voice' | 'audio') => void;
+  isLoading: boolean;
 }
 
 export function AnalysisTabs({
@@ -29,7 +30,8 @@ export function AnalysisTabs({
   insights,
   onDealSelect,
   onAnalyze,
-  onFileUpload
+  onFileUpload,
+  isLoading
 }: AnalysisTabsProps) {
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -53,6 +55,7 @@ export function AnalysisTabs({
           onAnalyze={onAnalyze}
           onFileUpload={onFileUpload}
           insights={insights}
+          isLoading={isLoading}
         />
       </TabsContent>
 
