@@ -15,19 +15,34 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Deal } from "@/types/types";
+import { Deal, CustomField } from "@/types/types";
 
 interface CreateDealFormProps {
-  open: boolean;
-  onClose: () => void;
+  open?: boolean;
+  onClose?: () => void;
   onSuccess?: () => void;
+  onBeforeCreate?: () => Promise<boolean>;
+  trigger?: React.ReactElement;
+  customFields: CustomField[];
 }
 
-export function CreateDealForm({ open, onClose, onSuccess }: CreateDealFormProps) {
+export function CreateDealForm({ 
+  open: controlledOpen,
+  onClose: controlledOnClose,
+  onSuccess,
+  onBeforeCreate,
+  trigger,
+  customFields 
+}: CreateDealFormProps) {
+  const [open, setOpen] = useState(false);
   const [dealName, setDealName] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [amount, setAmount] = useState<number | undefined>(undefined);
   const { toast } = useToast();
+
+  const isControlled = controlledOpen !== undefined;
+  const isOpen = isControlled ? controlledOpen : open;
+  const onClose = controlledOnClose || (() => setOpen(false));
 
   const createDeal = async (dealData: Omit<Deal, 'id' | 'created_at' | 'updated_at'>) => {
     try {
@@ -70,6 +85,13 @@ export function CreateDealForm({ open, onClose, onSuccess }: CreateDealFormProps
       return;
     }
 
+    if (onBeforeCreate) {
+      const canProceed = await onBeforeCreate();
+      if (!canProceed) {
+        return;
+      }
+    }
+
     const { data: authData } = await supabase.auth.getUser();
     if (!authData.user) {
       toast({
@@ -88,7 +110,7 @@ export function CreateDealForm({ open, onClose, onSuccess }: CreateDealFormProps
       health_score: 50,
       notes: '',
       custom_fields: {},
-      user_id: authData.user.id, // Added user_id here
+      user_id: authData.user.id,
     };
 
     await createDeal(dealData);
@@ -108,7 +130,8 @@ export function CreateDealForm({ open, onClose, onSuccess }: CreateDealFormProps
   };
 
   return (
-    <AlertDialog open={open} onOpenChange={onClose}>
+    <AlertDialog open={isOpen} onOpenChange={isControlled ? onClose : setOpen}>
+      {trigger && React.cloneElement(trigger, { onClick: () => setOpen(true) })}
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Create New Deal</AlertDialogTitle>
