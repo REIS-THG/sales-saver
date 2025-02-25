@@ -6,6 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sun, Moon, Globe } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useState } from "react";
 
 interface UserPreferencesProps {
   theme: string;
@@ -27,6 +28,7 @@ export function UserPreferences({
   isLoading = false,
 }: UserPreferencesProps) {
   const { t } = useTranslation();
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const languages = [
     { code: 'en', name: 'English' },
@@ -35,6 +37,26 @@ export function UserPreferences({
     { code: 'de', name: 'Deutsch' },
     { code: 'zh', name: '中文' },
   ];
+
+  const handleThemeChange = async (checked: boolean) => {
+    if (isUpdating) return;
+    setIsUpdating(true);
+    try {
+      await onThemeChange(checked ? "dark" : "light");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleLanguageChange = async (value: string) => {
+    if (isUpdating) return;
+    setIsUpdating(true);
+    try {
+      await onLanguageChange(value);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -75,7 +97,8 @@ export function UserPreferences({
             <Sun className="h-4 w-4 text-orange-500" />
             <Switch
               checked={theme === "dark"}
-              onCheckedChange={(checked) => onThemeChange(checked ? "dark" : "light")}
+              onCheckedChange={handleThemeChange}
+              disabled={isUpdating}
             />
             <Moon className="h-4 w-4 text-blue-500" />
           </div>
@@ -86,7 +109,11 @@ export function UserPreferences({
             <Globe className="h-4 w-4" />
             <Label>{t('preferences.language')}</Label>
           </div>
-          <Select value={language} onValueChange={onLanguageChange}>
+          <Select 
+            value={language} 
+            onValueChange={handleLanguageChange}
+            disabled={isUpdating}
+          >
             <SelectTrigger>
               <SelectValue placeholder={t('preferences.selectLanguage')} />
             </SelectTrigger>
