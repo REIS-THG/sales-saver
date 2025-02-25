@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,8 +18,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Deal, CustomField } from "@/types/types";
 
 interface CreateDealFormProps {
-  open?: boolean;
-  onClose?: () => void;
+  open: boolean;
+  onClose: () => void;
   onSuccess?: () => void;
   onBeforeCreate?: () => Promise<boolean>;
   trigger?: React.ReactElement;
@@ -27,14 +27,23 @@ interface CreateDealFormProps {
 }
 
 export function CreateDealForm({ 
-  open: controlledOpen,
+  open: controlledOpen = false,
   onClose: controlledOnClose,
   onSuccess,
   onBeforeCreate,
   trigger,
   customFields 
 }: CreateDealFormProps) {
-  const [open, setOpen] = useState(false);
+  console.log('[CreateDealForm] Initializing with props:', {
+    controlledOpen,
+    hasOnClose: !!controlledOnClose,
+    hasOnSuccess: !!onSuccess,
+    hasOnBeforeCreate: !!onBeforeCreate,
+    hasTrigger: !!trigger,
+    customFieldsCount: customFields?.length
+  });
+
+  const [open, setOpen] = useState(controlledOpen);
   const [dealName, setDealName] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [amount, setAmount] = useState<number | undefined>(undefined);
@@ -42,16 +51,39 @@ export function CreateDealForm({
 
   const isControlled = controlledOpen !== undefined;
   const isOpen = isControlled ? controlledOpen : open;
-  const onClose = controlledOnClose || (() => setOpen(false));
+  const onCloseWrapper = useCallback(() => {
+    console.log('[CreateDealForm] Close handler triggered');
+    if (controlledOnClose) {
+      try {
+        controlledOnClose();
+      } catch (error) {
+        console.error('[CreateDealForm] Error in onClose handler:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to close form properly"
+        });
+      }
+    }
+    setOpen(false);
+  }, [controlledOnClose, toast]);
 
   const createDeal = async (dealData: Omit<Deal, 'id' | 'created_at' | 'updated_at'>) => {
+    console.log('[CreateDealForm] Creating deal with data:', dealData);
     try {
-      const { data: authData } = await supabase.auth.getUser();
+      const { data: authData, error: authError } = await supabase.auth.getUser();
+      
+      if (authError) {
+        console.error('[CreateDealForm] Auth error:', authError);
+        throw new Error(`Authentication error: ${authError.message}`);
+      }
+
       if (!authData.user) {
+        console.error('[CreateDealForm] No authenticated user found');
         throw new Error("Not authenticated");
       }
 
-      const { error } = await supabase
+      const { error: insertError } = await supabase
         .from("deals")
         .insert([
           {
@@ -60,77 +92,101 @@ export function CreateDealForm({
           },
         ]);
 
-      if (error) {
-        throw new Error(error.message);
+      if (insertError) {
+        console.error('[CreateDealForm] Insert error:', insertError);
+        throw new Error(insertError.message);
       }
+
+      console.log('[CreateDealForm] Deal created successfully');
     } catch (error) {
-      console.error("Error creating deal:", error);
+      console.error("[CreateDealForm] Error creating deal:", error);
       toast({
         variant: "destructive",
         title: "Error",
         description: "Failed to create deal. Please try again.",
       });
+      throw error;
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('[CreateDealForm] Form submission started');
 
-    if (!dealName || !companyName || !amount) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Please fill in all fields.",
-      });
-      return;
-    }
-
-    if (onBeforeCreate) {
-      const canProceed = await onBeforeCreate();
-      if (!canProceed) {
+    try {
+      if (!dealName || !companyName || !amount) {
+        console.warn('[CreateDealForm] Missing required fields');
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Please fill in all fields.",
+        });
         return;
       }
-    }
 
-    const { data: authData } = await supabase.auth.getUser();
-    if (!authData.user) {
+      if (onBeforeCreate) {
+        console.log('[CreateDealForm] Executing onBeforeCreate hook');
+        const canProceed = await onBeforeCreate();
+        if (!canProceed) {
+          console.log('[CreateDealForm] onBeforeCreate prevented submission');
+          return;
+        }
+      }
+
+      const { data: authData, error: authError } = await supabase.auth.getUser();
+      if (authError || !authData.user) {
+        console.error('[CreateDealForm] Authentication error:', authError);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Not authenticated",
+        });
+        return;
+      }
+
+      const dealData = {
+        deal_name: dealName,
+        company_name: companyName,
+        amount: amount,
+        status: "open" as const,
+        health_score: 50,
+        notes: '',
+        custom_fields: {},
+        user_id: authData.user.id,
+      };
+
+      await createDeal(dealData);
+      
+      if (onSuccess) {
+        console.log('[CreateDealForm] Triggering onSuccess callback');
+        onSuccess();
+      }
+      
+      handleClose();
+      toast({
+        title: "Success",
+        description: "Deal created successfully",
+      });
+    } catch (error) {
+      console.error('[CreateDealForm] Form submission error:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Not authenticated",
+        description: "An unexpected error occurred. Please try again.",
       });
-      return;
     }
-
-    const dealData = {
-      deal_name: dealName,
-      company_name: companyName,
-      amount: amount,
-      status: "open" as const,
-      health_score: 50,
-      notes: '',
-      custom_fields: {},
-      user_id: authData.user.id,
-    };
-
-    await createDeal(dealData);
-    onSuccess?.();
-    handleClose();
-    toast({
-      title: "Success",
-      description: "Deal created successfully",
-    });
   };
 
   const handleClose = () => {
+    console.log('[CreateDealForm] Handling close');
     setDealName("");
     setCompanyName("");
     setAmount(undefined);
-    onClose();
+    onCloseWrapper();
   };
 
   return (
-    <AlertDialog open={isOpen} onOpenChange={isControlled ? onClose : setOpen}>
+    <AlertDialog open={isOpen} onOpenChange={isControlled ? onCloseWrapper : setOpen}>
       {trigger && React.cloneElement(trigger, { onClick: () => setOpen(true) })}
       <AlertDialogContent>
         <AlertDialogHeader>
