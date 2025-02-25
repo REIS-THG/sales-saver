@@ -1,14 +1,40 @@
 
+import { useState, useTransition } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
-import type { ReportConfigurationProps } from "./types";
-import { ReportPreview } from "./ReportPreview";
-import { VisualizationTypeSelector } from "./components/VisualizationTypeSelector";
-import { AxisFieldSelector } from "./components/AxisFieldSelector";
 import { X } from "lucide-react";
+import { AxisFieldSelector } from "./components/AxisFieldSelector";
+import { VisualizationTypeSelector } from "./components/VisualizationTypeSelector";
+import { ReportPreview } from "./ReportPreview";
+import type { ReportConfiguration as ReportConfigType } from "./types";
 
-export const ReportConfiguration = ({
+interface ReportConfigurationProps {
+  report: ReportConfigType;
+  onClose: () => void;
+  onUpdate: (reportId: string, updates: Partial<ReportConfigType>) => Promise<void>;
+  standardFields: {
+    field: string;
+    field_name: string;
+    field_type: "text" | "number" | "boolean" | "date" | "product";
+  }[];
+  customFields: {
+    id: string;
+    field_name: string;
+    field_type: "text" | "number" | "boolean" | "date" | "product";
+    is_required: boolean;
+  }[];
+  aggregations: {
+    value: "sum" | "avg" | "count" | "min" | "max";
+    label: string;
+  }[];
+  visualizationTypes: {
+    value: ReportConfigType["config"]["visualization"];
+    label: string;
+    icon: JSX.Element;
+  }[];
+}
+
+export function ReportConfiguration({
   report,
   onClose,
   onUpdate,
@@ -16,63 +42,81 @@ export const ReportConfiguration = ({
   customFields,
   aggregations,
   visualizationTypes,
-}: ReportConfigurationProps) => {
+}: ReportConfigurationProps) {
+  const [isPending, startTransition] = useTransition();
+  const [loading, setLoading] = useState(false);
+
+  const handleUpdate = async (updates: Partial<ReportConfigType>) => {
+    setLoading(true);
+    try {
+      await onUpdate(report.id, updates);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleConfigUpdate = (updates: Partial<ReportConfigType["config"]>) => {
+    startTransition(() => {
+      handleUpdate({
+        ...report,
+        config: {
+          ...report.config,
+          ...updates,
+        },
+      });
+    });
+  };
+
   return (
-    <Card className="fixed inset-4 z-50 flex flex-col bg-background">
-      <CardHeader className="border-b">
-        <div className="flex justify-between items-center">
-          <div>
-            <CardTitle>Configure Report: {report.name}</CardTitle>
-            <CardDescription>Customize your report visualization</CardDescription>
+    <Dialog open onOpenChange={() => onClose()}>
+      <DialogContent className="max-w-4xl h-[80vh] flex flex-col">
+        <DialogHeader className="flex-none">
+          <div className="flex items-center justify-between">
+            <DialogTitle>Configure Report</DialogTitle>
+            <Button variant="ghost" size="icon" onClick={onClose}>
+              <X className="h-4 w-4" />
+            </Button>
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="h-4 w-4" />
-          </Button>
+        </DialogHeader>
+
+        <div className="flex gap-6 flex-1 min-h-0">
+          <div className="w-1/3 space-y-6 overflow-y-auto p-1">
+            <AxisFieldSelector
+              type="dimension"
+              report={report}
+              standardFields={standardFields}
+              customFields={customFields}
+              onUpdate={handleUpdate}
+            />
+            
+            <AxisFieldSelector
+              type="metric"
+              report={report}
+              standardFields={standardFields}
+              customFields={customFields}
+              aggregations={aggregations}
+              onUpdate={handleUpdate}
+            />
+
+            <VisualizationTypeSelector
+              report={report}
+              visualizationTypes={visualizationTypes}
+              onUpdate={handleUpdate}
+            />
+          </div>
+
+          <div className="w-2/3 overflow-y-auto border rounded-lg p-4">
+            <ReportPreview
+              config={report.config}
+              data={[
+                { dimension: "Category A", value: 30 },
+                { dimension: "Category B", value: 45 },
+                { dimension: "Category C", value: 60 },
+              ]}
+            />
+          </div>
         </div>
-      </CardHeader>
-      <CardContent className="flex-1 p-0">
-        <ResizablePanelGroup direction="horizontal" className="min-h-0 rounded-lg">
-          <ResizablePanel defaultSize={40}>
-            <div className="h-full p-6 overflow-y-auto">
-              <div className="space-y-6">
-                <VisualizationTypeSelector
-                  report={report}
-                  visualizationTypes={visualizationTypes}
-                  onUpdate={onUpdate}
-                />
-                
-                <AxisFieldSelector
-                  type="dimension"
-                  report={report}
-                  standardFields={standardFields}
-                  customFields={customFields}
-                  onUpdate={onUpdate}
-                />
-                
-                <AxisFieldSelector
-                  type="metric"
-                  report={report}
-                  standardFields={standardFields}
-                  customFields={customFields}
-                  aggregations={aggregations}
-                  onUpdate={onUpdate}
-                />
-              </div>
-            </div>
-          </ResizablePanel>
-          
-          <ResizableHandle withHandle />
-          
-          <ResizablePanel defaultSize={60}>
-            <div className="h-full p-6 overflow-y-auto">
-              <h3 className="text-lg font-semibold mb-4">Preview</h3>
-              <div className="bg-white rounded-lg border p-4 h-[500px]">
-                <ReportPreview config={report.config} data={[]} />
-              </div>
-            </div>
-          </ResizablePanel>
-        </ResizablePanelGroup>
-      </CardContent>
-    </Card>
+      </DialogContent>
+    </Dialog>
   );
-};
+}

@@ -1,5 +1,5 @@
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useTransition } from "react";
 import { useApiError } from "@/hooks/use-api-error";
 import { useReportManagement } from "@/hooks/use-report-management";
 import { useReportFavorites } from "@/hooks/use-report-favorites";
@@ -13,6 +13,7 @@ export function useReports() {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [isPending, startTransition] = useTransition();
   
   const { handleAuthCheck, handleError, handleSuccess } = useApiError();
   const { actionLoading: managementLoading, createReport, updateReport, deleteReport } = useReportManagement();
@@ -36,9 +37,11 @@ export function useReports() {
       
       console.log(`Successfully fetched ${reportsData.length} reports`);
       
-      setReports(reportsData);
-      setTotalPages(Math.ceil(totalCount / 9)); // 9 items per page
-      setCurrentPage(page);
+      startTransition(() => {
+        setReports(reportsData);
+        setTotalPages(Math.ceil(totalCount / 9)); // 9 items per page
+        setCurrentPage(page);
+      });
     } catch (err) {
       console.error('Error fetching reports:', err);
       handleError(err, "Failed to fetch reports");
@@ -56,9 +59,11 @@ export function useReports() {
   const toggleFavorite = async (reportId: string, currentStatus: boolean) => {
     const updatedReport = await toggleFavoriteBase(reportId, currentStatus);
     if (updatedReport) {
-      setReports(prev => prev.map(report => 
-        report.id === reportId ? updatedReport : report
-      ));
+      startTransition(() => {
+        setReports(prev => prev.map(report => 
+          report.id === reportId ? updatedReport : report
+        ));
+      });
       return true;
     }
     return false;
@@ -67,9 +72,11 @@ export function useReports() {
   const handleUpdateReport = async (reportId: string, updates: Partial<ReportConfiguration>) => {
     const updatedReport = await updateReport(reportId, updates);
     if (updatedReport) {
-      setReports(prev => prev.map(report => 
-        report.id === reportId ? updatedReport : report
-      ));
+      startTransition(() => {
+        setReports(prev => prev.map(report => 
+          report.id === reportId ? updatedReport : report
+        ));
+      });
     }
     return updatedReport;
   };
@@ -79,7 +86,9 @@ export function useReports() {
     
     const newReport = await createReport();
     if (newReport) {
-      setReports(prev => [newReport, ...prev]);
+      startTransition(() => {
+        setReports(prev => [newReport, ...prev]);
+      });
       handleSuccess("Report created successfully");
     }
     return newReport;
@@ -88,7 +97,9 @@ export function useReports() {
   const handleDeleteReport = async (reportId: string) => {
     const success = await deleteReport(reportId);
     if (success) {
-      setReports(prev => prev.filter(report => report.id !== reportId));
+      startTransition(() => {
+        setReports(prev => prev.filter(report => report.id !== reportId));
+      });
       handleSuccess("Report deleted successfully");
     }
     return success;
@@ -96,7 +107,7 @@ export function useReports() {
 
   return {
     reports,
-    loading,
+    loading: loading || isPending,
     error,
     actionLoading,
     currentPage,
