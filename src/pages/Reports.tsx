@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BarChart2, PieChart, LineChart, Table } from "lucide-react";
@@ -127,6 +126,19 @@ const Reports = () => {
     }
   };
 
+  const handleUpdateReport = async (reportId: string, updates: Partial<ReportConfigType>) => {
+    try {
+      await updateReport(reportId, updates);
+    } catch (error) {
+      console.error('Error updating report:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update report",
+      });
+    }
+  };
+
   if (authLoading || reportsLoading) {
     return <ReportsLoadingState />;
   }
@@ -167,7 +179,7 @@ const Reports = () => {
           <ReportConfiguration
             report={reports.find(r => r.id === editingReportId)!}
             onClose={() => setEditingReportId(null)}
-            onUpdate={updateReport}
+            onUpdate={handleUpdateReport}
             standardFields={[
               { field: 'amount', field_name: 'Deal Amount', field_type: 'number' },
               { field: 'status', field_name: 'Deal Status', field_type: 'text' },

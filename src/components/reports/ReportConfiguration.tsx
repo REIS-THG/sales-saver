@@ -57,8 +57,7 @@ export function ReportConfiguration({
 
   const handleConfigUpdate = (updates: Partial<ReportConfigType["config"]>) => {
     startTransition(() => {
-      handleUpdate({
-        ...report,
+      void handleUpdate({
         config: {
           ...report.config,
           ...updates,
@@ -86,7 +85,7 @@ export function ReportConfiguration({
               report={report}
               standardFields={standardFields}
               customFields={customFields}
-              onUpdate={handleUpdate}
+              onUpdate={(reportId, updates) => onUpdate(reportId, updates)}
             />
             
             <AxisFieldSelector
@@ -95,13 +94,13 @@ export function ReportConfiguration({
               standardFields={standardFields}
               customFields={customFields}
               aggregations={aggregations}
-              onUpdate={handleUpdate}
+              onUpdate={(reportId, updates) => onUpdate(reportId, updates)}
             />
 
             <VisualizationTypeSelector
               report={report}
               visualizationTypes={visualizationTypes}
-              onUpdate={handleUpdate}
+              onUpdate={(reportId, updates) => onUpdate(reportId, updates)}
             />
           </div>
 

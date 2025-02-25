@@ -21,12 +21,16 @@ export function DashboardHeader({
   onSignOut,
   userData
 }: DashboardHeaderProps) {
+  const handleDealCreated = () => {
+    onDealCreated();
+  };
+
   return (
     <MainHeader onSignOut={onSignOut} userData={userData}>
       <div className="flex items-center gap-2">
         <CreateDealForm
-          onDealCreated={onDealCreated}
           customFields={customFields}
+          onSuccess={handleDealCreated}
           onBeforeCreate={onBeforeCreate}
           trigger={
             <Button className="shadow-sm">
