@@ -794,6 +794,7 @@ export type Database = {
           email: string | null
           full_name: string
           id: string
+          preferred_currency: string | null
           preferred_language: string | null
           role: string | null
           stripe_customer_id: string | null
@@ -813,6 +814,7 @@ export type Database = {
           email?: string | null
           full_name: string
           id?: string
+          preferred_currency?: string | null
           preferred_language?: string | null
           role?: string | null
           stripe_customer_id?: string | null
@@ -832,6 +834,7 @@ export type Database = {
           email?: string | null
           full_name?: string
           id?: string
+          preferred_currency?: string | null
           preferred_language?: string | null
           role?: string | null
           stripe_customer_id?: string | null

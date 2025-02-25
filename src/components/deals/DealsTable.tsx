@@ -28,7 +28,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, ArrowUpDown } from "lucide-react";
+import { MoreHorizontal, ArrowUpDown, Activity } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Deal, CustomField } from "@/types/types";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,12 +47,22 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useApiError } from "@/hooks/use-api-error";
 
+// Status configuration with colors
+const statusConfig = {
+  won: { label: "Won", color: "bg-green-500 text-white" },
+  lost: { label: "Lost", color: "bg-red-500 text-white" },
+  pending: { label: "Pending", color: "bg-yellow-500 text-white" },
+  stalled: { label: "Stalled", color: "bg-gray-500 text-white" },
+  negotiating: { label: "Negotiating", color: "bg-blue-500 text-white" },
+};
+
 interface DealsTableProps {
   deals: Deal[];
   customFields: CustomField[];
   showCustomFields: boolean;
   onSelectionChange: (selectedDeals: Deal[]) => void;
   fetchDeals: () => Promise<void>;
+  userData?: { preferred_currency?: string } | null;
 }
 
 export function DealsTable({ 
@@ -60,14 +70,54 @@ export function DealsTable({
   customFields, 
   showCustomFields, 
   onSelectionChange,
-  fetchDeals 
+  fetchDeals,
+  userData 
 }: DealsTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [rowSelection, setRowSelection] = useState({});
+  const [pageSize, setPageSize] = useState(10);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { handleAuthCheck, handleError, handleSuccess } = useApiError();
+
+  const currency = userData?.preferred_currency || 'USD';
+
+  const formatAmount = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency,
+    }).format(amount);
+  };
+
+  const getHealthScoreColor = (score: number) => {
+    if (score >= 80) return "text-green-600";
+    if (score >= 60) return "text-yellow-600";
+    if (score >= 40) return "text-orange-600";
+    return "text-red-600";
+  };
+
+  const handleStatusChange = async (dealId: string, newStatus: string) => {
+    try {
+      const userId = await handleAuthCheck();
+      if (!userId) return;
+
+      const { error } = await supabase
+        .from("deals")
+        .update({ status: newStatus })
+        .eq("id", dealId)
+        .eq("user_id", userId);
+
+      if (error) {
+        handleError(error, "Failed to update status");
+      } else {
+        handleSuccess("Status updated successfully");
+        await fetchDeals();
+      }
+    } catch (error) {
+      console.error("Error updating status:", error);
+    }
+  };
 
   // Generate columns based on standard and custom fields
   const generateColumns = (): ColumnDef<Deal>[] => {
@@ -107,14 +157,67 @@ export function DealsTable({
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         ),
+        cell: ({ row }) => formatAmount(row.original.amount),
       },
       {
         accessorKey: "status",
         header: "Status",
+        cell: ({ row }) => {
+          const status = row.original.status || 'pending';
+          const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
+          
+          return (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  className={`${config.color} px-2 py-1 rounded-full text-sm font-medium w-28`}
+                >
+                  {config.label}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {Object.entries(statusConfig).map(([value, { label, color }]) => (
+                  <DropdownMenuItem
+                    key={value}
+                    onClick={() => handleStatusChange(row.original.id, value)}
+                    className={`${color} my-1 rounded`}
+                  >
+                    {label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          );
+        },
+      },
+      {
+        accessorKey: "health_score",
+        header: ({ column }) => (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Health
+            <Activity className="ml-2 h-4 w-4" />
+          </Button>
+        ),
+        cell: ({ row }) => {
+          const score = row.original.health_score || 0;
+          return (
+            <div className={`font-medium ${getHealthScoreColor(score)}`}>
+              {score}%
+            </div>
+          );
+        },
       },
       {
         accessorKey: "expected_close_date",
         header: "Expected Close Date",
+        cell: ({ row }) => {
+          const date = row.original.expected_close_date;
+          return date ? new Date(date).toLocaleDateString() : '-';
+        },
       },
       {
         id: "actions",
@@ -129,7 +232,7 @@ export function DealsTable({
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+              <DropdownMenuContent align="end" className="bg-white">
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
                 <DropdownMenuItem onClick={() => navigate(`/deals/${deal.id}`)}>
                   Edit
@@ -223,7 +326,7 @@ export function DealsTable({
 
   return (
     <div>
-      <div className="flex items-center py-4">
+      <div className="flex items-center justify-between py-4">
         <Input
           placeholder="Filter deals..."
           value={(table.getColumn("deal_name")?.getFilterValue() as string) ?? ""}
@@ -232,6 +335,24 @@ export function DealsTable({
           }
           className="max-w-sm"
         />
+        <div className="flex items-center space-x-2">
+          <span className="text-sm text-gray-500">Rows per page:</span>
+          <select
+            value={pageSize}
+            onChange={e => {
+              const newSize = parseInt(e.target.value);
+              setPageSize(newSize);
+              table.setPageSize(newSize);
+            }}
+            className="border rounded p-1"
+          >
+            {[5, 10, 20, 30, 40, 50].map(size => (
+              <option key={size} value={size}>
+                {size}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
       <div className="rounded-md border">
         <Table>
