@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
@@ -7,6 +8,7 @@ import { AnalysisHeader } from "@/components/ai-analysis/AnalysisHeader";
 import { AnalysisSettings } from "@/components/ai-analysis/AnalysisSettings";
 import { AnalysisTabs } from "@/components/ai-analysis/AnalysisTabs";
 import { ReportsLoadingState } from "@/components/reports/ReportsLoadingState";
+import { Insight } from "@/types/types";
 
 interface AnalysisParams {
   salesApproach: 'consultative_selling' | 'solution_selling' | 'transactional_selling' | 'value_based_selling';
@@ -28,7 +30,7 @@ const AIAnalysis = () => {
     deals,
     selectedDeal,
     setSelectedDeal,
-    insights,
+    insights: rawInsights,
     isLoading,
     isAnalyzing,
     error,
@@ -43,6 +45,13 @@ const AIAnalysis = () => {
   const [activeTab, setActiveTab] = useState<string>("analysis");
   const [piiFilter, setPiiFilter] = useState(true);
   const [retainAnalysis, setRetainAnalysis] = useState(subscriptionTier === 'pro');
+
+  // Transform insights to ensure they match the expected type
+  const insights: Insight[] = rawInsights.map(insight => ({
+    ...insight,
+    priority: insight.priority as "high" | "medium" | "low",
+    status: insight.status as "open" | "acknowledged" | "resolved"
+  }));
 
   useEffect(() => {
     fetchDeals();
@@ -136,6 +145,7 @@ const AIAnalysis = () => {
             onDealSelect={handleDealSelect}
             onAnalyze={handleAnalyze}
             onFileUpload={handleFileUpload}
+            isLoading={isLoading}
           />
         </div>
       </div>

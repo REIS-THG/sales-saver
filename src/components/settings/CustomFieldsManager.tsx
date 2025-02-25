@@ -9,6 +9,23 @@ import type { CustomField, CustomFieldType } from "@/types/custom-field";
 import { ReportsLoadingState } from "@/components/reports/ReportsLoadingState";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
+type DatabaseCustomField = {
+  id: string;
+  field_name: string;
+  field_type: string;
+  is_required: boolean;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+  default_value?: any;
+  allow_multiple?: boolean;
+  options?: any[];
+  validation_rules?: any;
+  placeholder?: string;
+  help_text?: string;
+  is_active?: boolean;
+};
+
 export function CustomFieldsManager() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -27,13 +44,21 @@ export function CustomFieldsManager() {
 
       if (error) throw error;
 
-      return (data || []).map((field): CustomField => ({
-        ...field,
+      return (data || []).map((field: DatabaseCustomField): CustomField => ({
+        id: field.id,
+        field_name: field.field_name,
         field_type: field.field_type as CustomFieldType,
-        is_required: field.is_required || false,
-        is_active: field.is_active || true,
+        is_required: field.is_required,
+        user_id: field.user_id,
+        created_at: field.created_at,
+        updated_at: field.updated_at,
+        default_value: field.default_value,
+        allow_multiple: field.allow_multiple || false,
         options: field.options || [],
         validation_rules: field.validation_rules || {},
+        placeholder: field.placeholder,
+        help_text: field.help_text,
+        is_active: field.is_active || true
       }));
     },
   });
