@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import { FileText, Mail, FileIcon, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,6 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Deal, Insight } from "@/types/types";
 import { AlertCircle, ArrowUpRight, ShieldAlert } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ReportsLoadingState } from "@/components/reports/ReportsLoadingState";
 
 interface DealAnalysisTabProps {
   deals: Deal[];
@@ -17,6 +18,7 @@ interface DealAnalysisTabProps {
   onAnalyze: (dealId: string) => void;
   onFileUpload: (file: File, type: 'transcript' | 'email' | 'voice' | 'audio') => void;
   insights?: Insight[];
+  isLoading: boolean;
 }
 
 export function DealAnalysisTab({
@@ -28,8 +30,14 @@ export function DealAnalysisTab({
   onAnalyze,
   onFileUpload,
   insights = [],
-}: DealAnalysisTabProps) {
+  isLoading
+}: DealAnalysisTabProps & { isLoading: boolean }) {
   const selectedDealData = deals.find(deal => deal.id === selectedDeal);
+
+  if (isLoading) {
+    return <ReportsLoadingState />;
+  }
+
   const dealInsights = insights.filter(insight => insight.deal_id === selectedDeal);
 
   return (

@@ -1,8 +1,10 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Deal, Insight } from "@/types/types";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface AnalysisParams {
   salesApproach: 'consultative_selling' | 'solution_selling' | 'transactional_selling' | 'value_based_selling';
@@ -19,90 +21,88 @@ interface AnalysisParams {
 }
 
 export function useAIAnalysis() {
-  const [deals, setDeals] = useState<Deal[]>([]);
   const [selectedDeal, setSelectedDeal] = useState<string | null>(null);
-  const [insights, setInsights] = useState<Insight[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [analysisCount, setAnalysisCount] = useState(0);
   const [subscriptionTier, setSubscriptionTier] = useState<'free' | 'pro'>('free');
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const fetchDeals = async () => {
-    setIsLoading(true);
-    setError(null);
+  // Fetch deals with proper caching
+  const { data: deals = [], isLoading: isLoadingDeals } = useQuery({
+    queryKey: ['deals'],
+    queryFn: async () => {
+      const { data: authData } = await supabase.auth.getUser();
+      if (!authData.user) {
+        navigate("/auth");
+        return [];
+      }
 
-    const { data: authData } = await supabase.auth.getUser();
-    if (!authData.user) {
-      navigate("/auth");
-      return;
-    }
+      const { data, error } = await supabase
+        .from("deals")
+        .select("*")
+        .eq("user_id", authData.user.id)
+        .order("created_at", { ascending: false });
 
-    const { data, error } = await supabase
-      .from("deals")
-      .select("*")
-      .eq("user_id", authData.user.id)
-      .order("created_at", { ascending: false });
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to fetch deals",
+        });
+        throw error;
+      }
 
-    if (error) {
-      setError("Failed to fetch deals");
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to fetch deals",
-      });
-      return;
-    }
+      return (data || []).map(deal => ({
+        id: deal.id,
+        deal_name: deal.deal_name,
+        company_name: deal.company_name,
+        amount: Number(deal.amount),
+        status: (deal.status || 'open') as Deal['status'],
+        health_score: deal.health_score || 50,
+        user_id: deal.user_id,
+        created_at: deal.created_at,
+        updated_at: deal.updated_at,
+        start_date: deal.start_date,
+        expected_close_date: deal.expected_close_date,
+        last_contacted: deal.last_contacted,
+        next_action: deal.next_action,
+        contact_email: deal.contact_email,
+        contact_first_name: deal.contact_first_name,
+        contact_last_name: deal.contact_last_name,
+        company_url: deal.company_url,
+        notes: typeof deal.notes === 'string' ? deal.notes : '',
+        custom_fields: typeof deal.custom_fields === 'object' ? deal.custom_fields : {},
+        last_note_at: deal.last_note_at,
+        notes_count: deal.notes_count
+      }));
+    },
+    retry: 2,
+    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
+  });
 
-    const typedDeals: Deal[] = (data || []).map(deal => ({
-      id: deal.id,
-      deal_name: deal.deal_name,
-      company_name: deal.company_name,
-      amount: Number(deal.amount),
-      status: (deal.status || 'open') as Deal['status'],
-      health_score: deal.health_score || 50,
-      user_id: deal.user_id,
-      created_at: deal.created_at,
-      updated_at: deal.updated_at,
-      start_date: deal.start_date,
-      expected_close_date: deal.expected_close_date,
-      last_contacted: deal.last_contacted,
-      next_action: deal.next_action,
-      contact_email: deal.contact_email,
-      contact_first_name: deal.contact_first_name,
-      contact_last_name: deal.contact_last_name,
-      company_url: deal.company_url,
-      notes: typeof deal.notes === 'string' ? deal.notes : '',
-      custom_fields: typeof deal.custom_fields === 'object' ? deal.custom_fields : {},
-      last_note_at: deal.last_note_at,
-      notes_count: deal.notes_count
-    }));
+  // Fetch insights with proper caching
+  const { data: insights = [], isLoading: isLoadingInsights } = useQuery({
+    queryKey: ['insights', selectedDeal],
+    queryFn: async () => {
+      if (!selectedDeal) return [];
 
-    setDeals(typedDeals);
-    setIsLoading(false);
-  };
+      const { data, error } = await supabase
+        .from("deal_insights")
+        .select("*")
+        .eq("deal_id", selectedDeal)
+        .order("created_at", { ascending: false });
 
-  const fetchInsights = async (dealId: string) => {
-    setIsLoading(true);
-    setError(null);
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to fetch insights",
+        });
+        throw error;
+      }
 
-    const { data, error } = await supabase
-      .from("deal_insights")
-      .select("*")
-      .eq("deal_id", dealId)
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      setError("Failed to fetch insights");
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to fetch insights",
-      });
-    } else if (data) {
-      const typedInsights: Insight[] = data.map(insight => ({
+      return (data || []).map(insight => ({
         ...insight,
         insight_type: insight.insight_type as 'risk' | 'opportunity' | 'action_item',
         word_choice_analysis: insight.word_choice_analysis as Record<string, any> || {},
@@ -111,48 +111,66 @@ export function useAIAnalysis() {
         priority: 'medium',
         status: 'open'
       }));
-      
-      setInsights(typedInsights);
+    },
+    enabled: !!selectedDeal,
+    retry: 2,
+    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
+  });
+
+  // File upload mutation
+  const fileUploadMutation = useMutation({
+    mutationFn: async ({ file, type }: { file: File, type: 'transcript' | 'email' | 'voice' }) => {
+      // File upload logic here
+      console.log('File upload:', file, type);
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to upload file",
+      });
     }
-    setIsLoading(false);
-  };
+  });
 
-  const handleFileUpload = async (file: File, type: 'transcript' | 'email' | 'voice') => {
-    console.log('File upload:', file, type);
-  };
-
-  const analyzeDeal = async (dealId: string, params: AnalysisParams) => {
-    setIsAnalyzing(true);
-    setError(null);
-    
-    try {
+  // Deal analysis mutation
+  const analysisMutation = useMutation({
+    mutationFn: async ({ dealId, params }: { dealId: string, params: AnalysisParams }) => {
+      setIsAnalyzing(true);
       const response = await supabase.functions.invoke("analyze-deals", {
-        body: {
-          dealId,
-          analysisParams: params,
-        },
+        body: { dealId, analysisParams: params },
       });
 
       if (response.error) {
         throw new Error(response.error.message || "Analysis failed");
       }
 
-      await fetchInsights(dealId);
+      return response.data;
+    },
+    onSuccess: () => {
       toast({
         title: "Success",
         description: "Deal analysis completed",
       });
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to analyze deal";
-      setError(errorMessage);
+      queryClient.invalidateQueries({ queryKey: ['insights', selectedDeal] });
+    },
+    onError: (error: Error) => {
       toast({
         variant: "destructive",
         title: "Error",
-        description: errorMessage,
+        description: error.message || "Failed to analyze deal",
       });
-    } finally {
+    },
+    onSettled: () => {
       setIsAnalyzing(false);
     }
+  });
+
+  const analyzeDeal = async (dealId: string, params: AnalysisParams) => {
+    await analysisMutation.mutateAsync({ dealId, params });
+  };
+
+  const handleFileUpload = async (file: File, type: 'transcript' | 'email' | 'voice') => {
+    await fileUploadMutation.mutateAsync({ file, type });
   };
 
   return {
@@ -160,13 +178,16 @@ export function useAIAnalysis() {
     selectedDeal,
     setSelectedDeal,
     insights,
-    isLoading,
+    isLoading: isLoadingDeals || isLoadingInsights,
     isAnalyzing,
-    error,
-    analysisCount,
+    error: null,
+    analysisCount: insights.length,
     subscriptionTier,
-    fetchDeals,
-    fetchInsights,
+    fetchDeals: () => queryClient.invalidateQueries({ queryKey: ['deals'] }),
+    fetchInsights: (dealId: string) => {
+      setSelectedDeal(dealId);
+      queryClient.invalidateQueries({ queryKey: ['insights', dealId] });
+    },
     analyzeDeal,
     handleFileUpload,
   };

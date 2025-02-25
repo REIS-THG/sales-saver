@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
@@ -7,6 +6,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AnalysisHeader } from "@/components/ai-analysis/AnalysisHeader";
 import { AnalysisSettings } from "@/components/ai-analysis/AnalysisSettings";
 import { AnalysisTabs } from "@/components/ai-analysis/AnalysisTabs";
+import { ReportsLoadingState } from "@/components/reports/ReportsLoadingState";
 
 interface AnalysisParams {
   salesApproach: 'consultative_selling' | 'solution_selling' | 'transactional_selling' | 'value_based_selling';
@@ -76,6 +76,19 @@ const AIAnalysis = () => {
     };
     await analyzeDeal(dealId, params);
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <DashboardHeader
+          onDealCreated={fetchDeals}
+          customFields={[]}
+          userData={null}
+        />
+        <ReportsLoadingState />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
