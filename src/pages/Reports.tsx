@@ -1,22 +1,20 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { BarChart2, PieChart, LineChart, Table } from "lucide-react";
 import { useReports } from "@/hooks/use-reports";
-import { ReportConfiguration } from "@/components/reports/ReportConfiguration";
-import type { ReportConfiguration as ReportConfigType } from "@/components/reports/types";
 import { useToast } from "@/hooks/use-toast";
-import type { User } from "@/types/types";
 import { useAuth } from "@/hooks/useAuth";
 import { ReportsHeader } from "@/components/reports/ReportsHeader";
 import { ReportsLoadingState } from "@/components/reports/ReportsLoadingState";
 import { ReportsEmptyState } from "@/components/reports/ReportsEmptyState";
 import { ReportsContent } from "@/components/reports/ReportsContent";
 import { MainHeader } from "@/components/layout/MainHeader";
+import { ReportEditor } from "@/components/reports/ReportEditor";
+import { useReportActions } from "@/components/reports/ReportActions";
+import type { ReportConfiguration as ReportConfigType } from "@/components/reports/types";
 
 const Reports = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
   const [editingReportId, setEditingReportId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
@@ -34,31 +32,25 @@ const Reports = () => {
     toggleFavorite,
   } = useReports();
 
+  const { handleCreateReport, handleUpdateReport, handleExportExcel, handleExportGoogleSheets } = 
+    useReportActions({
+      onCreateReport: async () => {
+        const newReport = await createReport();
+        if (newReport) {
+          setEditingReportId(newReport.id);
+        }
+        return;
+      },
+      onUpdateReport: updateReport,
+      onExportExcel: async () => {},
+      onExportGoogleSheets: async () => {},
+    });
+
   useEffect(() => {
     if (!authLoading && !user) {
       navigate("/auth");
     }
   }, [user, authLoading, navigate]);
-
-  const handleCreateReport = async () => {
-    try {
-      const newReport = await createReport();
-      if (newReport) {
-        setEditingReportId(newReport.id);
-        toast({
-          title: "Success",
-          description: "New report created",
-        });
-      }
-    } catch (error) {
-      console.error('Error creating report:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to create report",
-      });
-    }
-  };
 
   const handleEditReport = (report: ReportConfigType) => {
     setEditingReportId(report.id);
@@ -71,69 +63,9 @@ const Reports = () => {
 
   const saveReportName = async () => {
     if (!editingReportId) return;
-
-    try {
-      const updatedReport = await updateReport(editingReportId, { name: editingName });
-      if (updatedReport) {
-        setEditingReportId(null);
-        setEditingName("");
-        toast({
-          title: "Success",
-          description: "Report name updated",
-        });
-      }
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to update report name",
-      });
-    }
-  };
-
-  const handleExportExcel = async (report: ReportConfigType) => {
-    try {
-      toast({
-        title: "Success",
-        description: "Report exported to Excel",
-      });
-    } catch (err) {
-      console.error('Error exporting to Excel:', err);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to export to Excel",
-      });
-    }
-  };
-
-  const handleExportGoogleSheets = async (report: ReportConfigType) => {
-    try {
-      toast({
-        title: "Success",
-        description: "Report exported to Google Sheets",
-      });
-    } catch (err) {
-      console.error('Error exporting to CSV:', err);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to export to CSV",
-      });
-    }
-  };
-
-  const handleUpdateReport = async (reportId: string, updates: Partial<ReportConfigType>) => {
-    try {
-      await updateReport(reportId, updates);
-    } catch (error) {
-      console.error('Error updating report:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to update report",
-      });
-    }
+    await handleUpdateReport(editingReportId, { name: editingName });
+    setEditingReportId(null);
+    setEditingName("");
   };
 
   if (authLoading || reportsLoading) {
@@ -175,34 +107,12 @@ const Reports = () => {
           />
         )}
 
-        {editingReportId && reports.find(r => r.id === editingReportId) && (
-          <ReportConfiguration
-            report={reports.find(r => r.id === editingReportId)!}
-            onClose={() => setEditingReportId(null)}
-            onUpdate={handleUpdateReport}
-            standardFields={[
-              { field: 'amount', field_name: 'Deal Amount', field_type: 'number' },
-              { field: 'status', field_name: 'Deal Status', field_type: 'text' },
-              { field: 'health_score', field_name: 'Health Score', field_type: 'number' },
-              { field: 'created_at', field_name: 'Creation Date', field_type: 'date' },
-              { field: 'company_name', field_name: 'Company', field_type: 'text' },
-            ]}
-            customFields={[]}
-            aggregations={[
-              { value: 'sum', label: 'Sum' },
-              { value: 'avg', label: 'Average' },
-              { value: 'count', label: 'Count' },
-              { value: 'min', label: 'Minimum' },
-              { value: 'max', label: 'Maximum' },
-            ]}
-            visualizationTypes={[
-              { value: 'bar', label: 'Bar Chart', icon: <BarChart2 className="h-4 w-4" /> },
-              { value: 'line', label: 'Line Chart', icon: <LineChart className="h-4 w-4" /> },
-              { value: 'pie', label: 'Pie Chart', icon: <PieChart className="h-4 w-4" /> },
-              { value: 'table', label: 'Table', icon: <Table className="h-4 w-4" /> },
-            ]}
-          />
-        )}
+        <ReportEditor
+          editingReportId={editingReportId}
+          reports={reports}
+          onUpdate={handleUpdateReport}
+          onClose={() => setEditingReportId(null)}
+        />
       </div>
     </div>
   );
