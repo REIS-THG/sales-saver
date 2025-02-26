@@ -38,7 +38,7 @@ const Index = () => {
                   onClick={() => handleNavigate("/auth")}
                   className="hover:bg-indigo-50 dark:hover:bg-gray-800"
                 >
-                  Log in
+                  Sign in
                 </Button>
                 <Button 
                   onClick={() => handleNavigate("/auth")}
