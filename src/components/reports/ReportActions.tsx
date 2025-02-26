@@ -4,7 +4,7 @@ import type { ReportConfiguration as ReportConfigType } from "./types";
 
 interface ReportActionsProps {
   onCreateReport: () => Promise<void>;
-  onUpdateReport: (reportId: string, updates: Partial<ReportConfigType>) => Promise<void>;
+  onUpdateReport: (reportId: string, updates: Partial<ReportConfigType>) => Promise<ReportConfigType | null>;
   onExportExcel: (report: ReportConfigType) => Promise<void>;
   onExportGoogleSheets: (report: ReportConfigType) => Promise<void>;
 }
@@ -32,7 +32,8 @@ export const useReportActions = ({
 
   const handleUpdateReport = async (reportId: string, updates: Partial<ReportConfigType>) => {
     try {
-      await onUpdateReport(reportId, updates);
+      const updatedReport = await onUpdateReport(reportId, updates);
+      return updatedReport;
     } catch (error) {
       console.error('Error updating report:', error);
       toast({
@@ -40,6 +41,7 @@ export const useReportActions = ({
         title: "Error",
         description: "Failed to update report",
       });
+      return null;
     }
   };
 
