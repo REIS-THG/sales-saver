@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BarChart2, PieChart, LineChart, Table } from "lucide-react";
@@ -11,12 +12,12 @@ import { ReportsHeader } from "@/components/reports/ReportsHeader";
 import { ReportsLoadingState } from "@/components/reports/ReportsLoadingState";
 import { ReportsEmptyState } from "@/components/reports/ReportsEmptyState";
 import { ReportsContent } from "@/components/reports/ReportsContent";
+import { MainHeader } from "@/components/layout/MainHeader";
 
 const Reports = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
-  const [userData, setUserData] = useState<User | null>(null);
   const [editingReportId, setEditingReportId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
 
@@ -38,10 +39,6 @@ const Reports = () => {
       navigate("/auth");
     }
   }, [user, authLoading, navigate]);
-
-  useEffect(() => {
-    fetchReports(currentPage);
-  }, [currentPage, fetchReports]);
 
   const handleCreateReport = async () => {
     try {
@@ -143,15 +140,18 @@ const Reports = () => {
     return <ReportsLoadingState />;
   }
 
-  const isFreePlan = userData?.subscription_status === 'free';
+  if (!user) {
+    return null;
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <MainHeader onSignOut={() => navigate("/auth")} userData={user} />
+      <div className="container mx-auto p-6">
         <ReportsHeader 
           onCreateReport={handleCreateReport}
           isLoading={actionLoading['create']}
-          isFreePlan={isFreePlan}
+          isFreePlan={user?.subscription_status === 'free'}
         />
 
         {reports.length === 0 ? (
