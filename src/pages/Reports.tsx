@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useReports } from "@/hooks/use-reports";
+import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { ReportsHeader } from "@/components/reports/ReportsHeader";
 import { ReportsLoadingState } from "@/components/reports/ReportsLoadingState";
@@ -10,7 +11,7 @@ import { ReportsContent } from "@/components/reports/ReportsContent";
 import { MainHeader } from "@/components/layout/MainHeader";
 import { ReportEditor } from "@/components/reports/ReportEditor";
 import { useReportActions } from "@/components/reports/ReportActions";
-import type { ReportConfiguration } from "@/components/reports/types";
+import type { ReportConfiguration as ReportConfigType } from "@/components/reports/types";
 
 const Reports = () => {
   const navigate = useNavigate();
@@ -37,13 +38,10 @@ const Reports = () => {
         const newReport = await createReport();
         if (newReport) {
           setEditingReportId(newReport.id);
-          return newReport;
         }
-        return null;
       },
-      onUpdateReport: async (reportId: string, updates: Partial<ReportConfiguration>) => {
-        const updated = await updateReport(reportId, updates);
-        return updated;
+      onUpdateReport: async (reportId: string, updates: Partial<ReportConfigType>) => {
+        await updateReport(reportId, updates);
       },
       onExportExcel: async () => {},
       onExportGoogleSheets: async () => {},
@@ -55,7 +53,7 @@ const Reports = () => {
     }
   }, [user, authLoading, navigate]);
 
-  const handleEditReport = (report: ReportConfiguration) => {
+  const handleEditReport = (report: ReportConfigType) => {
     setEditingReportId(report.id);
     setEditingName(report.name);
   };
@@ -66,11 +64,9 @@ const Reports = () => {
 
   const saveReportName = async () => {
     if (!editingReportId) return;
-    const updated = await handleUpdateReport(editingReportId, { name: editingName });
-    if (updated) {
-      setEditingReportId(null);
-      setEditingName("");
-    }
+    await handleUpdateReport(editingReportId, { name: editingName });
+    setEditingReportId(null);
+    setEditingName("");
   };
 
   if (authLoading || reportsLoading) {
