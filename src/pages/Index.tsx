@@ -1,4 +1,3 @@
-
 import { startTransition, Suspense, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -65,7 +64,7 @@ const Index = () => {
             Boost your team's performance, close more deals, and make data-driven decisions with our intelligent sales management platform.
           </p>
           
-          {!user ? (
+          {!user && (
             <Button
               onClick={() => handleNavigate("/auth")}
               className="group relative inline-flex items-center px-8 py-6 text-lg bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
@@ -73,22 +72,6 @@ const Index = () => {
               Get Started Free
               <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Button>
-          ) : (
-            <div className="space-y-4">
-              <Button
-                className="w-full max-w-xs mx-auto bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
-                onClick={() => handleNavigate("/dashboard")}
-              >
-                Go to Dashboard
-              </Button>
-              <Button
-                className="w-full max-w-xs mx-auto"
-                variant="outline"
-                onClick={() => handleNavigate("/reports")}
-              >
-                View Reports
-              </Button>
-            </div>
           )}
         </div>
 
