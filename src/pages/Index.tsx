@@ -30,23 +30,6 @@ const Index = () => {
             <h2 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
               Sales Saver
             </h2>
-            {!user && (
-              <div className="space-x-4">
-                <Button 
-                  variant="outline"
-                  onClick={() => handleNavigate("/auth")}
-                  className="hover:bg-indigo-50 dark:hover:bg-gray-800"
-                >
-                  Sign in
-                </Button>
-                <Button 
-                  onClick={() => handleNavigate("/auth")}
-                  className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
-                >
-                  Sign up
-                </Button>
-              </div>
-            )}
           </div>
         </div>
       </nav>
@@ -67,10 +50,11 @@ const Index = () => {
           {!user && (
             <Button
               onClick={() => handleNavigate("/auth")}
-              className="group relative inline-flex items-center px-8 py-6 text-lg bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+              size="lg"
+              className="group relative inline-flex items-center px-8 py-8 text-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
             >
-              Get Started Free
-              <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              Start Your Free Trial
+              <ArrowRight className="ml-2 h-6 w-6 group-hover:translate-x-1 transition-transform" />
             </Button>
           )}
         </div>
