@@ -39,9 +39,10 @@ const Reports = () => {
         if (newReport) {
           setEditingReportId(newReport.id);
         }
-        return;
       },
-      onUpdateReport: updateReport,
+      onUpdateReport: async (reportId: string, updates: Partial<ReportConfigType>) => {
+        await updateReport(reportId, updates);
+      },
       onExportExcel: async () => {},
       onExportGoogleSheets: async () => {},
     });
