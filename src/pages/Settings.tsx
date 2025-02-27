@@ -1,68 +1,71 @@
 
-import { AccountSettings } from "@/components/settings/AccountSettings";
-import { UserPreferences } from "@/components/settings/UserPreferences";
-import { CustomFieldsManager } from "@/components/settings/CustomFieldsManager";
-import { TeamSettings } from "@/components/settings/TeamSettings";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAuth } from "@/hooks/useAuth";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { CreditCard } from "lucide-react";
 import { MainHeader } from "@/components/layout/MainHeader";
 import { useTranslation } from "react-i18next";
 import { ReportsLoadingState } from "@/components/reports/ReportsLoadingState";
+import { useAuth } from "@/hooks/useAuth";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { AccountSettings } from "@/components/settings/AccountSettings";
+import { UserPreferences } from "@/components/settings/UserPreferences";
+import { CustomFieldsManager } from "@/components/settings/CustomFieldsManager";
+import { TeamSettings } from "@/components/settings/TeamSettings";
 import "@/i18n/config";
+
+const SettingsSkeleton = () => (
+  <div className="space-y-6 animate-pulse">
+    <div className="h-8 w-48 bg-gray-200 dark:bg-gray-700 rounded"></div>
+    <div className="h-[200px] bg-gray-100 dark:bg-gray-800 rounded-lg"></div>
+  </div>
+);
 
 export default function Settings() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
+  const [activeTab, setActiveTab] = useState("account");
+
+  // Memoize theme initialization to prevent unnecessary recalculations
   const [theme, setTheme] = useState(() => {
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme) return savedTheme;
-    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      return 'dark';
-    }
-    return 'light';
-  });
-  const [defaultView, setDefaultView] = useState("table");
-  const [language, setLanguage] = useState(() => {
-    return localStorage.getItem('language') || 'en';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   });
 
+  const [defaultView, setDefaultView] = useState("table");
+  const [language, setLanguage] = useState(() => localStorage.getItem('language') || 'en');
+
+  // Authentication check
   useEffect(() => {
     if (!loading && !user) {
       navigate("/auth");
-      return;
     }
   }, [user, loading, navigate]);
 
-  useEffect(() => {
-    document.documentElement.classList.remove('light', 'dark');
-    document.documentElement.classList.add(theme);
-    localStorage.setItem('theme', theme);
-  }, [theme]);
-
-  useEffect(() => {
-    if (i18n.isInitialized) {
-      i18n.changeLanguage(language);
-      localStorage.setItem('language', language);
-    }
-  }, [language, i18n]);
-
-  const handleThemeChange = async (newTheme: string) => {
+  // Theme management with performance optimization
+  const handleThemeChange = useCallback((newTheme: string) => {
     setTheme(newTheme);
-  };
+    document.documentElement.classList.remove('light', 'dark');
+    document.documentElement.classList.add(newTheme);
+    localStorage.setItem('theme', newTheme);
+  }, []);
 
-  const handleDefaultViewChange = async (newView: string) => {
-    setDefaultView(newView);
-  };
-
-  const handleLanguageChange = async (newLanguage: string) => {
+  // Language management with performance optimization
+  const handleLanguageChange = useCallback((newLanguage: string) => {
     setLanguage(newLanguage);
-  };
+    if (i18n.isInitialized) {
+      i18n.changeLanguage(newLanguage);
+      localStorage.setItem('language', newLanguage);
+    }
+  }, [i18n]);
+
+  // Default view management
+  const handleDefaultViewChange = useCallback((newView: string) => {
+    setDefaultView(newView);
+  }, []);
 
   if (loading) {
     return <ReportsLoadingState />;
@@ -73,8 +76,8 @@ export default function Settings() {
   }
 
   return (
-    <Suspense fallback={<ReportsLoadingState />}>
-      <div className="min-h-screen">
+    <div className="min-h-screen">
+      <ErrorBoundary>
         <MainHeader onSignOut={() => navigate("/auth")} userData={user}>
           <Link to="/subscription">
             <Button variant="outline" className="gap-2">
@@ -101,7 +104,7 @@ export default function Settings() {
             </div>
           )}
           
-          <Tabs defaultValue="account" className="space-y-8">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
             <TabsList>
               <TabsTrigger value="account">{t('settings.tabs.account')}</TabsTrigger>
               <TabsTrigger value="preferences">{t('settings.tabs.preferences')}</TabsTrigger>
@@ -109,31 +112,37 @@ export default function Settings() {
               <TabsTrigger value="teams">{t('settings.tabs.teams')}</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="account" className="space-y-8">
-              <AccountSettings userData={user} />
-            </TabsContent>
+            <ErrorBoundary>
+              <Suspense fallback={<SettingsSkeleton />}>
+                <TabsContent value="account" className="space-y-8">
+                  {activeTab === "account" && <AccountSettings userData={user} />}
+                </TabsContent>
 
-            <TabsContent value="preferences" className="space-y-8">
-              <UserPreferences
-                theme={theme}
-                defaultView={defaultView}
-                language={language}
-                onThemeChange={handleThemeChange}
-                onDefaultViewChange={handleDefaultViewChange}
-                onLanguageChange={handleLanguageChange}
-              />
-            </TabsContent>
+                <TabsContent value="preferences" className="space-y-8">
+                  {activeTab === "preferences" && (
+                    <UserPreferences
+                      theme={theme}
+                      defaultView={defaultView}
+                      language={language}
+                      onThemeChange={handleThemeChange}
+                      onDefaultViewChange={handleDefaultViewChange}
+                      onLanguageChange={handleLanguageChange}
+                    />
+                  )}
+                </TabsContent>
 
-            <TabsContent value="custom-fields" className="space-y-8">
-              <CustomFieldsManager />
-            </TabsContent>
+                <TabsContent value="custom-fields" className="space-y-8">
+                  {activeTab === "custom-fields" && <CustomFieldsManager />}
+                </TabsContent>
 
-            <TabsContent value="teams" className="space-y-8">
-              <TeamSettings />
-            </TabsContent>
+                <TabsContent value="teams" className="space-y-8">
+                  {activeTab === "teams" && <TeamSettings />}
+                </TabsContent>
+              </Suspense>
+            </ErrorBoundary>
           </Tabs>
         </div>
-      </div>
-    </Suspense>
+      </ErrorBoundary>
+    </div>
   );
 }
