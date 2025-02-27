@@ -6,7 +6,7 @@ import { BarChart2, PieChart, LineChart, Table } from "lucide-react";
 interface ReportEditorProps {
   editingReportId: string | null;
   reports: ReportConfigType[];
-  onUpdate: (reportId: string, updates: Partial<ReportConfigType>) => Promise<ReportConfigType | null>;
+  onUpdate: (reportId: string, updates: Partial<ReportConfigType>) => Promise<void>;
   onClose: () => void;
 }
 

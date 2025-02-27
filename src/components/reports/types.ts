@@ -53,7 +53,7 @@ export interface ReportCardProps {
 export interface ReportConfigurationProps {
   report: ReportConfiguration;
   onClose: () => void;
-  onUpdate: (reportId: string, updates: Partial<ReportConfiguration>) => Promise<ReportConfiguration | null>;
+  onUpdate: (reportId: string, updates: Partial<ReportConfiguration>) => Promise<void>;
   standardFields: { field_name: string; field: string; field_type: "text" | "number" | "boolean" | "date" | "product"; }[];
   customFields: { id: string; field_name: string; field_type: "text" | "number" | "boolean" | "date" | "product"; is_required: boolean; user_id?: string; }[];
   aggregations: { value: 'sum' | 'avg' | 'count' | 'min' | 'max'; label: string; }[];
