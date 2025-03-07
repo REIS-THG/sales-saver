@@ -45,8 +45,14 @@ const Reports = () => {
       onUpdateReport: async (reportId: string, updates: Partial<ReportConfigType>): Promise<ReportConfigType | null> => {
         return await updateReport(reportId, updates);
       },
-      onExportExcel: async () => {},
-      onExportGoogleSheets: async () => {},
+      onExportExcel: async (report: ReportConfigType) => {
+        // Mock implementation for Excel export
+        console.log("Exporting to Excel:", report);
+      },
+      onExportGoogleSheets: async (report: ReportConfigType) => {
+        // Mock implementation for Google Sheets export
+        console.log("Exporting to Google Sheets:", report);
+      },
     });
 
   useEffect(() => {
@@ -86,6 +92,9 @@ const Reports = () => {
     await handleUpdateReport(reportId, updates);
   };
 
+  // Determine if user is on free plan
+  const isFreePlan = user.subscription_status === 'free' || user.subscription_status === false;
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <MainHeader onSignOut={() => navigate("/auth")} userData={user} />
@@ -93,7 +102,7 @@ const Reports = () => {
         <ReportsHeader 
           onCreateReport={handleCreateReport}
           isLoading={actionLoading['create']}
-          isFreePlan={user?.subscription_status === 'free'}
+          isFreePlan={isFreePlan}
         />
 
         {reports.length === 0 ? (

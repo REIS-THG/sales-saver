@@ -9,7 +9,7 @@ interface VisualizationTypeSelectorProps {
     label: string;
     icon: JSX.Element;
   }[];
-  onUpdate: (reportId: string, updates: Partial<ReportConfiguration>) => void;
+  onUpdate: (reportId: string, updates: Partial<ReportConfiguration>) => Promise<void>;
 }
 
 export const VisualizationTypeSelector = ({
@@ -27,7 +27,6 @@ export const VisualizationTypeSelector = ({
             variant={report.config.visualization === type.value ? "default" : "outline"}
             onClick={() => {
               onUpdate(report.id, {
-                ...report,
                 config: {
                   ...report.config,
                   visualization: type.value

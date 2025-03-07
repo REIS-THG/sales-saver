@@ -74,12 +74,14 @@ export function useReports() {
     } finally {
       setLoading(false);
     }
-  }, [user, handleError]);
+  }, [user, handleError, currentPage]);
 
   // Only fetch reports once when component mounts or user changes
   useEffect(() => {
-    fetchReports(1);
-  }, [user]); // Remove currentPage dependency to prevent infinite loop
+    if (user) {
+      fetchReports(1);
+    }
+  }, [user]); 
 
   const toggleFavorite = async (reportId: string, currentStatus: boolean) => {
     const report = reports.find(r => r.id === reportId);
@@ -108,6 +110,10 @@ export function useReports() {
         return newReports;
       });
     });
+    
+    if (updatedReport) {
+      handleSuccess("Report updated successfully");
+    }
     
     return updatedReport;
   };
