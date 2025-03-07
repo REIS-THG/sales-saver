@@ -36,7 +36,8 @@ export function useSubscriptionStatus() {
         return null;
       }
 
-      const userSubscription = userData.subscription_status as SubscriptionStatus;
+      // Properly convert boolean subscription_status to SubscriptionStatus type
+      const userSubscription: SubscriptionStatus = userData.subscription_status === true ? 'pro' : 'free';
       setSubscriptionTier(userSubscription);
       return userData;
     },
