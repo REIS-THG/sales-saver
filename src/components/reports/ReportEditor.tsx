@@ -21,11 +21,16 @@ export const ReportEditor = ({ editingReportId, reports, onUpdate, onClose }: Re
       onClose={onClose}
       onUpdate={onUpdate}
       standardFields={[
+        { field: 'created_at', field_name: 'Creation Date', field_type: 'date' },
+        { field: 'expected_close_date', field_name: 'Expected Close Date', field_type: 'date' },
         { field: 'amount', field_name: 'Deal Amount', field_type: 'number' },
         { field: 'status', field_name: 'Deal Status', field_type: 'text' },
         { field: 'health_score', field_name: 'Health Score', field_type: 'number' },
-        { field: 'created_at', field_name: 'Creation Date', field_type: 'date' },
         { field: 'company_name', field_name: 'Company', field_type: 'text' },
+        { field: 'deal_name', field_name: 'Deal Name', field_type: 'text' },
+        { field: 'contact_first_name', field_name: 'Contact First Name', field_type: 'text' },
+        { field: 'contact_last_name', field_name: 'Contact Last Name', field_type: 'text' },
+        { field: 'contact_email', field_name: 'Contact Email', field_type: 'text' },
       ]}
       customFields={[]}
       aggregations={[

@@ -21,9 +21,18 @@ import { ReportPreviewProps } from "./types";
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
 export const ReportPreview = ({ config, data }: ReportPreviewProps) => {
+  if (!data || data.length === 0) {
+    return (
+      <div className="h-64 flex items-center justify-center border rounded p-4 bg-gray-50">
+        <p className="text-gray-500">No data available. Please select dimensions and metrics.</p>
+      </div>
+    );
+  }
+
   const formatXAxis = (tickItem: string) => {
     if (!tickItem) return '';
     try {
+      // Check if the tickItem is a valid date
       const date = parseISO(tickItem);
       return format(date, 'MMM d');
     } catch {
@@ -62,7 +71,7 @@ export const ReportPreview = ({ config, data }: ReportPreviewProps) => {
             <YAxis />
             <Tooltip content={renderCustomTooltip} />
             <Legend />
-            <Bar dataKey="value" fill="#3b82f6">
+            <Bar dataKey="value" name={config.metrics[0]?.label || "Value"} fill="#3b82f6">
               {data.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
               ))}
@@ -87,6 +96,7 @@ export const ReportPreview = ({ config, data }: ReportPreviewProps) => {
             <Line 
               type="monotone" 
               dataKey="value" 
+              name={config.metrics[0]?.label || "Value"}
               stroke="#3b82f6" 
               strokeWidth={2}
               dot={{ r: 4 }}
@@ -123,8 +133,8 @@ export const ReportPreview = ({ config, data }: ReportPreviewProps) => {
           <table className="w-full border-collapse">
             <thead>
               <tr>
-                <th className="border p-2">Dimension</th>
-                <th className="border p-2">Value</th>
+                <th className="border p-2">{config.dimensions[0]?.label || "Dimension"}</th>
+                <th className="border p-2">{config.metrics[0]?.label || "Value"}</th>
               </tr>
             </thead>
             <tbody>

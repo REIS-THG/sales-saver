@@ -30,15 +30,15 @@ export function useReports() {
     }
 
     try {
-      // For MVP, let's use mock data to show visualizations
+      // For MVP, let's use realistic mock data for reports
       const mockReports: ReportConfiguration[] = [
         {
           id: "1",
           user_id: user.id,
-          name: "Sales Overview",
-          description: "Monthly sales performance",
+          name: "Monthly Sales Analysis",
+          description: "Track monthly sales performance over time",
           config: {
-            dimensions: [{ field: "month", type: "standard", label: "Month" }],
+            dimensions: [{ field: "created_at", type: "standard", label: "Month" }],
             metrics: [{ field: "amount", aggregation: "sum", label: "Total Sales" }],
             filters: [],
             visualization: "bar"
@@ -49,13 +49,27 @@ export function useReports() {
         {
           id: "2",
           user_id: user.id,
-          name: "Deal Pipeline",
-          description: "Current pipeline status",
+          name: "Deal Pipeline by Status",
+          description: "Current pipeline status distribution",
           config: {
             dimensions: [{ field: "status", type: "standard", label: "Status" }],
             metrics: [{ field: "amount", aggregation: "sum", label: "Deal Value" }],
             filters: [],
             visualization: "pie"
+          },
+          is_favorite: false,
+          created_at: new Date().toISOString(),
+        },
+        {
+          id: "3",
+          user_id: user.id,
+          name: "Health Score Distribution",
+          description: "Analyze deal health scores",
+          config: {
+            dimensions: [{ field: "health_score", type: "standard", label: "Health Score" }],
+            metrics: [{ field: "deal_name", aggregation: "count", label: "Number of Deals" }],
+            filters: [],
+            visualization: "line"
           },
           is_favorite: false,
           created_at: new Date().toISOString(),
@@ -81,7 +95,7 @@ export function useReports() {
     if (user) {
       fetchReports(1);
     }
-  }, [user]); 
+  }, [user, fetchReports]); 
 
   const toggleFavorite = async (reportId: string, currentStatus: boolean) => {
     const report = reports.find(r => r.id === reportId);
