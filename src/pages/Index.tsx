@@ -1,3 +1,4 @@
+
 import { startTransition, Suspense, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,22 @@ const Index = () => {
             <h2 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
               Sales Saver
             </h2>
+            {user ? (
+              <Button
+                onClick={() => handleNavigate("/dashboard")}
+                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white"
+              >
+                Dashboard
+              </Button>
+            ) : (
+              <Button
+                onClick={() => handleNavigate("/auth")}
+                variant="outline"
+                className="border-indigo-600 text-indigo-600 hover:bg-indigo-50"
+              >
+                Sign In
+              </Button>
+            )}
           </div>
         </div>
       </nav>
@@ -54,6 +71,17 @@ const Index = () => {
               className="group relative inline-flex items-center px-8 py-8 text-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
             >
               Start Your Free Trial
+              <ArrowRight className="ml-2 h-6 w-6 group-hover:translate-x-1 transition-transform" />
+            </Button>
+          )}
+          
+          {user && (
+            <Button
+              onClick={() => handleNavigate("/dashboard")}
+              size="lg"
+              className="group relative inline-flex items-center px-8 py-8 text-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+            >
+              Go to Dashboard
               <ArrowRight className="ml-2 h-6 w-6 group-hover:translate-x-1 transition-transform" />
             </Button>
           )}
@@ -150,6 +178,25 @@ const Index = () => {
                 className="bg-white text-indigo-600 hover:bg-indigo-50 text-lg px-8 py-6"
               >
                 Start Your Free Trial
+              </Button>
+            </div>
+          </div>
+        )}
+        
+        {user && (
+          <div className="text-center py-16">
+            <div className="max-w-3xl mx-auto p-8 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl shadow-xl">
+              <h2 className="text-3xl font-bold text-white mb-4">
+                Welcome Back!
+              </h2>
+              <p className="text-xl text-indigo-100 mb-8">
+                Continue working with your sales data and insights.
+              </p>
+              <Button
+                onClick={() => handleNavigate("/dashboard")}
+                className="bg-white text-indigo-600 hover:bg-indigo-50 text-lg px-8 py-6"
+              >
+                Go to Dashboard
               </Button>
             </div>
           </div>
