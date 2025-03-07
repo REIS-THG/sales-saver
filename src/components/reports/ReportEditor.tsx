@@ -2,6 +2,7 @@
 import { ReportConfiguration } from "./ReportConfiguration";
 import type { ReportConfiguration as ReportConfigType } from "./types";
 import { BarChart2, PieChart, LineChart, Table } from "lucide-react";
+import { useState, useEffect } from "react";
 
 interface ReportEditorProps {
   editingReportId: string | null;
@@ -11,13 +12,26 @@ interface ReportEditorProps {
 }
 
 export const ReportEditor = ({ editingReportId, reports, onUpdate, onClose }: ReportEditorProps) => {
-  if (!editingReportId || !reports.find(r => r.id === editingReportId)) {
+  const [currentReport, setCurrentReport] = useState<ReportConfigType | null>(null);
+  
+  useEffect(() => {
+    if (editingReportId) {
+      const report = reports.find(r => r.id === editingReportId);
+      if (report) {
+        setCurrentReport(report);
+      }
+    } else {
+      setCurrentReport(null);
+    }
+  }, [editingReportId, reports]);
+
+  if (!currentReport) {
     return null;
   }
 
   return (
     <ReportConfiguration
-      report={reports.find(r => r.id === editingReportId)!}
+      report={currentReport}
       onClose={onClose}
       onUpdate={onUpdate}
       standardFields={[

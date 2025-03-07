@@ -14,6 +14,7 @@ export function useReports() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isPending, startTransition] = useTransition();
+  const [isDataFetched, setIsDataFetched] = useState(false);
   
   const { handleAuthCheck, handleError, handleSuccess } = useApiError();
   const { actionLoading: managementLoading, createReport, updateReport, deleteReport } = useReportManagement();
@@ -24,7 +25,7 @@ export function useReports() {
 
   // Modified fetchReports to include error handling and prevent infinite loop
   const fetchReports = useCallback(async (page = currentPage) => {
-    if (!user) {
+    if (!user || isDataFetched) {
       setLoading(false);
       return;
     }
@@ -80,6 +81,7 @@ export function useReports() {
         setReports(mockReports);
         setTotalPages(1); // For MVP, we'll just show one page
         setCurrentPage(page);
+        setIsDataFetched(true);
       });
     } catch (err) {
       console.error('Error fetching reports:', err);
@@ -88,14 +90,14 @@ export function useReports() {
     } finally {
       setLoading(false);
     }
-  }, [user, handleError, currentPage]);
+  }, [user, handleError, currentPage, isDataFetched]);
 
   // Only fetch reports once when component mounts or user changes
   useEffect(() => {
-    if (user) {
+    if (user && !isDataFetched) {
       fetchReports(1);
     }
-  }, [user, fetchReports]); 
+  }, [user, fetchReports, isDataFetched]); 
 
   const toggleFavorite = async (reportId: string, currentStatus: boolean) => {
     const report = reports.find(r => r.id === reportId);
