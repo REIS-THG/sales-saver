@@ -81,6 +81,11 @@ const Reports = () => {
     return null;
   }
 
+  // Wrapper function to align types between ReportEditor and our update function
+  const handleEditorUpdate = async (reportId: string, updates: Partial<ReportConfigType>) => {
+    await handleUpdateReport(reportId, updates);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <MainHeader onSignOut={() => navigate("/auth")} userData={user} />
@@ -115,7 +120,7 @@ const Reports = () => {
         <ReportEditor
           editingReportId={editingReportId}
           reports={reports}
-          onUpdate={handleUpdateReport}
+          onUpdate={handleEditorUpdate}
           onClose={() => setEditingReportId(null)}
         />
       </div>
