@@ -23,7 +23,7 @@ const SettingsSkeleton = () => (
 );
 
 export default function Settings() {
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const [activeTab, setActiveTab] = useState("account");
@@ -40,34 +40,37 @@ export default function Settings() {
 
   // Authentication check
   useEffect(() => {
-    if (!loading && !user) {
+    if (!authLoading && !user) {
       navigate("/auth");
     }
-  }, [user, loading, navigate]);
+  }, [user, authLoading, navigate]);
 
-  // Theme management with performance optimization
-  const handleThemeChange = useCallback((newTheme: string) => {
+  // Theme management with performance optimization - wrapped with Promise to match expected type
+  const handleThemeChange = useCallback(async (newTheme: string): Promise<void> => {
     setTheme(newTheme);
     document.documentElement.classList.remove('light', 'dark');
     document.documentElement.classList.add(newTheme);
     localStorage.setItem('theme', newTheme);
+    return Promise.resolve();
   }, []);
 
-  // Language management with performance optimization
-  const handleLanguageChange = useCallback((newLanguage: string) => {
+  // Default view management - wrapped with Promise to match expected type
+  const handleDefaultViewChange = useCallback(async (newView: string): Promise<void> => {
+    setDefaultView(newView);
+    return Promise.resolve();
+  }, []);
+
+  // Language management with performance optimization - wrapped with Promise to match expected type
+  const handleLanguageChange = useCallback(async (newLanguage: string): Promise<void> => {
     setLanguage(newLanguage);
     if (i18n.isInitialized) {
       i18n.changeLanguage(newLanguage);
       localStorage.setItem('language', newLanguage);
     }
+    return Promise.resolve();
   }, [i18n]);
 
-  // Default view management
-  const handleDefaultViewChange = useCallback((newView: string) => {
-    setDefaultView(newView);
-  }, []);
-
-  if (loading) {
+  if (authLoading) {
     return <ReportsLoadingState />;
   }
 

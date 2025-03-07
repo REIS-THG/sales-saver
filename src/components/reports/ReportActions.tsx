@@ -30,7 +30,7 @@ export const useReportActions = ({
     }
   };
 
-  const handleUpdateReport = async (reportId: string, updates: Partial<ReportConfigType>) => {
+  const handleUpdateReport = async (reportId: string, updates: Partial<ReportConfigType>): Promise<ReportConfigType | null> => {
     try {
       const updatedReport = await onUpdateReport(reportId, updates);
       return updatedReport;
