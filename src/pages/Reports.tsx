@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useReports } from "@/hooks/use-reports";
@@ -32,7 +31,6 @@ const Reports = () => {
     toggleFavorite,
   } = useReports();
 
-  // Fixing type mismatches for report actions
   const { handleCreateReport, handleUpdateReport, handleExportExcel, handleExportGoogleSheets } = 
     useReportActions({
       onCreateReport: async () => {
@@ -41,16 +39,13 @@ const Reports = () => {
           setEditingReportId(newReport.id);
         }
       },
-      // Return type fixed to match ReportConfiguration | null
       onUpdateReport: async (reportId: string, updates: Partial<ReportConfigType>): Promise<ReportConfigType | null> => {
         return await updateReport(reportId, updates);
       },
       onExportExcel: async (report: ReportConfigType) => {
-        // Mock implementation for Excel export
         console.log("Exporting to Excel:", report);
       },
       onExportGoogleSheets: async (report: ReportConfigType) => {
-        // Mock implementation for Google Sheets export
         console.log("Exporting to Google Sheets:", report);
       },
     });
@@ -87,13 +82,11 @@ const Reports = () => {
     return null;
   }
 
-  // Wrapper function to align types between ReportEditor and our update function
   const handleEditorUpdate = async (reportId: string, updates: Partial<ReportConfigType>) => {
     await handleUpdateReport(reportId, updates);
   };
 
-  // Determine if user is on free plan - Fix type error by proper type checking
-  const isFreePlan = user.subscription_status === 'free' || user.subscription_status === false || user.subscription_status === undefined;
+  const isFreePlan = user.subscription_status === 'free';
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
