@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Deal, Insight } from "@/types/types";
+import { Deal, Insight, SubscriptionStatus } from "@/types/types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface AnalysisParams {
@@ -23,7 +23,7 @@ interface AnalysisParams {
 export function useAIAnalysis() {
   const [selectedDeal, setSelectedDeal] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [subscriptionTier, setSubscriptionTier] = useState<'free' | 'pro'>('free');
+  const [subscriptionTier, setSubscriptionTier] = useState<SubscriptionStatus>('free');
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -49,7 +49,8 @@ export function useAIAnalysis() {
         return null;
       }
 
-      setSubscriptionTier(userData.subscription_status === 'pro' ? 'pro' : 'free');
+      const userSubscription = userData.subscription_status as SubscriptionStatus;
+      setSubscriptionTier(userSubscription);
       return userData;
     },
     retry: 1,
