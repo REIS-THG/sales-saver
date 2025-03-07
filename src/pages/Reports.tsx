@@ -92,8 +92,8 @@ const Reports = () => {
     await handleUpdateReport(reportId, updates);
   };
 
-  // Determine if user is on free plan
-  const isFreePlan = user.subscription_status === 'free' || user.subscription_status === false;
+  // Determine if user is on free plan - Fix type error by proper type checking
+  const isFreePlan = user.subscription_status === 'free' || user.subscription_status === false || user.subscription_status === undefined;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
