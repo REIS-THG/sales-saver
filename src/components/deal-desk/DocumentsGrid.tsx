@@ -6,7 +6,7 @@ interface DocumentsGridProps {
   isGenerating: 'sow' | 'contract' | 'invoice' | null;
   isProSubscription: boolean;
   selectedDealId: string | null;
-  onGenerate: (type: 'sow' | 'contract' | 'invoice') => Promise<void>;
+  onGenerate: (type: 'sow' | 'contract' | 'invoice', format: 'text' | 'docx' | 'pdf') => Promise<void>;
 }
 
 export function DocumentsGrid({
@@ -21,7 +21,7 @@ export function DocumentsGrid({
         title="Statement of Work"
         description="Generate a customized Statement of Work based on deal specifications and requirements."
         icon={<FileText className="h-5 w-5 text-blue-500" />}
-        onGenerate={() => onGenerate('sow')}
+        onGenerate={(format) => onGenerate('sow', format)}
         isGenerating={isGenerating === 'sow'}
         isDisabled={!selectedDealId || !isProSubscription}
       />
@@ -30,7 +30,7 @@ export function DocumentsGrid({
         title="Contract"
         description="Create a contract document with terms and conditions based on the deal parameters."
         icon={<FileCheck className="h-5 w-5 text-green-500" />}
-        onGenerate={() => onGenerate('contract')}
+        onGenerate={(format) => onGenerate('contract', format)}
         isGenerating={isGenerating === 'contract'}
         isDisabled={!selectedDealId || !isProSubscription}
       />
@@ -39,7 +39,7 @@ export function DocumentsGrid({
         title="Invoice"
         description="Generate an invoice with deal amounts, payment terms, and client details."
         icon={<Receipt className="h-5 w-5 text-purple-500" />}
-        onGenerate={() => onGenerate('invoice')}
+        onGenerate={(format) => onGenerate('invoice', format)}
         isGenerating={isGenerating === 'invoice'}
         isDisabled={!selectedDealId || !isProSubscription}
       />

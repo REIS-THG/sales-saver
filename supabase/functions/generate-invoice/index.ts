@@ -1,6 +1,9 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import * as docx from "https://esm.sh/docx@8.2.3";
+import { encode as base64Encode } from "https://deno.land/std@0.177.0/encoding/base64.ts";
+import { Packer } from "https://esm.sh/docx@8.2.3";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -18,7 +21,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { dealId, dealData } = await req.json();
+    const { dealId, dealData, format = 'text' } = await req.json();
 
     // Verify user's subscription status
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser(
@@ -39,7 +42,7 @@ serve(async (req) => {
       throw new Error('Failed to fetch user data');
     }
 
-    // Fix: Check for boolean 'true' value in subscription_status
+    // Check for boolean 'true' value in subscription_status
     if (userData?.subscription_status !== true) {
       throw new Error('This feature requires a Pro subscription');
     }
@@ -95,6 +98,40 @@ serve(async (req) => {
     
     const invoiceText = result.choices[0].message.content;
 
+    // Format as requested (text, docx, pdf)
+    let responseData = { success: true };
+    let contentType = 'application/json';
+    
+    if (format === 'docx') {
+      // Create DOCX document
+      const doc = new docx.Document({
+        sections: [{
+          properties: {},
+          children: [
+            new docx.Paragraph({
+              text: `INVOICE: ${dealData.deal_name}`,
+              heading: docx.HeadingLevel.HEADING_1,
+              spacing: { after: 200 }
+            }),
+            ...formatDocxContent(invoiceText)
+          ],
+        }],
+      });
+
+      // Generate document buffer
+      const buffer = await Packer.toBuffer(doc);
+      const base64Doc = base64Encode(buffer);
+      responseData = { 
+        ...responseData, 
+        invoice: base64Doc, 
+        filename: `${dealData.deal_name.replace(/\s+/g, '_')}_Invoice.docx`,
+        mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      };
+    } else {
+      // Default text format
+      responseData = { ...responseData, invoice: invoiceText };
+    }
+
     // Still save to database for record keeping
     const { error: insertError } = await supabaseClient
       .from('generated_documents')
@@ -110,8 +147,8 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, invoice: invoiceText }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      JSON.stringify(responseData),
+      { headers: { ...corsHeaders, 'Content-Type': contentType } },
     );
 
   } catch (error) {
@@ -127,3 +164,40 @@ serve(async (req) => {
     );
   }
 });
+
+// Helper function to convert text to docx paragraphs
+function formatDocxContent(text: string): docx.Paragraph[] {
+  const paragraphs: docx.Paragraph[] = [];
+  
+  // Split the text into sections and paragraphs
+  const lines = text.split('\n');
+  
+  for (const line of lines) {
+    const trimmedLine = line.trim();
+    
+    // Skip empty lines
+    if (!trimmedLine) {
+      continue;
+    }
+    
+    // Check if this is a heading (simple heuristic)
+    if (trimmedLine.match(/^#+\s/) || trimmedLine.toUpperCase() === trimmedLine) {
+      paragraphs.push(
+        new docx.Paragraph({
+          text: trimmedLine.replace(/^#+\s/, ''),
+          heading: docx.HeadingLevel.HEADING_2,
+          spacing: { before: 200, after: 100 }
+        })
+      );
+    } else {
+      paragraphs.push(
+        new docx.Paragraph({
+          text: trimmedLine,
+          spacing: { before: 100, after: 100 }
+        })
+      );
+    }
+  }
+  
+  return paragraphs;
+}

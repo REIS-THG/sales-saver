@@ -16,6 +16,6 @@ export function useDealDesk() {
     deals,
     isGenerating,
     isProSubscription,
-    handleGenerate: (type: 'sow' | 'contract' | 'invoice') => handleGenerate(type, selectedDealId)
+    handleGenerate: (type: 'sow' | 'contract' | 'invoice', format: 'text' | 'docx' | 'pdf' = 'docx') => handleGenerate(type, selectedDealId, format)
   };
 }
