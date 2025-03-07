@@ -11,8 +11,8 @@ export function SubscriptionAlert() {
     <Alert className="mb-6">
       <AlertCircle className="h-4 w-4" />
       <AlertTitle>Pro Subscription Required</AlertTitle>
-      <AlertDescription>
-        Document generation features require a Pro subscription. 
+      <AlertDescription className="flex items-center gap-2">
+        Document generation features require a Pro subscription.
         <Button variant="link" className="p-0 h-auto" onClick={() => navigate("/subscription")}>
           Upgrade now
         </Button>
