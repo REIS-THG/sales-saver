@@ -1,52 +1,56 @@
 
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { SubscriptionStatus } from "@/types/types";
+import { useAuth } from "./useAuth";
 
-export function useSubscriptionStatus() {
-  const [subscriptionTier, setSubscriptionTier] = useState<SubscriptionStatus>('free');
-  const navigate = useNavigate();
-  const { toast } = useToast();
+export const useSubscriptionStatus = () => {
+  const [subscriptionTier, setSubscriptionTier] = useState<"free" | "pro" | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const { user, isLoading: userLoading } = useAuth();
 
-  const { data: userData, isLoading } = useQuery({
-    queryKey: ['user-subscription'],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+  useEffect(() => {
+    const fetchSubscriptionStatus = async () => {
+      if (userLoading) return;
       if (!user) {
-        navigate("/auth");
-        return null;
+        setSubscriptionTier("free");
+        setIsLoading(false);
+        return;
       }
 
-      const { data: userData, error } = await supabase
-        .from("users")
-        .select("subscription_status")
-        .eq("user_id", user.id)
-        .single();
+      try {
+        setIsLoading(true);
+        
+        // Query the users table to get subscription status
+        const { data, error } = await supabase
+          .from("users")
+          .select("subscription_status")
+          .eq("user_id", user.id)
+          .single();
 
-      if (error) {
-        console.error("Error fetching user data:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Could not fetch subscription data",
-        });
-        return null;
+        if (error) {
+          throw error;
+        }
+
+        // Convert boolean to tier string
+        setSubscriptionTier(data?.subscription_status ? "pro" : "free");
+      } catch (err) {
+        console.error("Error fetching subscription status:", err);
+        setError(err instanceof Error ? err : new Error(String(err)));
+        // Default to free if there's an error
+        setSubscriptionTier("free");
+      } finally {
+        setIsLoading(false);
       }
+    };
 
-      // Properly convert boolean subscription_status to SubscriptionStatus type
-      const userSubscription: SubscriptionStatus = userData.subscription_status === true ? 'pro' : 'free';
-      setSubscriptionTier(userSubscription);
-      return userData;
-    },
-    retry: 1,
-  });
+    fetchSubscriptionStatus();
+  }, [user, userLoading]);
 
   return {
     subscriptionTier,
     isLoading,
-    userData
+    error,
+    isPro: subscriptionTier === "pro",
   };
-}
+};
