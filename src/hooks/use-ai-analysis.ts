@@ -28,6 +28,33 @@ export function useAIAnalysis() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Fetch user subscription status
+  useQuery({
+    queryKey: ['user-subscription'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        navigate("/auth");
+        return null;
+      }
+
+      const { data: userData, error } = await supabase
+        .from("users")
+        .select("subscription_status")
+        .eq("user_id", user.id)
+        .single();
+
+      if (error) {
+        console.error("Error fetching user data:", error);
+        return null;
+      }
+
+      setSubscriptionTier(userData.subscription_status === 'pro' ? 'pro' : 'free');
+      return userData;
+    },
+    retry: 1,
+  });
+
   // Fetch deals with proper caching
   const { data: deals = [], isLoading: isLoadingDeals } = useQuery({
     queryKey: ['deals'],
@@ -120,6 +147,11 @@ export function useAIAnalysis() {
   // File upload mutation
   const fileUploadMutation = useMutation({
     mutationFn: async ({ file, type }: { file: File, type: 'transcript' | 'email' | 'voice' }) => {
+      // Check subscription status
+      if (subscriptionTier !== 'pro') {
+        throw new Error("File upload feature requires a Pro subscription");
+      }
+      
       // File upload logic here
       console.log('File upload:', file, type);
     },
@@ -127,7 +159,7 @@ export function useAIAnalysis() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to upload file",
+        description: error instanceof Error ? error.message : "Failed to upload file",
       });
     }
   });
@@ -135,6 +167,11 @@ export function useAIAnalysis() {
   // Deal analysis mutation
   const analysisMutation = useMutation({
     mutationFn: async ({ dealId, params }: { dealId: string, params: AnalysisParams }) => {
+      // Check subscription status for advanced features
+      if (subscriptionTier !== 'pro' && (params.piiFilter || params.retainAnalysis)) {
+        throw new Error("Advanced analysis features require a Pro subscription");
+      }
+      
       setIsAnalyzing(true);
       const response = await supabase.functions.invoke("analyze-deals", {
         body: { dealId, analysisParams: params },

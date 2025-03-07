@@ -1,20 +1,51 @@
 
 import { MainHeader } from "@/components/layout/MainHeader";
 import { Button } from "@/components/ui/button";
-import { FileText, FileCheck, Receipt, Loader2 } from "lucide-react";
+import { FileText, FileCheck, Receipt, Loader2, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { Deal } from "@/types/types";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import type { Deal, User } from "@/types/types";
 
 const DealDesk = () => {
   const [selectedDealId, setSelectedDealId] = useState<string | null>(null);
   const [deals, setDeals] = useState<Deal[]>([]);
   const [isGenerating, setIsGenerating] = useState<'sow' | 'contract' | 'invoice' | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [isProSubscription, setIsProSubscription] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Fetch user data and subscription status
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      
+      if (!authUser) {
+        navigate("/auth");
+        return;
+      }
+
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('user_id', authUser.id)
+        .single();
+
+      if (userError) {
+        console.error('Error fetching user data:', userError);
+        return;
+      }
+
+      setUser(userData);
+      setIsProSubscription(userData.subscription_status === 'pro');
+    };
+
+    fetchUserData();
+  }, [navigate]);
 
   // Fetch deals when component mounts
   useEffect(() => {
@@ -68,6 +99,15 @@ const DealDesk = () => {
       return;
     }
 
+    if (!isProSubscription) {
+      toast({
+        variant: "destructive",
+        title: "Pro Subscription Required",
+        description: "This feature requires a Pro subscription. Please upgrade your plan to continue.",
+      });
+      return;
+    }
+
     setIsGenerating(type);
     try {
       const { data: dealData, error: dealError } = await supabase
@@ -85,9 +125,28 @@ const DealDesk = () => {
 
       if (response.error) throw new Error(response.error.message);
 
+      // Create and trigger download of document
+      const documentContent = type === 'sow' 
+        ? response.data.sow 
+        : type === 'contract' 
+          ? response.data.contract 
+          : response.data.invoice;
+
+      const filename = `${dealData.deal_name.replace(/\s+/g, '_')}_${type}.txt`;
+      
+      const blob = new Blob([documentContent], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
       toast({
         title: "Success",
-        description: `${type.toUpperCase()} generated successfully. Check your email for the document.`,
+        description: `${type.toUpperCase()} generated and downloaded successfully.`,
       });
     } catch (error) {
       toast({
@@ -108,6 +167,19 @@ const DealDesk = () => {
           <h1 className="text-2xl font-bold text-gray-900">Deal Desk</h1>
           <p className="text-sm text-gray-500">Generate and manage deal documents</p>
         </div>
+
+        {!isProSubscription && (
+          <Alert variant="warning" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Pro Subscription Required</AlertTitle>
+            <AlertDescription>
+              Document generation features require a Pro subscription. 
+              <Button variant="link" className="p-0 h-auto" onClick={() => navigate("/subscription")}>
+                Upgrade now
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
 
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -141,7 +213,7 @@ const DealDesk = () => {
             <Button 
               className="w-full" 
               onClick={() => handleGenerate('sow')}
-              disabled={!selectedDealId || isGenerating === 'sow'}
+              disabled={!selectedDealId || isGenerating === 'sow' || !isProSubscription}
             >
               {isGenerating === 'sow' ? (
                 <>
@@ -167,7 +239,7 @@ const DealDesk = () => {
             <Button 
               className="w-full"
               onClick={() => handleGenerate('contract')}
-              disabled={!selectedDealId || isGenerating === 'contract'}
+              disabled={!selectedDealId || isGenerating === 'contract' || !isProSubscription}
             >
               {isGenerating === 'contract' ? (
                 <>
@@ -193,7 +265,7 @@ const DealDesk = () => {
             <Button 
               className="w-full"
               onClick={() => handleGenerate('invoice')}
-              disabled={!selectedDealId || isGenerating === 'invoice'}
+              disabled={!selectedDealId || isGenerating === 'invoice' || !isProSubscription}
             >
               {isGenerating === 'invoice' ? (
                 <>

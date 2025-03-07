@@ -1,4 +1,3 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -36,7 +35,11 @@ serve(async (req) => {
       .eq('user_id', user.id)
       .single();
 
-    if (userDataError || !userData?.subscription_status) {
+    if (userDataError) {
+      throw new Error('Failed to fetch user data');
+    }
+
+    if (userData?.subscription_status !== 'pro') {
       throw new Error('This feature requires a Pro subscription');
     }
 
@@ -84,6 +87,7 @@ serve(async (req) => {
     const result = await response.json();
     const sowText = result.choices[0].message.content;
 
+    // Still save to database for record keeping
     const { error: insertError } = await supabaseClient
       .from('generated_documents')
       .insert({
@@ -94,7 +98,7 @@ serve(async (req) => {
       });
 
     if (insertError) {
-      throw new Error('Failed to store generated SOW');
+      console.error('Error storing SOW:', insertError);
     }
 
     return new Response(
@@ -103,6 +107,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
+    console.error('Error in generate-sow function:', error);
     return new Response(
       JSON.stringify({
         error: error instanceof Error ? error.message : 'An unknown error occurred',

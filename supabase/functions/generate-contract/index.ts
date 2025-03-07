@@ -34,7 +34,11 @@ serve(async (req) => {
       .eq('user_id', user.id)
       .single();
 
-    if (userDataError || !userData?.subscription_status) {
+    if (userDataError) {
+      throw new Error('Failed to fetch user data');
+    }
+
+    if (userData?.subscription_status !== 'pro') {
       throw new Error('This feature requires a Pro subscription');
     }
 
@@ -94,7 +98,6 @@ serve(async (req) => {
 
     if (insertError) {
       console.error('Error storing contract:', insertError);
-      throw new Error('Failed to store generated contract');
     }
 
     return new Response(
