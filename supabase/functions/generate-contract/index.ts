@@ -1,3 +1,4 @@
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -38,7 +39,8 @@ serve(async (req) => {
       throw new Error('Failed to fetch user data');
     }
 
-    if (userData?.subscription_status !== 'pro') {
+    // Fix: Check for boolean 'true' value in subscription_status
+    if (userData?.subscription_status !== true) {
       throw new Error('This feature requires a Pro subscription');
     }
 
@@ -69,6 +71,8 @@ serve(async (req) => {
       ? 'You are a legal document assistant that generates professional contracts. Keep the language formal and legally sound.'
       : `You are a legal document assistant that generates professional contracts. Generate the content in ${language}. Keep the language formal and legally sound.`;
 
+    console.log('Sending prompt to OpenAI for contract generation');
+    
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -85,6 +89,13 @@ serve(async (req) => {
     });
 
     const result = await response.json();
+    console.log('OpenAI response received for contract');
+    
+    if (!result.choices || result.choices.length === 0) {
+      console.error('Invalid OpenAI response:', result);
+      throw new Error('Invalid response from OpenAI');
+    }
+    
     const contractText = result.choices[0].message.content;
 
     const { error: insertError } = await supabaseClient

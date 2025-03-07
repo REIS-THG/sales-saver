@@ -1,3 +1,4 @@
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -39,7 +40,9 @@ serve(async (req) => {
       throw new Error('Failed to fetch user data');
     }
 
-    if (userData?.subscription_status !== 'pro') {
+    // Fix: Check for boolean 'true' value in subscription_status
+    // The database stores a boolean value, not a string
+    if (userData?.subscription_status !== true) {
       throw new Error('This feature requires a Pro subscription');
     }
 
@@ -66,6 +69,8 @@ serve(async (req) => {
     6. Success Criteria
     7. Terms and Conditions`;
 
+    console.log('Sending prompt to OpenAI:', prompt);
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -85,6 +90,13 @@ serve(async (req) => {
     });
 
     const result = await response.json();
+    console.log('OpenAI response received');
+    
+    if (!result.choices || result.choices.length === 0) {
+      console.error('Invalid OpenAI response:', result);
+      throw new Error('Invalid response from OpenAI');
+    }
+    
     const sowText = result.choices[0].message.content;
 
     // Still save to database for record keeping

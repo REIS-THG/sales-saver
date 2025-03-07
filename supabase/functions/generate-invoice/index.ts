@@ -39,7 +39,8 @@ serve(async (req) => {
       throw new Error('Failed to fetch user data');
     }
 
-    if (userData?.subscription_status !== 'pro') {
+    // Fix: Check for boolean 'true' value in subscription_status
+    if (userData?.subscription_status !== true) {
       throw new Error('This feature requires a Pro subscription');
     }
 
@@ -64,6 +65,8 @@ serve(async (req) => {
     5. Payment Terms
     6. Due Date`;
 
+    console.log('Sending prompt to OpenAI for invoice generation');
+    
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -83,6 +86,13 @@ serve(async (req) => {
     });
 
     const result = await response.json();
+    console.log('OpenAI response received for invoice');
+    
+    if (!result.choices || result.choices.length === 0) {
+      console.error('Invalid OpenAI response:', result);
+      throw new Error('Invalid response from OpenAI');
+    }
+    
     const invoiceText = result.choices[0].message.content;
 
     // Still save to database for record keeping
