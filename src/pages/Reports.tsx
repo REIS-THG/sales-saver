@@ -32,7 +32,7 @@ const Reports = () => {
     toggleFavorite,
   } = useReports();
 
-  // Fixed return type to match expected Promise<ReportConfigType | null>
+  // Fixing type mismatches for report actions
   const { handleCreateReport, handleUpdateReport, handleExportExcel, handleExportGoogleSheets } = 
     useReportActions({
       onCreateReport: async () => {
@@ -41,7 +41,7 @@ const Reports = () => {
           setEditingReportId(newReport.id);
         }
       },
-      // Modified to correctly return ReportConfigType to match expected type
+      // Return type fixed to match ReportConfiguration | null
       onUpdateReport: async (reportId: string, updates: Partial<ReportConfigType>): Promise<ReportConfigType | null> => {
         return await updateReport(reportId, updates);
       },
@@ -66,10 +66,11 @@ const Reports = () => {
 
   const saveReportName = async () => {
     if (!editingReportId) return;
-    // Modified to properly handle the Promise<ReportConfigType | null> return
-    await handleUpdateReport(editingReportId, { name: editingName });
-    setEditingReportId(null);
-    setEditingName("");
+    const updated = await handleUpdateReport(editingReportId, { name: editingName });
+    if (updated) {
+      setEditingReportId(null);
+      setEditingName("");
+    }
   };
 
   if (authLoading || reportsLoading) {

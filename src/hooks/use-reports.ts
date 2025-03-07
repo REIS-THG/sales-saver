@@ -94,14 +94,22 @@ export function useReports() {
     return true;
   };
 
-  const handleUpdateReport = async (reportId: string, updates: Partial<ReportConfiguration>) => {
+  const handleUpdateReport = async (reportId: string, updates: Partial<ReportConfiguration>): Promise<ReportConfiguration | null> => {
     // For MVP, update locally without API call
+    let updatedReport: ReportConfiguration | null = null;
+    
     startTransition(() => {
-      setReports(prev => prev.map(report => 
-        report.id === reportId ? { ...report, ...updates } : report
-      ));
+      setReports(prev => {
+        const newReports = prev.map(report => 
+          report.id === reportId ? { ...report, ...updates } : report
+        );
+        
+        updatedReport = newReports.find(r => r.id === reportId) || null;
+        return newReports;
+      });
     });
-    return reports.find(r => r.id === reportId);
+    
+    return updatedReport;
   };
 
   const handleCreateReport = async () => {
