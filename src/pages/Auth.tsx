@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -43,6 +42,14 @@ const Auth = () => {
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  useEffect(() => {
+    const authMode = localStorage.getItem("auth_mode");
+    if (authMode === "signup") {
+      setIsLogin(false);
+      localStorage.removeItem("auth_mode");
+    }
+  }, []);
 
   const passwordStrength = {
     length: password.length >= 8,

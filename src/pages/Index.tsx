@@ -31,22 +31,36 @@ const Index = () => {
             <h2 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
               Sales Saver
             </h2>
-            {user ? (
-              <Button
-                onClick={() => handleNavigate("/dashboard")}
-                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white"
-              >
-                Dashboard
-              </Button>
-            ) : (
-              <Button
-                onClick={() => handleNavigate("/auth")}
-                variant="outline"
-                className="border-indigo-600 text-indigo-600 hover:bg-indigo-50"
-              >
-                Sign In
-              </Button>
-            )}
+            <div className="flex space-x-2">
+              {user ? (
+                <Button
+                  onClick={() => handleNavigate("/dashboard")}
+                  className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white"
+                >
+                  Dashboard
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    onClick={() => handleNavigate("/auth")}
+                    variant="outline"
+                    className="border-indigo-600 text-indigo-600 hover:bg-indigo-50"
+                  >
+                    Sign In
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      navigate("/auth");
+                      // This will make the Auth page open in signup mode instead of login
+                      localStorage.setItem("auth_mode", "signup");
+                    }}
+                    className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white"
+                  >
+                    Sign Up
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </nav>
@@ -65,14 +79,27 @@ const Index = () => {
           </p>
           
           {!user && (
-            <Button
-              onClick={() => handleNavigate("/auth")}
-              size="lg"
-              className="group relative inline-flex items-center px-8 py-8 text-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
-            >
-              Start Your Free Trial
-              <ArrowRight className="ml-2 h-6 w-6 group-hover:translate-x-1 transition-transform" />
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button
+                onClick={() => handleNavigate("/auth")}
+                size="lg"
+                className="group relative inline-flex items-center px-8 py-8 text-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+              >
+                Sign In
+                <ArrowRight className="ml-2 h-6 w-6 group-hover:translate-x-1 transition-transform" />
+              </Button>
+              <Button
+                onClick={() => {
+                  navigate("/auth");
+                  localStorage.setItem("auth_mode", "signup");
+                }}
+                size="lg"
+                className="group relative inline-flex items-center px-8 py-8 text-xl bg-white border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-50 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+              >
+                Sign Up Free
+                <ArrowRight className="ml-2 h-6 w-6 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </div>
           )}
           
           {user && (
@@ -173,12 +200,23 @@ const Index = () => {
               <p className="text-xl text-indigo-100 mb-8">
                 Join thousands of sales teams already using Sales Saver to exceed their targets.
               </p>
-              <Button
-                onClick={() => handleNavigate("/auth")}
-                className="bg-white text-indigo-600 hover:bg-indigo-50 text-lg px-8 py-6"
-              >
-                Start Your Free Trial
-              </Button>
+              <div className="flex flex-col sm:flex-row justify-center gap-4">
+                <Button
+                  onClick={() => handleNavigate("/auth")}
+                  className="bg-white text-indigo-600 hover:bg-indigo-50 text-lg px-8 py-6"
+                >
+                  Sign In
+                </Button>
+                <Button
+                  onClick={() => {
+                    navigate("/auth");
+                    localStorage.setItem("auth_mode", "signup");
+                  }}
+                  className="bg-indigo-800 text-white hover:bg-indigo-900 text-lg px-8 py-6"
+                >
+                  Sign Up Free
+                </Button>
+              </div>
             </div>
           </div>
         )}
