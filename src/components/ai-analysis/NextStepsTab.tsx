@@ -60,7 +60,10 @@ export function NextStepsTab({ deals, selectedDeal, onDealSelect, insights = [] 
             dealName={selectedDealData.deal_name}
             insights={dealInsights}
           />
-          <MessageGenerator dealId={selectedDeal} />
+          <MessageGenerator 
+            dealId={selectedDeal} 
+            generateDripCampaign={generateDripCampaign}
+          />
         </>
       )}
     </div>
