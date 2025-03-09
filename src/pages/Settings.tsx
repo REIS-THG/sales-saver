@@ -1,5 +1,5 @@
 
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { CreditCard } from "lucide-react";
@@ -23,7 +23,7 @@ const SettingsSkeleton = () => (
 );
 
 export default function Settings() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const [activeTab, setActiveTab] = useState("account");
@@ -37,6 +37,7 @@ export default function Settings() {
 
   const [defaultView, setDefaultView] = useState("table");
   const [language, setLanguage] = useState(() => localStorage.getItem('language') || 'en');
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // Authentication check
   useEffect(() => {
@@ -116,32 +117,37 @@ export default function Settings() {
             </TabsList>
 
             <ErrorBoundary>
-              <Suspense fallback={<SettingsSkeleton />}>
+              {activeTab === "account" && (
                 <TabsContent value="account" className="space-y-8">
-                  {activeTab === "account" && <AccountSettings userData={user} />}
+                  <AccountSettings userData={user} />
                 </TabsContent>
+              )}
 
+              {activeTab === "preferences" && (
                 <TabsContent value="preferences" className="space-y-8">
-                  {activeTab === "preferences" && (
-                    <UserPreferences
-                      theme={theme}
-                      defaultView={defaultView}
-                      language={language}
-                      onThemeChange={handleThemeChange}
-                      onDefaultViewChange={handleDefaultViewChange}
-                      onLanguageChange={handleLanguageChange}
-                    />
-                  )}
+                  <UserPreferences
+                    theme={theme}
+                    defaultView={defaultView}
+                    language={language}
+                    onThemeChange={handleThemeChange}
+                    onDefaultViewChange={handleDefaultViewChange}
+                    onLanguageChange={handleLanguageChange}
+                    isLoading={isUpdating}
+                  />
                 </TabsContent>
+              )}
 
+              {activeTab === "custom-fields" && (
                 <TabsContent value="custom-fields" className="space-y-8">
-                  {activeTab === "custom-fields" && <CustomFieldsManager />}
+                  <CustomFieldsManager />
                 </TabsContent>
+              )}
 
+              {activeTab === "teams" && (
                 <TabsContent value="teams" className="space-y-8">
-                  {activeTab === "teams" && <TeamSettings />}
+                  <TeamSettings />
                 </TabsContent>
-              </Suspense>
+              )}
             </ErrorBoundary>
           </Tabs>
         </div>

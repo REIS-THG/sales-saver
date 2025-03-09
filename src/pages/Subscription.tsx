@@ -1,3 +1,4 @@
+
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { Spinner } from "@/components/ui/spinner";
@@ -16,7 +17,7 @@ const loadStripeScript = () => {
 };
 
 export default function Subscription() {
-  const { user, loading } = useAuth();
+  const { user, isLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
@@ -43,7 +44,7 @@ export default function Subscription() {
     }
   }, [searchParams, toast]);
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Spinner size="lg" />

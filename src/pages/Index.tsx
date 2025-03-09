@@ -8,7 +8,7 @@ import { ArrowRight, BarChart3, BrainCircuit, Users2, Rocket, ShieldCheck, Zap }
 
 const Index = () => {
   const navigate = useNavigate();
-  const { user, loading } = useAuth();
+  const { user, isLoading, isAuthenticated } = useAuth();
   const [isPending, setIsPending] = useState(false);
 
   const handleNavigate = (path: string) => {
@@ -18,7 +18,7 @@ const Index = () => {
     });
   };
 
-  if (loading || isPending) {
+  if (isLoading || isPending) {
     return <ReportsLoadingState />;
   }
 
