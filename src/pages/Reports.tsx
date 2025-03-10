@@ -1,81 +1,39 @@
 
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useReports } from "@/hooks/use-reports";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
+import { useState, useEffect } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ReportsHeader } from "@/components/reports/ReportsHeader";
-import { ReportsLoadingState } from "@/components/reports/ReportsLoadingState";
-import { ReportsEmptyState } from "@/components/reports/ReportsEmptyState";
-import { ReportsContent } from "@/components/reports/ReportsContent";
-import { MainHeader } from "@/components/layout/MainHeader";
+import { ReportsList } from "@/components/reports/ReportsList";
 import { ReportEditor } from "@/components/reports/ReportEditor";
-import { useReportActions } from "@/components/reports/ReportActions";
-import type { ReportConfiguration as ReportConfigType } from "@/components/reports/types";
+import { ReportsEmptyState } from "@/components/reports/ReportsEmptyState";
+import { ReportsLoadingState } from "@/components/reports/ReportsLoadingState";
+import { useAuth } from "@/hooks/useAuth";
+import { useReports } from "@/hooks/use-reports";
+import { useNavigate } from "react-router-dom";
 
-const Reports = () => {
+export default function ReportsPage() {
   const navigate = useNavigate();
-  const { user, isLoading: authLoading } = useAuth();
-  const [editingReportId, setEditingReportId] = useState<string | null>(null);
-  const [editingName, setEditingName] = useState("");
-
-  const {
-    reports,
-    loading: reportsLoading,
-    actionLoading,
-    currentPage,
-    totalPages,
-    fetchReports,
-    createReport,
-    updateReport,
-    deleteReport,
-    toggleFavorite,
-  } = useReports();
-
-  const { handleCreateReport, handleUpdateReport, handleExportExcel, handleExportGoogleSheets } = 
-    useReportActions({
-      onCreateReport: async () => {
-        const newReport = await createReport();
-        if (newReport) {
-          setEditingReportId(newReport.id);
-        }
-      },
-      onUpdateReport: async (reportId: string, updates: Partial<ReportConfigType>): Promise<ReportConfigType | null> => {
-        return await updateReport(reportId, updates);
-      },
-      onExportExcel: async (report: ReportConfigType) => {
-        console.log("Exporting to Excel:", report);
-      },
-      onExportGoogleSheets: async (report: ReportConfigType) => {
-        console.log("Exporting to Google Sheets:", report);
-      },
-    });
+  const { user, isLoading } = useAuth();
+  const [activeTab, setActiveTab] = useState("my-reports");
+  const [showEditor, setShowEditor] = useState(false);
+  const { reports, isLoading: isLoadingReports, error } = useReports();
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (!isLoading && !user) {
       navigate("/auth");
     }
-  }, [user, authLoading, navigate]);
+  }, [isLoading, user, navigate]);
 
-  const handleEditReport = (report: ReportConfigType) => {
-    setEditingReportId(report.id);
-    setEditingName(report.name);
+  const handleCreateReport = () => {
+    setShowEditor(true);
   };
 
-  const handleEditNameChange = (newName: string) => {
-    setEditingName(newName);
+  const handleCloseEditor = () => {
+    setShowEditor(false);
   };
 
-  const saveReportName = async () => {
-    if (!editingReportId) return;
-    const updated = await handleUpdateReport(editingReportId, { name: editingName });
-    if (updated) {
-      setEditingReportId(null);
-      setEditingName("");
-    }
-  };
-
-  if (authLoading || reportsLoading) {
+  if (isLoading || isLoadingReports) {
     return <ReportsLoadingState />;
   }
 
@@ -83,52 +41,88 @@ const Reports = () => {
     return null;
   }
 
-  const handleEditorUpdate = async (reportId: string, updates: Partial<ReportConfigType>) => {
-    await handleUpdateReport(reportId, updates);
-  };
+  // Check for free tier limitations
+  const isFreeTier = user.subscription_status === 'free';
+  const hasReachedLimit = isFreeTier && reports.length >= 1;
 
-  const isFreePlan = user.subscription_status === 'free';
+  // If we're showing the editor, render it instead of the reports list
+  if (showEditor) {
+    return (
+      <div className="flex flex-col h-full">
+        <ReportEditor onClose={handleCloseEditor} />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <MainHeader onSignOut={() => navigate("/auth")} userData={user} />
-      <div className="container mx-auto p-6">
-        <ReportsHeader 
-          onCreateReport={handleCreateReport}
-          isLoading={actionLoading['create']}
-          isFreePlan={isFreePlan}
-        />
+    <div className="flex flex-col h-full">
+      <ReportsHeader onCreateReport={handleCreateReport} />
 
-        {reports.length === 0 ? (
-          <ReportsEmptyState onCreateReport={handleCreateReport} />
-        ) : (
-          <ReportsContent
-            reports={reports}
-            onEdit={handleEditReport}
-            onDelete={deleteReport}
-            onToggleFavorite={toggleFavorite}
-            editingReportId={editingReportId}
-            editingName={editingName}
-            onEditNameChange={handleEditNameChange}
-            onSaveReportName={saveReportName}
-            onExportExcel={handleExportExcel}
-            onExportGoogleSheets={handleExportGoogleSheets}
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={fetchReports}
-            actionLoading={actionLoading}
-          />
-        )}
+      <div className="flex-1 space-y-4 p-8 pt-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList>
+            <TabsTrigger value="my-reports">My Reports</TabsTrigger>
+            <TabsTrigger value="templates">Templates</TabsTrigger>
+            <TabsTrigger value="shared">Shared with me</TabsTrigger>
+          </TabsList>
+          <TabsContent value="my-reports" className="space-y-4">
+            {reports.length > 0 ? (
+              <ReportsList reports={reports} />
+            ) : (
+              <ReportsEmptyState onCreateReport={handleCreateReport} />
+            )}
 
-        <ReportEditor
-          editingReportId={editingReportId}
-          reports={reports}
-          onUpdate={handleEditorUpdate}
-          onClose={() => setEditingReportId(null)}
-        />
+            {hasReachedLimit && (
+              <Card className="bg-muted/50">
+                <CardHeader>
+                  <CardTitle>Free Tier Limitation</CardTitle>
+                  <CardDescription>
+                    You've reached the maximum number of reports for the free tier
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Upgrade to Pro to create unlimited reports and unlock additional features.
+                  </p>
+                  <Button onClick={() => navigate("/subscription")}>
+                    Upgrade to Pro
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+          <TabsContent value="templates">
+            <Card>
+              <CardHeader>
+                <CardTitle>Report Templates</CardTitle>
+                <CardDescription>
+                  Pre-designed report templates to help you get started
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  Report templates are coming soon...
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="shared">
+            <Card>
+              <CardHeader>
+                <CardTitle>Shared Reports</CardTitle>
+                <CardDescription>
+                  Reports shared with you by team members
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  No reports have been shared with you yet.
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
-};
-
-export default Reports;
+}
