@@ -58,7 +58,7 @@ export default function Settings() {
         </TabsList>
         <TabsContent value="account" className="space-y-4">
           <Suspense fallback={<ReportsLoadingState />}>
-            <AccountSettings user={user} />
+            <AccountSettings userData={user} />
           </Suspense>
         </TabsContent>
         <TabsContent value="preferences" className="space-y-4">

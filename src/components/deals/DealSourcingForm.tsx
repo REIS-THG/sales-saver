@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +20,8 @@ interface PotentialDeal extends Omit<Deal, 'id' | 'user_id' | 'created_at' | 'up
   source_url?: string;
   matched_keywords?: string[];
   relevance_score?: number;
+  health_score: number;
+  custom_fields: Record<string, any>;
 }
 
 export function DealSourcingForm() {
@@ -53,7 +54,6 @@ export function DealSourcingForm() {
 
       if (error) throw error;
       
-      // Cast both source_type and source_filters when mapping
       setConfigs(configs?.map(config => ({
         ...config,
         source_type: config.source_type as SourceType,
@@ -96,7 +96,6 @@ export function DealSourcingForm() {
     if (e.key === 'Enter' && newSourceUrl.trim()) {
       e.preventDefault();
       
-      // Basic URL validation
       try {
         new URL(newSourceUrl.trim());
         setSourceUrls([...sourceUrls, newSourceUrl.trim()]);
@@ -217,7 +216,6 @@ export function DealSourcingForm() {
 
   const processWebsiteScraping = async (url: string) => {
     try {
-      // Call the website scraping edge function
       const { data, error } = await supabase.functions.invoke('scrape-website', {
         body: {
           url,
@@ -235,7 +233,6 @@ export function DealSourcingForm() {
       
       console.log('Scraped data:', data);
       
-      // Process the scraped data with AI
       const aiResponse = await supabase.functions.invoke('ai-deal-extraction', {
         body: {
           metadata: data.metadata,
@@ -248,8 +245,13 @@ export function DealSourcingForm() {
         throw new Error('AI processing failed');
       }
       
-      // Combine the direct scrape results with AI-enhanced results
-      return [...data.deals, ...aiResponse.data.deals];
+      const enhancedDeals = [...data.deals, ...aiResponse.data.deals].map(deal => ({
+        ...deal,
+        health_score: 50,
+        custom_fields: {},
+      }));
+      
+      return enhancedDeals;
     } catch (e) {
       console.error('Error in website scraping for URL:', url, e);
       return [];
@@ -257,10 +259,8 @@ export function DealSourcingForm() {
   };
 
   const processMarketplaceSource = async (url: string) => {
-    // Simulate marketplace API call
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // Generate mock marketplace results
     const deals: PotentialDeal[] = [];
     const numDeals = Math.floor(Math.random() * 3) + 1;
     
@@ -277,6 +277,8 @@ export function DealSourcingForm() {
         confidence_score: Math.floor(Math.random() * 30) + 70,
         source_url: url,
         matched_keywords: [randomKeyword],
+        health_score: 50,
+        custom_fields: {},
       });
     }
     
@@ -284,10 +286,8 @@ export function DealSourcingForm() {
   };
 
   const processAPISource = async (url: string) => {
-    // Simulate API integration
     await new Promise(resolve => setTimeout(resolve, 1500));
     
-    // Generate mock API results
     const deals: PotentialDeal[] = [];
     const numDeals = Math.floor(Math.random() * 2) + 1;
     
@@ -304,6 +304,8 @@ export function DealSourcingForm() {
         confidence_score: Math.floor(Math.random() * 20) + 80,
         source_url: url,
         matched_keywords: [randomKeyword],
+        health_score: 50,
+        custom_fields: {},
       });
     }
     
@@ -311,7 +313,6 @@ export function DealSourcingForm() {
   };
 
   const processManualSource = async () => {
-    // For manual sources, we'll just use the keywords to generate potential deals
     await new Promise(resolve => setTimeout(resolve, 500));
     
     const deals: PotentialDeal[] = [];
@@ -330,6 +331,8 @@ export function DealSourcingForm() {
         confidence_score: Math.floor(Math.random() * 40) + 60,
         source_url: 'https://example.com',
         matched_keywords: [randomKeyword],
+        health_score: 50,
+        custom_fields: {},
       });
     }
     
@@ -378,7 +381,6 @@ export function DealSourcingForm() {
         
         allDeals.push(...deals);
         
-        // Update progress
         setSearchProgress(((i + 1) / sourceUrls.length) * 100);
       }
       
@@ -559,8 +561,8 @@ export function DealSourcingForm() {
               >
                 {isLoading ? (
                   <>
-                    <Spinner className="mr-2 h-4 w-4" />
-                    Searching...
+                    <Spinner size="sm" />
+                    <span className="ml-2">Searching...</span>
                   </>
                 ) : (
                   <>

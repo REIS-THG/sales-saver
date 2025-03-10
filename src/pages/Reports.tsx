@@ -11,19 +11,33 @@ import { ReportsLoadingState } from "@/components/reports/ReportsLoadingState";
 import { useAuth } from "@/hooks/useAuth";
 import { useReports } from "@/hooks/use-reports";
 import { useNavigate } from "react-router-dom";
+import type { ReportConfiguration } from "@/components/reports/types";
 
 export default function ReportsPage() {
   const navigate = useNavigate();
-  const { user, isLoading } = useAuth();
+  const { user, isLoading: userLoading } = useAuth();
   const [activeTab, setActiveTab] = useState("my-reports");
   const [showEditor, setShowEditor] = useState(false);
-  const { reports, isLoading: isLoadingReports, error } = useReports();
+  const [editingReportId, setEditingReportId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState("");
+  const { 
+    reports, 
+    loading: reportsLoading, 
+    error, 
+    actionLoading,
+    currentPage,
+    totalPages,
+    fetchReports,
+    createReport,
+    updateReport,
+    deleteReport,
+  } = useReports();
 
   useEffect(() => {
-    if (!isLoading && !user) {
+    if (!userLoading && !user) {
       navigate("/auth");
     }
-  }, [isLoading, user, navigate]);
+  }, [userLoading, user, navigate]);
 
   const handleCreateReport = () => {
     setShowEditor(true);
@@ -31,9 +45,49 @@ export default function ReportsPage() {
 
   const handleCloseEditor = () => {
     setShowEditor(false);
+    setEditingReportId(null);
   };
 
-  if (isLoading || isLoadingReports) {
+  const handleEditReport = (report: ReportConfiguration) => {
+    setEditingReportId(report.id);
+    setEditingName(report.name);
+    setShowEditor(true);
+  };
+
+  const handleEditNameChange = (name: string) => {
+    setEditingName(name);
+  };
+
+  const handleSaveReportName = async () => {
+    if (editingReportId) {
+      await updateReport(editingReportId, { name: editingName });
+      setEditingReportId(null);
+    }
+  };
+
+  const handleToggleFavorite = async (reportId: string, currentStatus: boolean) => {
+    await updateReport(reportId, { is_favorite: !currentStatus });
+  };
+
+  const handleDeleteReport = async (reportId: string) => {
+    await deleteReport(reportId);
+  };
+
+  const handleExportExcel = async (report: ReportConfiguration) => {
+    // Implementation would go here
+    console.log("Export to Excel:", report);
+  };
+
+  const handleExportGoogleSheets = async (report: ReportConfiguration) => {
+    // Implementation would go here
+    console.log("Export to Google Sheets:", report);
+  };
+
+  const handlePageChange = (page: number) => {
+    fetchReports(page);
+  };
+
+  if (userLoading || reportsLoading) {
     return <ReportsLoadingState />;
   }
 
@@ -49,14 +103,23 @@ export default function ReportsPage() {
   if (showEditor) {
     return (
       <div className="flex flex-col h-full">
-        <ReportEditor onClose={handleCloseEditor} />
+        <ReportEditor 
+          editingReportId={editingReportId}
+          reports={reports} 
+          onUpdate={updateReport}
+          onClose={handleCloseEditor}
+        />
       </div>
     );
   }
 
   return (
     <div className="flex flex-col h-full">
-      <ReportsHeader onCreateReport={handleCreateReport} />
+      <ReportsHeader 
+        onCreateReport={handleCreateReport} 
+        isLoading={reportsLoading}
+        isFreePlan={isFreeTier}
+      />
 
       <div className="flex-1 space-y-4 p-8 pt-6">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -67,7 +130,22 @@ export default function ReportsPage() {
           </TabsList>
           <TabsContent value="my-reports" className="space-y-4">
             {reports.length > 0 ? (
-              <ReportsList reports={reports} />
+              <ReportsList 
+                reports={reports}
+                onEdit={handleEditReport}
+                onDelete={handleDeleteReport}
+                onToggleFavorite={handleToggleFavorite}
+                editingReportId={editingReportId}
+                editingName={editingName}
+                onEditNameChange={handleEditNameChange}
+                onSaveReportName={handleSaveReportName}
+                onExportExcel={handleExportExcel}
+                onExportGoogleSheets={handleExportGoogleSheets}
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                actionLoading={actionLoading}
+              />
             ) : (
               <ReportsEmptyState onCreateReport={handleCreateReport} />
             )}

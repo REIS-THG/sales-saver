@@ -1,9 +1,10 @@
 
 interface SpinnerProps {
   size?: "sm" | "md" | "lg";
+  className?: string;
 }
 
-export const Spinner = ({ size = "md" }: SpinnerProps) => {
+export const Spinner = ({ size = "md", className = "" }: SpinnerProps) => {
   const sizeClasses = {
     sm: "h-4 w-4",
     md: "h-6 w-6",
@@ -11,7 +12,7 @@ export const Spinner = ({ size = "md" }: SpinnerProps) => {
   };
 
   return (
-    <div className={`animate-spin ${sizeClasses[size]}`}>
+    <div className={`animate-spin ${sizeClasses[size]} ${className}`}>
       <svg
         xmlns="http://www.w3.org/2000/svg"
         fill="none"

@@ -1,24 +1,14 @@
 
 import { useState } from "react";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Radio, RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useToast } from "@/hooks/use-toast";
+import { Sun, Moon, Palette, Language, Layout } from "lucide-react";
 
-export interface UserPreferencesProps {
+interface UserPreferencesProps {
   theme: string;
   defaultView: string;
   language: string;
@@ -33,121 +23,103 @@ export function UserPreferences({
   language,
   onThemeChange,
   onDefaultViewChange,
-  onLanguageChange
+  onLanguageChange,
 }: UserPreferencesProps) {
-  const [emailNotifications, setEmailNotifications] = useState(true);
-  const [inAppNotifications, setInAppNotifications] = useState(true);
+  const [localTheme, setLocalTheme] = useState(theme);
+  const [localDefaultView, setLocalDefaultView] = useState(defaultView);
+  const [localLanguage, setLocalLanguage] = useState(language);
+  const { toast } = useToast();
+
+  const handleSavePreferences = () => {
+    onThemeChange(localTheme);
+    onDefaultViewChange(localDefaultView);
+    onLanguageChange(localLanguage);
+    
+    toast({
+      title: "Preferences saved",
+      description: "Your preferences have been updated",
+    });
+  };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-medium">User Preferences</h3>
-        <p className="text-sm text-muted-foreground">
-          Customize your application experience
-        </p>
-      </div>
-      <Separator />
-      <div className="grid gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Appearance</CardTitle>
-            <CardDescription>
-              Customize how the application looks
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-6">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="theme">Theme</Label>
-                <Select value={theme} onValueChange={onThemeChange}>
-                  <SelectTrigger id="theme">
-                    <SelectValue placeholder="Select theme" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="light">Light</SelectItem>
-                    <SelectItem value="dark">Dark</SelectItem>
-                    <SelectItem value="system">System</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="default-view">Default View</Label>
-                <Select value={defaultView} onValueChange={onDefaultViewChange}>
-                  <SelectTrigger id="default-view">
-                    <SelectValue placeholder="Select default view" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="kanban">Kanban</SelectItem>
-                    <SelectItem value="list">List</SelectItem>
-                    <SelectItem value="table">Table</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>User Preferences</CardTitle>
+        <CardDescription>Customize your experience</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="space-y-3">
+          <div className="flex items-center space-x-2">
+            <Palette className="h-5 w-5 text-gray-500" />
+            <Label htmlFor="theme">Theme</Label>
+          </div>
+          <RadioGroup
+            value={localTheme}
+            onValueChange={setLocalTheme}
+            className="flex flex-col space-y-1"
+          >
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="light" id="theme-light" />
+              <Label htmlFor="theme-light" className="flex items-center">
+                <Sun className="mr-2 h-4 w-4" />
+                Light
+              </Label>
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Notifications</CardTitle>
-            <CardDescription>
-              Manage your notification preferences
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-6">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="email-notifications">Email Notifications</Label>
-                <div className="text-sm text-muted-foreground">
-                  Receive email notifications for important updates
-                </div>
-              </div>
-              <Switch
-                id="email-notifications"
-                checked={emailNotifications}
-                onCheckedChange={setEmailNotifications}
-              />
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="dark" id="theme-dark" />
+              <Label htmlFor="theme-dark" className="flex items-center">
+                <Moon className="mr-2 h-4 w-4" />
+                Dark
+              </Label>
             </div>
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="in-app-notifications">In-App Notifications</Label>
-                <div className="text-sm text-muted-foreground">
-                  Receive notifications within the application
-                </div>
-              </div>
-              <Switch
-                id="in-app-notifications"
-                checked={inAppNotifications}
-                onCheckedChange={setInAppNotifications}
-              />
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="system" id="theme-system" />
+              <Label htmlFor="theme-system">System</Label>
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Language</CardTitle>
-            <CardDescription>
-              Set your preferred language
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <Label htmlFor="language">Language</Label>
-              <Select value={language} onValueChange={onLanguageChange}>
-                <SelectTrigger id="language">
-                  <SelectValue placeholder="Select language" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="en">English</SelectItem>
-                  <SelectItem value="es">Spanish</SelectItem>
-                  <SelectItem value="fr">French</SelectItem>
-                  <SelectItem value="de">German</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+          </RadioGroup>
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex items-center space-x-2">
+            <Layout className="h-5 w-5 text-gray-500" />
+            <Label htmlFor="default-view">Default Deal View</Label>
+          </div>
+          <Select
+            value={localDefaultView}
+            onValueChange={setLocalDefaultView}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select default view" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="kanban">Kanban</SelectItem>
+              <SelectItem value="list">List</SelectItem>
+              <SelectItem value="table">Table</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex items-center space-x-2">
+            <Language className="h-5 w-5 text-gray-500" />
+            <Label htmlFor="language">Language</Label>
+          </div>
+          <Select value={localLanguage} onValueChange={setLocalLanguage}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select language" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="en">English</SelectItem>
+              <SelectItem value="es">Español</SelectItem>
+              <SelectItem value="fr">Français</SelectItem>
+              <SelectItem value="de">Deutsch</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <Button onClick={handleSavePreferences}>Save Preferences</Button>
+      </CardContent>
+    </Card>
   );
 }
 

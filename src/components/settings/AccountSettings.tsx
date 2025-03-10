@@ -140,3 +140,5 @@ export function AccountSettings({ userData }: AccountSettingsProps) {
     </Card>
   );
 }
+
+export default AccountSettings;

@@ -1,193 +1,161 @@
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { CustomFieldForm, CustomFieldFormData } from "./custom-fields/CustomFieldForm";
+import { CustomField } from "@/types/custom-field";
+import { supabase } from "@/integrations/supabase/client";
 import { CustomFieldsTable } from "./custom-fields/CustomFieldsTable";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { CustomField, CustomFieldType } from "@/types/custom-field";
-import { ReportsLoadingState } from "@/components/reports/ReportsLoadingState";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-
-type DatabaseCustomField = {
-  id: string;
-  field_name: string;
-  field_type: string;
-  is_required: boolean;
-  user_id: string;
-  created_at: string;
-  updated_at: string;
-  default_value?: any;
-  allow_multiple?: boolean;
-  options?: any[];
-  validation_rules?: any;
-  placeholder?: string;
-  help_text?: string;
-  is_active?: boolean;
-};
+import { CustomFieldForm } from "./custom-fields/CustomFieldForm";
 
 export function CustomFieldsManager() {
+  const [customFields, setCustomFields] = useState<CustomField[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editingField, setEditingField] = useState<CustomField | null>(null);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
-  const { data: customFields = [], isLoading: isLoadingFields, error } = useQuery({
-    queryKey: ['customFields'],
-    queryFn: async () => {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) throw new Error("User not authenticated");
+  useEffect(() => {
+    fetchCustomFields();
+  }, []);
 
-      const { data, error } = await supabase
-        .from("custom_fields")
-        .select("*")
-        .eq("user_id", userData.user.id)
-        .order("created_at", { ascending: true });
+  const fetchCustomFields = async () => {
+    setIsLoading(true);
+    try {
+      const { data: fields, error } = await supabase
+        .from('custom_fields')
+        .select('*')
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
+      setCustomFields(fields || []);
+    } catch (error: any) {
+      toast({
+        title: "Error fetching custom fields",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-      return (data || []).map((field: DatabaseCustomField): CustomField => ({
-        id: field.id,
-        field_name: field.field_name,
-        field_type: field.field_type as CustomFieldType,
-        is_required: field.is_required,
-        user_id: field.user_id,
-        created_at: field.created_at,
-        updated_at: field.updated_at,
-        default_value: field.default_value,
-        allow_multiple: field.allow_multiple || false,
-        options: field.options || [],
-        validation_rules: field.validation_rules || {},
-        placeholder: field.placeholder,
-        help_text: field.help_text,
-        is_active: field.is_active || true
-      }));
-    },
-  });
-
-  const createCustomFieldMutation = useMutation({
-    mutationFn: async (values: CustomFieldFormData) => {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) throw new Error("User not authenticated");
-
+  const handleCreateField = async (field: Omit<CustomField, 'id'>) => {
+    try {
       const { data, error } = await supabase
-        .from("custom_fields")
-        .insert({
-          field_name: values.field_name,
-          field_type: values.field_type,
-          is_required: values.is_required,
-          user_id: userData.user.id,
-          default_value: values.default_value,
-          allow_multiple: values.allow_multiple,
-          options: values.options,
-          validation_rules: values.validation_rules,
-          help_text: values.help_text,
-          placeholder: values.placeholder,
-          is_active: true
-        })
+        .from('custom_fields')
+        .insert([field])
         .select()
         .single();
 
       if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['customFields'] });
+
+      setCustomFields(prev => [data as CustomField, ...prev]);
+      setShowForm(false);
       toast({
-        title: "Success",
-        description: "Custom field created successfully",
+        title: "Custom field created",
+        description: `${field.field_name} has been created successfully`,
       });
-    },
-    onError: (error: Error) => {
+    } catch (error: any) {
       toast({
-        title: "Error",
-        description: "Failed to create custom field: " + error.message,
+        title: "Error creating custom field",
+        description: error.message,
         variant: "destructive",
       });
-    },
-  });
+    }
+  };
 
-  const deleteCustomFieldMutation = useMutation({
-    mutationFn: async (fieldId: string) => {
+  const handleUpdateField = async (id: string, updates: Partial<CustomField>) => {
+    try {
+      const { data, error } = await supabase
+        .from('custom_fields')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setCustomFields(prev => prev.map(field => field.id === id ? (data as CustomField) : field));
+      setEditingField(null);
+      setShowForm(false);
+      toast({
+        title: "Custom field updated",
+        description: `${updates.field_name || 'Field'} has been updated successfully`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error updating custom field",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteField = async (id: string) => {
+    try {
       const { error } = await supabase
-        .from("custom_fields")
+        .from('custom_fields')
         .delete()
-        .eq("id", fieldId);
+        .eq('id', id);
 
       if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['customFields'] });
+
+      setCustomFields(prev => prev.filter(field => field.id !== id));
       toast({
-        title: "Success",
-        description: "Custom field deleted successfully",
+        title: "Custom field deleted",
+        description: "The field has been deleted successfully",
       });
-    },
-    onError: (error: Error) => {
+    } catch (error: any) {
       toast({
-        title: "Error",
-        description: "Failed to delete custom field: " + error.message,
+        title: "Error deleting custom field",
+        description: error.message,
         variant: "destructive",
       });
-    },
-  });
+    }
+  };
 
-  const updateCustomFieldMutation = useMutation({
-    mutationFn: async ({ id, ...values }: Partial<CustomField> & { id: string }) => {
-      const { error } = await supabase
-        .from("custom_fields")
-        .update(values)
-        .eq("id", id);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['customFields'] });
-      toast({
-        title: "Success",
-        description: "Custom field updated successfully",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: "Failed to update custom field: " + error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  if (isLoadingFields) {
-    return <ReportsLoadingState />;
-  }
-
-  if (error) {
-    return (
-      <Alert variant="destructive">
-        <AlertDescription>
-          Failed to load custom fields: {error instanceof Error ? error.message : 'Unknown error'}
-        </AlertDescription>
-      </Alert>
-    );
-  }
+  const handleEditField = (field: CustomField) => {
+    setEditingField(field);
+    setShowForm(true);
+  };
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Custom Fields</CardTitle>
-        <CardDescription>Add and manage custom fields for your deals</CardDescription>
+        <CardDescription>Manage custom fields for your deals</CardDescription>
       </CardHeader>
       <CardContent>
-        <CustomFieldForm 
-          onSubmit={(values) => createCustomFieldMutation.mutateAsync(values)}
-        />
-        <div className="mt-6">
-          <CustomFieldsTable 
-            fields={customFields}
-            onDelete={(id) => deleteCustomFieldMutation.mutateAsync(id)}
-            onUpdate={(field) => updateCustomFieldMutation.mutateAsync(field)}
-            isLoading={createCustomFieldMutation.isPending || deleteCustomFieldMutation.isPending}
+        {showForm ? (
+          <CustomFieldForm
+            initialField={editingField}
+            onSubmit={editingField ? 
+              (updates) => handleUpdateField(editingField.id, updates) : 
+              handleCreateField}
+            onCancel={() => {
+              setShowForm(false);
+              setEditingField(null);
+            }}
           />
-        </div>
+        ) : (
+          <CustomFieldsTable
+            fields={customFields}
+            isLoading={isLoading}
+            onEdit={handleEditField}
+            onDelete={handleDeleteField}
+          />
+        )}
       </CardContent>
+      {!showForm && (
+        <CardFooter>
+          <Button onClick={() => setShowForm(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Custom Field
+          </Button>
+        </CardFooter>
+      )}
     </Card>
   );
 }
