@@ -90,7 +90,12 @@ export default function ReportsPage() {
   };
 
   if (userLoading || reportsLoading) {
-    return <ReportsLoadingState />;
+    return (
+      <>
+        <MainHeader userData={user} />
+        <ReportsLoadingState />
+      </>
+    );
   }
 
   if (!user) {
@@ -103,6 +108,7 @@ export default function ReportsPage() {
   if (showEditor) {
     return (
       <div className="flex flex-col h-full">
+        <MainHeader userData={user} />
         <ReportEditor 
           editingReportId={editingReportId}
           reports={reports} 

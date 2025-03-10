@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { CustomField, CustomFieldType } from "@/types/custom-field";
+import { CustomField, CustomFieldType, CustomFieldOption } from "@/types/custom-field";
 import { supabase } from "@/integrations/supabase/client";
 import { CustomFieldsTable } from "./custom-fields/CustomFieldsTable";
 import { CustomFieldForm } from "./custom-fields/CustomFieldForm";
@@ -39,15 +39,20 @@ export function CustomFieldsManager() {
         created_at: field.created_at,
         updated_at: field.updated_at,
         user_id: field.user_id,
-        allow_multiple: false, // Default values for missing properties
-        custom_fields: {},
-        options: [],
-        validation_rules: {},
-        health_score: 0,
-        default_value: undefined,
-        placeholder: "",
-        help_text: "",
-        is_active: true
+        allow_multiple: field.allow_multiple || false,
+        custom_fields: field.custom_fields || {},
+        options: Array.isArray(field.options) 
+          ? field.options.map((opt: any) => ({
+              label: opt.label || "",
+              value: opt.value || ""
+            })) as CustomFieldOption[]
+          : [],
+        validation_rules: field.validation_rules || {},
+        health_score: field.health_score || 0,
+        default_value: field.default_value,
+        placeholder: field.placeholder || "",
+        help_text: field.help_text || "",
+        is_active: field.is_active !== undefined ? field.is_active : true
       })) || [];
       
       setCustomFields(typedFields);
@@ -64,12 +69,23 @@ export function CustomFieldsManager() {
 
   const handleCreateField = async (field: Omit<CustomField, 'id'>) => {
     try {
+      // Ensure options are properly formatted before sending to DB
+      const processedOptions = field.options?.map(opt => ({
+        label: opt.label || "",
+        value: opt.value || ""
+      }));
+
       const { data, error } = await supabase
         .from('custom_fields')
         .insert([{
           field_name: field.field_name,
           field_type: field.field_type,
           is_required: field.is_required || false,
+          // Only include these if they're actually present in the database schema
+          options: processedOptions,
+          default_value: field.default_value,
+          placeholder: field.placeholder,
+          help_text: field.help_text
         }])
         .select()
         .single();
@@ -85,15 +101,20 @@ export function CustomFieldsManager() {
         created_at: data.created_at,
         updated_at: data.updated_at,
         user_id: data.user_id,
-        allow_multiple: false,
-        custom_fields: {},
-        options: [],
-        validation_rules: {},
-        health_score: 0,
-        default_value: field.default_value,
-        placeholder: field.placeholder || "",
-        help_text: field.help_text || "",
-        is_active: true
+        allow_multiple: data.allow_multiple || false,
+        custom_fields: data.custom_fields || {},
+        options: Array.isArray(data.options) 
+          ? data.options.map((opt: any) => ({
+              label: opt.label || "",
+              value: opt.value || ""
+            })) as CustomFieldOption[]
+          : [],
+        validation_rules: data.validation_rules || {},
+        health_score: data.health_score || 0,
+        default_value: data.default_value,
+        placeholder: data.placeholder || "",
+        help_text: data.help_text || "",
+        is_active: data.is_active !== undefined ? data.is_active : true
       };
 
       setCustomFields(prev => [typedField, ...prev]);
@@ -113,11 +134,22 @@ export function CustomFieldsManager() {
 
   const handleUpdateField = async (id: string, updates: Partial<CustomField>) => {
     try {
+      // Ensure options are properly formatted
+      const processedOptions = updates.options?.map(opt => ({
+        label: opt.label || "",
+        value: opt.value || ""
+      }));
+
       // Only send fields that the database expects
       const dbUpdates = {
         field_name: updates.field_name,
         field_type: updates.field_type,
-        is_required: updates.is_required
+        is_required: updates.is_required,
+        options: processedOptions,
+        default_value: updates.default_value,
+        placeholder: updates.placeholder,
+        help_text: updates.help_text,
+        is_active: updates.is_active
       };
       
       const { data, error } = await supabase
@@ -138,15 +170,20 @@ export function CustomFieldsManager() {
         created_at: data.created_at,
         updated_at: data.updated_at,
         user_id: data.user_id,
-        allow_multiple: false,
-        custom_fields: {},
-        options: [],
-        validation_rules: {},
-        health_score: 0,
-        default_value: updates.default_value,
-        placeholder: updates.placeholder || "",
-        help_text: updates.help_text || "",
-        is_active: updates.is_active !== undefined ? updates.is_active : true
+        allow_multiple: data.allow_multiple || false,
+        custom_fields: data.custom_fields || {},
+        options: Array.isArray(data.options) 
+          ? data.options.map((opt: any) => ({
+              label: opt.label || "",
+              value: opt.value || ""
+            })) as CustomFieldOption[]
+          : [],
+        validation_rules: data.validation_rules || {},
+        health_score: data.health_score || 0,
+        default_value: data.default_value,
+        placeholder: data.placeholder || "",
+        help_text: data.help_text || "",
+        is_active: data.is_active !== undefined ? data.is_active : true
       };
 
       setCustomFields(prev => prev.map(field => field.id === id ? typedField : field));

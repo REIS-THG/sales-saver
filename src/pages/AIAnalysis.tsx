@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { useAIAnalysis } from "@/hooks/use-ai-analysis";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -9,6 +9,8 @@ import { AnalysisSettings } from "@/components/ai-analysis/AnalysisSettings";
 import { AnalysisTabs } from "@/components/ai-analysis/AnalysisTabs";
 import { ReportsLoadingState } from "@/components/reports/ReportsLoadingState";
 import { Insight } from "@/types/types";
+import { useAuth } from "@/hooks/useAuth";
+import { MainHeader } from "@/components/layout/MainHeader";
 
 interface AnalysisParams {
   salesApproach: 'consultative_selling' | 'solution_selling' | 'transactional_selling' | 'value_based_selling';
@@ -26,12 +28,15 @@ interface AnalysisParams {
 
 const AIAnalysis = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { user, isLoading: userLoading } = useAuth();
+  
   const {
     deals,
     selectedDeal,
     setSelectedDeal,
     insights: rawInsights,
-    isLoading,
+    isLoading: dataLoading,
     isAnalyzing,
     error,
     analysisCount,
@@ -44,7 +49,16 @@ const AIAnalysis = () => {
 
   const [activeTab, setActiveTab] = useState<string>("analysis");
   const [piiFilter, setPiiFilter] = useState(true);
-  const [retainAnalysis, setRetainAnalysis] = useState(subscriptionTier === 'pro');
+  const [retainAnalysis, setRetainAnalysis] = useState(user?.subscription_status === 'pro');
+
+  useEffect(() => {
+    if (!userLoading && !user) {
+      navigate("/auth");
+    }
+    if (user) {
+      setRetainAnalysis(user.subscription_status === 'pro');
+    }
+  }, [userLoading, user, navigate]);
 
   // Transform insights to ensure they match the expected type
   const insights: Insight[] = rawInsights.map(insight => ({
@@ -54,15 +68,19 @@ const AIAnalysis = () => {
   }));
 
   useEffect(() => {
-    fetchDeals();
-    const dealId = searchParams.get('dealId');
-    if (dealId) {
-      setSelectedDeal(dealId);
-      fetchInsights(dealId);
+    if (user) {
+      fetchDeals();
+      const dealId = searchParams.get('dealId');
+      if (dealId) {
+        setSelectedDeal(dealId);
+        fetchInsights(dealId);
+      }
     }
-  }, [searchParams]);
+  }, [searchParams, user]);
 
-  const isAnalysisLimited = subscriptionTier === 'free' && analysisCount >= 1;
+  // Use user's subscription status directly to ensure consistency
+  const userSubscriptionTier = user?.subscription_status || 'free';
+  const isAnalysisLimited = userSubscriptionTier === 'free' && analysisCount >= 1;
 
   const handleDealSelect = (dealId: string) => {
     setSelectedDeal(dealId);
@@ -86,14 +104,12 @@ const AIAnalysis = () => {
     await analyzeDeal(dealId, params);
   };
 
+  const isLoading = userLoading || dataLoading;
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <DashboardHeader
-          onDealCreated={fetchDeals}
-          customFields={[]}
-          userData={null}
-        />
+        <MainHeader userData={user} />
         <ReportsLoadingState />
       </div>
     );
@@ -101,14 +117,10 @@ const AIAnalysis = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <DashboardHeader
-        onDealCreated={fetchDeals}
-        customFields={[]}
-        userData={null}
-      />
+      <MainHeader userData={user} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <AnalysisHeader subscriptionTier={subscriptionTier} />
+        <AnalysisHeader subscriptionTier={userSubscriptionTier} />
 
         {error && (
           <Alert variant="destructive" className="mb-6">
@@ -131,7 +143,7 @@ const AIAnalysis = () => {
             setPiiFilter={setPiiFilter}
             retainAnalysis={retainAnalysis}
             setRetainAnalysis={setRetainAnalysis}
-            subscriptionTier={subscriptionTier}
+            subscriptionTier={userSubscriptionTier}
           />
 
           <AnalysisTabs

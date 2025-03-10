@@ -21,7 +21,7 @@ export function AnalysisHeader({ subscriptionTier }: AnalysisHeaderProps) {
       {subscriptionTier === 'free' && (
         <Button
           variant="outline"
-          onClick={() => navigate("/settings/subscription")}
+          onClick={() => navigate("/subscription")}
           className="shrink-0"
         >
           <span>Upgrade to Pro</span>
