@@ -1,12 +1,11 @@
 
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Card } from "@/components/ui/card";
 import { CustomField } from "@/types/custom-field";
-import { CustomFieldsTable } from "./CustomFieldsTable";
-import { CustomFieldForm } from "./CustomFieldForm";
 import { useCustomFields } from "./useCustomFields";
+import { CustomFieldsHeader } from "./components/CustomFieldsHeader";
+import { CustomFieldsContent } from "./components/CustomFieldsContent";
+import { CustomFieldsActions } from "./components/CustomFieldsActions";
 
 export function CustomFieldsManagerUI() {
   const [showForm, setShowForm] = useState(false);
@@ -38,33 +37,19 @@ export function CustomFieldsManagerUI() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Custom Fields</CardTitle>
-        <CardDescription>Manage custom fields for your deals</CardDescription>
-      </CardHeader>
-      <CardContent>
-        {showForm ? (
-          <CustomFieldForm
-            initialData={editingField || undefined}
-            onSubmit={handleFormSubmit}
-          />
-        ) : (
-          <CustomFieldsTable
-            fields={customFields}
-            isLoading={isLoading}
-            onEdit={handleEditField}
-            onDelete={deleteField}
-            onUpdate={toggleFieldStatus}
-          />
-        )}
-      </CardContent>
+      <CustomFieldsHeader />
+      <CustomFieldsContent
+        showForm={showForm}
+        customFields={customFields}
+        isLoading={isLoading}
+        editingField={editingField}
+        onEdit={handleEditField}
+        onDelete={deleteField}
+        onToggleStatus={toggleFieldStatus}
+        onSubmit={handleFormSubmit}
+      />
       {!showForm && (
-        <CardFooter>
-          <Button onClick={() => setShowForm(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Custom Field
-          </Button>
-        </CardFooter>
+        <CustomFieldsActions onAddField={() => setShowForm(true)} />
       )}
     </Card>
   );
