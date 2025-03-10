@@ -29,4 +29,6 @@ export interface CustomField {
   placeholder?: string;
   help_text?: string;
   is_active?: boolean;
+  custom_fields?: Record<string, any>;
+  health_score?: number;
 }

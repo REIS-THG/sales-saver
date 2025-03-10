@@ -30,15 +30,24 @@ export function CustomFieldsManager() {
 
       if (error) throw error;
       
-      // Cast the field_type as CustomFieldType to satisfy TypeScript
-      const typedFields = fields?.map(field => ({
-        ...field,
+      // Transform the database response to match our CustomField type
+      const typedFields: CustomField[] = fields?.map(field => ({
+        id: field.id,
+        field_name: field.field_name,
         field_type: field.field_type as CustomFieldType,
-        allow_multiple: field.allow_multiple || false,
-        custom_fields: field.custom_fields || {},
-        options: field.options || [],
-        validation_rules: field.validation_rules || {},
-        health_score: field.health_score || 0
+        is_required: field.is_required || false,
+        created_at: field.created_at,
+        updated_at: field.updated_at,
+        user_id: field.user_id,
+        allow_multiple: false, // Default values for missing properties
+        custom_fields: {},
+        options: [],
+        validation_rules: {},
+        health_score: 0,
+        default_value: undefined,
+        placeholder: "",
+        help_text: "",
+        is_active: true
       })) || [];
       
       setCustomFields(typedFields);
@@ -57,22 +66,35 @@ export function CustomFieldsManager() {
     try {
       const { data, error } = await supabase
         .from('custom_fields')
-        .insert([field])
+        .insert([{
+          field_name: field.field_name,
+          field_type: field.field_type,
+          is_required: field.is_required || false,
+        }])
         .select()
         .single();
 
       if (error) throw error;
 
-      // Cast the returned field_type to CustomFieldType
-      const typedField = {
-        ...data,
+      // Transform the returned data to match CustomField type
+      const typedField: CustomField = {
+        id: data.id,
+        field_name: data.field_name,
         field_type: data.field_type as CustomFieldType,
-        allow_multiple: data.allow_multiple || false,
-        custom_fields: data.custom_fields || {},
-        options: data.options || [],
-        validation_rules: data.validation_rules || {},
-        health_score: data.health_score || 0
-      } as CustomField;
+        is_required: data.is_required || false,
+        created_at: data.created_at,
+        updated_at: data.updated_at,
+        user_id: data.user_id,
+        allow_multiple: false,
+        custom_fields: {},
+        options: [],
+        validation_rules: {},
+        health_score: 0,
+        default_value: field.default_value,
+        placeholder: field.placeholder || "",
+        help_text: field.help_text || "",
+        is_active: true
+      };
 
       setCustomFields(prev => [typedField, ...prev]);
       setShowForm(false);
@@ -91,25 +113,41 @@ export function CustomFieldsManager() {
 
   const handleUpdateField = async (id: string, updates: Partial<CustomField>) => {
     try {
+      // Only send fields that the database expects
+      const dbUpdates = {
+        field_name: updates.field_name,
+        field_type: updates.field_type,
+        is_required: updates.is_required
+      };
+      
       const { data, error } = await supabase
         .from('custom_fields')
-        .update(updates)
+        .update(dbUpdates)
         .eq('id', id)
         .select()
         .single();
 
       if (error) throw error;
 
-      // Cast the returned field_type to CustomFieldType
-      const typedField = {
-        ...data,
+      // Transform the returned data to match CustomField type
+      const typedField: CustomField = {
+        id: data.id,
+        field_name: data.field_name,
         field_type: data.field_type as CustomFieldType,
-        allow_multiple: data.allow_multiple || false,
-        custom_fields: data.custom_fields || {},
-        options: data.options || [],
-        validation_rules: data.validation_rules || {},
-        health_score: data.health_score || 0
-      } as CustomField;
+        is_required: data.is_required || false,
+        created_at: data.created_at,
+        updated_at: data.updated_at,
+        user_id: data.user_id,
+        allow_multiple: false,
+        custom_fields: {},
+        options: [],
+        validation_rules: {},
+        health_score: 0,
+        default_value: updates.default_value,
+        placeholder: updates.placeholder || "",
+        help_text: updates.help_text || "",
+        is_active: updates.is_active !== undefined ? updates.is_active : true
+      };
 
       setCustomFields(prev => prev.map(field => field.id === id ? typedField : field));
       setEditingField(null);
@@ -155,7 +193,7 @@ export function CustomFieldsManager() {
     setShowForm(true);
   };
 
-  const handleUpdateStatus = (field: Partial<CustomField> & { id: string }) => {
+  const handleUpdateStatus = (field: CustomField) => {
     handleUpdateField(field.id, field);
   };
 
