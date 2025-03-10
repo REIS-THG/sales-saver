@@ -191,3 +191,5 @@ export function CustomFieldsManager() {
     </Card>
   );
 }
+
+export default CustomFieldsManager;

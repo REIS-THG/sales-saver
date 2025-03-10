@@ -46,9 +46,9 @@ export function useAuth() {
     try {
       console.log('Fetching user data for:', userId);
       const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('user_id', userId)
+        .from("users")
+        .select("*")
+        .eq("user_id", userId)
         .single();
 
       if (error) {
@@ -81,7 +81,7 @@ export function useAuth() {
           : {};
 
         // Map the subscription status to the correct type
-        const subscription_status = data.subscription_status ? 'pro' : 'free' as const;
+        const subscription_status = data.subscription_status === true ? 'pro' : 'free' as 'free' | 'pro' | 'enterprise';
 
         // Create a properly typed User object
         const userData: User = {

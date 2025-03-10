@@ -11,3 +11,5 @@ export function TeamSettings() {
     </div>
   );
 }
+
+export default TeamSettings;
