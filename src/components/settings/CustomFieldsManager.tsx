@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,29 +29,28 @@ export function CustomFieldsManager() {
 
       if (error) throw error;
       
-      // Transform the database response to match our CustomField type
       const typedFields: CustomField[] = fields?.map(field => ({
         id: field.id,
+        user_id: field.user_id,
         field_name: field.field_name,
         field_type: field.field_type as CustomFieldType,
         is_required: field.is_required || false,
-        created_at: field.created_at,
-        updated_at: field.updated_at,
-        user_id: field.user_id,
         allow_multiple: field.allow_multiple || false,
-        custom_fields: field.custom_fields || {},
         options: Array.isArray(field.options) 
           ? field.options.map((opt: any) => ({
-              label: opt.label || "",
-              value: opt.value || ""
-            })) as CustomFieldOption[]
+              label: String(opt.label || ''),
+              value: String(opt.value || '')
+            }))
           : [],
         validation_rules: field.validation_rules || {},
-        health_score: field.health_score || 0,
         default_value: field.default_value,
-        placeholder: field.placeholder || "",
-        help_text: field.help_text || "",
-        is_active: field.is_active !== undefined ? field.is_active : true
+        placeholder: field.placeholder || '',
+        help_text: field.help_text || '',
+        created_at: field.created_at,
+        updated_at: field.updated_at,
+        is_active: field.is_active !== undefined ? field.is_active : true,
+        custom_fields: field.custom_fields || {},
+        health_score: field.health_score || 0
       })) || [];
       
       setCustomFields(typedFields);
@@ -69,7 +67,6 @@ export function CustomFieldsManager() {
 
   const handleCreateField = async (field: Omit<CustomField, 'id'>) => {
     try {
-      // Ensure options are properly formatted before sending to DB
       const processedOptions = field.options?.map(opt => ({
         label: opt.label || "",
         value: opt.value || ""
@@ -81,7 +78,6 @@ export function CustomFieldsManager() {
           field_name: field.field_name,
           field_type: field.field_type,
           is_required: field.is_required || false,
-          // Only include these if they're actually present in the database schema
           options: processedOptions,
           default_value: field.default_value,
           placeholder: field.placeholder,
@@ -92,7 +88,6 @@ export function CustomFieldsManager() {
 
       if (error) throw error;
 
-      // Transform the returned data to match CustomField type
       const typedField: CustomField = {
         id: data.id,
         field_name: data.field_name,
@@ -134,13 +129,11 @@ export function CustomFieldsManager() {
 
   const handleUpdateField = async (id: string, updates: Partial<CustomField>) => {
     try {
-      // Ensure options are properly formatted
       const processedOptions = updates.options?.map(opt => ({
         label: opt.label || "",
         value: opt.value || ""
       }));
 
-      // Only send fields that the database expects
       const dbUpdates = {
         field_name: updates.field_name,
         field_type: updates.field_type,
@@ -161,7 +154,6 @@ export function CustomFieldsManager() {
 
       if (error) throw error;
 
-      // Transform the returned data to match CustomField type
       const typedField: CustomField = {
         id: data.id,
         field_name: data.field_name,

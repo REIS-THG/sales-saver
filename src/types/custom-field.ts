@@ -1,34 +1,34 @@
 
-export type CustomFieldValidation = {
-  required?: boolean;
+export type CustomFieldType = 'text' | 'number' | 'boolean' | 'date' | 'product' | 'multi-select';
+
+export interface CustomFieldOption {
+  label: string;
+  value: string;
+}
+
+export interface CustomFieldValidation {
   min?: number;
   max?: number;
   pattern?: string;
   custom?: string;
-};
-
-export type CustomFieldOption = {
-  label: string;
-  value: string;
-};
-
-export type CustomFieldType = "text" | "number" | "boolean" | "date" | "product" | "multi-select";
+}
 
 export interface CustomField {
   id: string;
+  user_id: string;
   field_name: string;
   field_type: CustomFieldType;
   is_required: boolean;
-  user_id?: string;
-  created_at?: string;
-  updated_at?: string;
-  default_value?: any;
   allow_multiple?: boolean;
   options?: CustomFieldOption[];
   validation_rules?: CustomFieldValidation;
+  default_value?: any;
   placeholder?: string;
   help_text?: string;
+  created_at: string;
+  updated_at: string;
   is_active?: boolean;
   custom_fields?: Record<string, any>;
   health_score?: number;
 }
+
