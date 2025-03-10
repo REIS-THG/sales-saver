@@ -29,9 +29,14 @@ export default function ReportsPage() {
     totalPages,
     fetchReports,
     createReport,
-    updateReport,
+    updateReport: updateReportBase,
     deleteReport,
   } = useReports();
+
+  // Create a wrapper function for updateReport that matches the expected return type
+  const updateReport = async (reportId: string, updates: Partial<ReportConfiguration>): Promise<void> => {
+    await updateReportBase(reportId, updates);
+  };
 
   useEffect(() => {
     if (!userLoading && !user) {

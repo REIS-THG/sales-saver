@@ -4,9 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Radio, RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
-import { Sun, Moon, Palette, Language, Layout } from "lucide-react";
+import { Sun, Moon, Palette, Languages, Layout } from "lucide-react";
 
 interface UserPreferencesProps {
   theme: string;
@@ -101,7 +101,7 @@ export function UserPreferences({
 
         <div className="space-y-3">
           <div className="flex items-center space-x-2">
-            <Language className="h-5 w-5 text-gray-500" />
+            <Languages className="h-5 w-5 text-gray-500" />
             <Label htmlFor="language">Language</Label>
           </div>
           <Select value={localLanguage} onValueChange={setLocalLanguage}>

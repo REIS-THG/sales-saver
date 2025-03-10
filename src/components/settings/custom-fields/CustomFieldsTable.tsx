@@ -11,10 +11,11 @@ interface CustomFieldsTableProps {
   fields: CustomField[];
   onDelete: (fieldId: string) => void;
   onUpdate: (field: Partial<CustomField> & { id: string }) => void;
+  onEdit: (field: CustomField) => void;
   isLoading?: boolean;
 }
 
-export function CustomFieldsTable({ fields, onDelete, onUpdate, isLoading }: CustomFieldsTableProps) {
+export function CustomFieldsTable({ fields, onDelete, onUpdate, onEdit, isLoading }: CustomFieldsTableProps) {
   return (
     <Table>
       <TableHeader>
@@ -55,10 +56,7 @@ export function CustomFieldsTable({ fields, onDelete, onUpdate, isLoading }: Cus
                 <Button 
                   variant="ghost" 
                   size="icon"
-                  onClick={() => {
-                    // TODO: Implement edit functionality
-                    console.log("Edit field:", field);
-                  }}
+                  onClick={() => onEdit(field)}
                 >
                   <Edit2 className="h-4 w-4 text-blue-500" />
                 </Button>

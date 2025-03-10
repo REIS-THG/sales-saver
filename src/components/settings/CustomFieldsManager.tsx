@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { CustomField } from "@/types/custom-field";
+import { CustomField, CustomFieldType } from "@/types/custom-field";
 import { supabase } from "@/integrations/supabase/client";
 import { CustomFieldsTable } from "./custom-fields/CustomFieldsTable";
 import { CustomFieldForm } from "./custom-fields/CustomFieldForm";
@@ -29,7 +29,14 @@ export function CustomFieldsManager() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setCustomFields(fields || []);
+      
+      // Cast the field_type as CustomFieldType to satisfy TypeScript
+      const typedFields = fields?.map(field => ({
+        ...field,
+        field_type: field.field_type as CustomFieldType
+      })) || [];
+      
+      setCustomFields(typedFields);
     } catch (error: any) {
       toast({
         title: "Error fetching custom fields",
@@ -51,7 +58,13 @@ export function CustomFieldsManager() {
 
       if (error) throw error;
 
-      setCustomFields(prev => [data as CustomField, ...prev]);
+      // Cast the returned field_type to CustomFieldType
+      const typedField = {
+        ...data,
+        field_type: data.field_type as CustomFieldType
+      } as CustomField;
+
+      setCustomFields(prev => [typedField, ...prev]);
       setShowForm(false);
       toast({
         title: "Custom field created",
@@ -77,7 +90,13 @@ export function CustomFieldsManager() {
 
       if (error) throw error;
 
-      setCustomFields(prev => prev.map(field => field.id === id ? (data as CustomField) : field));
+      // Cast the returned field_type to CustomFieldType
+      const typedField = {
+        ...data,
+        field_type: data.field_type as CustomFieldType
+      } as CustomField;
+
+      setCustomFields(prev => prev.map(field => field.id === id ? typedField : field));
       setEditingField(null);
       setShowForm(false);
       toast({
@@ -130,14 +149,10 @@ export function CustomFieldsManager() {
       <CardContent>
         {showForm ? (
           <CustomFieldForm
-            initialField={editingField}
+            initialData={editingField || undefined}
             onSubmit={editingField ? 
               (updates) => handleUpdateField(editingField.id, updates) : 
               handleCreateField}
-            onCancel={() => {
-              setShowForm(false);
-              setEditingField(null);
-            }}
           />
         ) : (
           <CustomFieldsTable
@@ -145,6 +160,7 @@ export function CustomFieldsManager() {
             isLoading={isLoading}
             onEdit={handleEditField}
             onDelete={handleDeleteField}
+            onUpdate={handleUpdateField}
           />
         )}
       </CardContent>

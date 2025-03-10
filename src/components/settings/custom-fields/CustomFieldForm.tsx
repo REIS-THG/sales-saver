@@ -8,7 +8,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import type { CustomFieldOption, CustomFieldValidation } from "@/types/custom-field";
+import type { CustomFieldOption, CustomFieldValidation, CustomField, CustomFieldType } from "@/types/custom-field";
 import { useState } from "react";
 import { PlusCircle, X } from "lucide-react";
 
@@ -36,7 +36,7 @@ export type CustomFieldFormData = z.infer<typeof CustomFieldSchema>;
 
 interface CustomFieldFormProps {
   onSubmit: (data: CustomFieldFormData) => void;
-  initialData?: Partial<CustomFieldFormData>;
+  initialData?: Partial<CustomField>;
 }
 
 export function CustomFieldForm({ onSubmit, initialData }: CustomFieldFormProps) {
@@ -45,13 +45,15 @@ export function CustomFieldForm({ onSubmit, initialData }: CustomFieldFormProps)
   const form = useForm<CustomFieldFormData>({
     resolver: zodResolver(CustomFieldSchema),
     defaultValues: {
-      field_name: "",
-      field_type: "text",
-      is_required: false,
-      allow_multiple: false,
-      options: [],
-      validation_rules: {},
-      ...initialData
+      field_name: initialData?.field_name || "",
+      field_type: (initialData?.field_type as CustomFieldType) || "text",
+      is_required: initialData?.is_required || false,
+      allow_multiple: initialData?.allow_multiple || false,
+      options: initialData?.options || [],
+      validation_rules: initialData?.validation_rules || {},
+      default_value: initialData?.default_value || "",
+      placeholder: initialData?.placeholder || "",
+      help_text: initialData?.help_text || ""
     },
   });
 
@@ -228,7 +230,10 @@ export function CustomFieldForm({ onSubmit, initialData }: CustomFieldFormProps)
           )}
         />
 
-        <Button type="submit">Add Custom Field</Button>
+        <div className="flex gap-2">
+          <Button type="submit">{initialData ? "Update" : "Add"} Custom Field</Button>
+          {initialData && <Button type="button" variant="outline" onClick={() => onSubmit(form.getValues())}>Cancel</Button>}
+        </div>
       </form>
     </Form>
   );
