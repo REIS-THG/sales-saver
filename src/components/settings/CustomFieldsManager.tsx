@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { CustomField, CustomFieldType } from "@/types/custom-field";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,7 +33,12 @@ export function CustomFieldsManager() {
       // Cast the field_type as CustomFieldType to satisfy TypeScript
       const typedFields = fields?.map(field => ({
         ...field,
-        field_type: field.field_type as CustomFieldType
+        field_type: field.field_type as CustomFieldType,
+        allow_multiple: field.allow_multiple || false,
+        custom_fields: field.custom_fields || {},
+        options: field.options || [],
+        validation_rules: field.validation_rules || {},
+        health_score: field.health_score || 0
       })) || [];
       
       setCustomFields(typedFields);
@@ -61,7 +66,12 @@ export function CustomFieldsManager() {
       // Cast the returned field_type to CustomFieldType
       const typedField = {
         ...data,
-        field_type: data.field_type as CustomFieldType
+        field_type: data.field_type as CustomFieldType,
+        allow_multiple: data.allow_multiple || false,
+        custom_fields: data.custom_fields || {},
+        options: data.options || [],
+        validation_rules: data.validation_rules || {},
+        health_score: data.health_score || 0
       } as CustomField;
 
       setCustomFields(prev => [typedField, ...prev]);
@@ -93,7 +103,12 @@ export function CustomFieldsManager() {
       // Cast the returned field_type to CustomFieldType
       const typedField = {
         ...data,
-        field_type: data.field_type as CustomFieldType
+        field_type: data.field_type as CustomFieldType,
+        allow_multiple: data.allow_multiple || false,
+        custom_fields: data.custom_fields || {},
+        options: data.options || [],
+        validation_rules: data.validation_rules || {},
+        health_score: data.health_score || 0
       } as CustomField;
 
       setCustomFields(prev => prev.map(field => field.id === id ? typedField : field));
@@ -140,6 +155,10 @@ export function CustomFieldsManager() {
     setShowForm(true);
   };
 
+  const handleUpdateStatus = (field: Partial<CustomField> & { id: string }) => {
+    handleUpdateField(field.id, field);
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -160,7 +179,7 @@ export function CustomFieldsManager() {
             isLoading={isLoading}
             onEdit={handleEditField}
             onDelete={handleDeleteField}
-            onUpdate={handleUpdateField}
+            onUpdate={handleUpdateStatus}
           />
         )}
       </CardContent>

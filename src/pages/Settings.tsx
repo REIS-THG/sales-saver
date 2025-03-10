@@ -3,6 +3,7 @@ import { useState, useEffect, lazy, Suspense } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { ReportsLoadingState } from "@/components/reports/ReportsLoadingState";
+import { MainHeader } from "@/components/layout/MainHeader";
 
 // Lazy-load components
 const AccountSettings = lazy(() => import("@/components/settings/AccountSettings"));
@@ -47,43 +48,46 @@ export default function Settings() {
   }
 
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <h2 className="text-3xl font-bold tracking-tight">Settings</h2>
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="account">Account</TabsTrigger>
-          <TabsTrigger value="preferences">Preferences</TabsTrigger>
-          <TabsTrigger value="customFields">Custom Fields</TabsTrigger>
-          <TabsTrigger value="team">Team</TabsTrigger>
-        </TabsList>
-        <TabsContent value="account" className="space-y-4">
-          <Suspense fallback={<ReportsLoadingState />}>
-            <AccountSettings userData={user} />
-          </Suspense>
-        </TabsContent>
-        <TabsContent value="preferences" className="space-y-4">
-          <Suspense fallback={<ReportsLoadingState />}>
-            <UserPreferences 
-              theme={userPreferences.theme}
-              defaultView={userPreferences.defaultView}
-              language={userPreferences.language}
-              onThemeChange={handleThemeChange}
-              onDefaultViewChange={handleDefaultViewChange}
-              onLanguageChange={handleLanguageChange}
-            />
-          </Suspense>
-        </TabsContent>
-        <TabsContent value="customFields" className="space-y-4">
-          <Suspense fallback={<ReportsLoadingState />}>
-            <CustomFieldsManager />
-          </Suspense>
-        </TabsContent>
-        <TabsContent value="team" className="space-y-4">
-          <Suspense fallback={<ReportsLoadingState />}>
-            <TeamSettings />
-          </Suspense>
-        </TabsContent>
-      </Tabs>
+    <div className="min-h-screen bg-gray-50">
+      <MainHeader userData={user} />
+      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6 max-w-7xl mx-auto">
+        <h2 className="text-3xl font-bold tracking-tight">Settings</h2>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="account">Account</TabsTrigger>
+            <TabsTrigger value="preferences">Preferences</TabsTrigger>
+            <TabsTrigger value="customFields">Custom Fields</TabsTrigger>
+            <TabsTrigger value="team">Team</TabsTrigger>
+          </TabsList>
+          <TabsContent value="account" className="space-y-4">
+            <Suspense fallback={<ReportsLoadingState />}>
+              <AccountSettings userData={user} />
+            </Suspense>
+          </TabsContent>
+          <TabsContent value="preferences" className="space-y-4">
+            <Suspense fallback={<ReportsLoadingState />}>
+              <UserPreferences 
+                theme={userPreferences.theme}
+                defaultView={userPreferences.defaultView}
+                language={userPreferences.language}
+                onThemeChange={handleThemeChange}
+                onDefaultViewChange={handleDefaultViewChange}
+                onLanguageChange={handleLanguageChange}
+              />
+            </Suspense>
+          </TabsContent>
+          <TabsContent value="customFields" className="space-y-4">
+            <Suspense fallback={<ReportsLoadingState />}>
+              <CustomFieldsManager />
+            </Suspense>
+          </TabsContent>
+          <TabsContent value="team" className="space-y-4">
+            <Suspense fallback={<ReportsLoadingState />}>
+              <TeamSettings />
+            </Suspense>
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }
