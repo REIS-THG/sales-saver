@@ -1,7 +1,6 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { useAIAnalysis } from "@/hooks/use-ai-analysis";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AnalysisHeader } from "@/components/ai-analysis/AnalysisHeader";
@@ -11,6 +10,9 @@ import { ReportsLoadingState } from "@/components/reports/ReportsLoadingState";
 import { Insight } from "@/types/types";
 import { useAuth } from "@/hooks/useAuth";
 import { MainHeader } from "@/components/layout/MainHeader";
+import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { AlertTriangle } from "lucide-react";
 
 interface AnalysisParams {
   salesApproach: 'consultative_selling' | 'solution_selling' | 'transactional_selling' | 'value_based_selling';
@@ -119,7 +121,7 @@ const AIAnalysis = () => {
     <div className="min-h-screen bg-gray-50">
       <MainHeader userData={user} />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <AnalysisHeader subscriptionTier={userSubscriptionTier} />
 
         {error && (
@@ -130,6 +132,7 @@ const AIAnalysis = () => {
 
         {isAnalysisLimited && (
           <Alert className="mb-6">
+            <AlertTriangle className="h-4 w-4" />
             <AlertTitle>Analysis Limit Reached</AlertTitle>
             <AlertDescription>
               You've reached your free analysis limit. Upgrade to Pro for unlimited analysis and additional features.
@@ -137,28 +140,41 @@ const AIAnalysis = () => {
           </Alert>
         )}
 
-        <div className="bg-white rounded-lg shadow">
-          <AnalysisSettings
-            piiFilter={piiFilter}
-            setPiiFilter={setPiiFilter}
-            retainAnalysis={retainAnalysis}
-            setRetainAnalysis={setRetainAnalysis}
-            subscriptionTier={userSubscriptionTier}
-          />
+        <div className="grid grid-cols-1 gap-6">
+          <Card className="overflow-hidden">
+            <CardContent className="p-0">
+              <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
+                <h2 className="text-xl font-semibold tracking-tight">AI-Powered Deal Intelligence</h2>
+                <p className="text-muted-foreground mt-1">
+                  Analyze your deals, get next step recommendations, and track progress over time
+                </p>
+              </div>
+              
+              <Separator />
+              
+              <AnalysisSettings
+                piiFilter={piiFilter}
+                setPiiFilter={setPiiFilter}
+                retainAnalysis={retainAnalysis}
+                setRetainAnalysis={setRetainAnalysis}
+                subscriptionTier={userSubscriptionTier}
+              />
 
-          <AnalysisTabs
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            deals={deals}
-            selectedDeal={selectedDeal}
-            isAnalyzing={isAnalyzing}
-            isAnalysisLimited={isAnalysisLimited}
-            insights={insights}
-            onDealSelect={handleDealSelect}
-            onAnalyze={handleAnalyze}
-            onFileUpload={handleFileUpload}
-            isLoading={isLoading}
-          />
+              <AnalysisTabs
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                deals={deals}
+                selectedDeal={selectedDeal}
+                isAnalyzing={isAnalyzing}
+                isAnalysisLimited={isAnalysisLimited}
+                insights={insights}
+                onDealSelect={handleDealSelect}
+                onAnalyze={handleAnalyze}
+                onFileUpload={handleFileUpload}
+                isLoading={isLoading}
+              />
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

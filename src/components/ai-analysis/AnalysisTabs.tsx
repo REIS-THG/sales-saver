@@ -5,6 +5,7 @@ import { DealAnalysisTab } from "./DealAnalysisTab";
 import { NextStepsTab } from "./NextStepsTab";
 import { AnalysisHistoryTab } from "./AnalysisHistoryTab";
 import { Deal, Insight } from "@/types/types";
+import { BarChart3, ArrowRight, History } from "lucide-react";
 
 interface AnalysisTabsProps {
   activeTab: string;
@@ -34,12 +35,21 @@ export function AnalysisTabs({
   isLoading
 }: AnalysisTabsProps) {
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab}>
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
       <div className="p-6">
-        <TabsList className="w-full justify-start">
-          <TabsTrigger value="analysis">Deal Analysis</TabsTrigger>
-          <TabsTrigger value="next-steps">Next Step Assistant</TabsTrigger>
-          <TabsTrigger value="history">Analysis History</TabsTrigger>
+        <TabsList className="w-full grid grid-cols-3 h-14">
+          <TabsTrigger value="analysis" className="flex items-center gap-2 h-full">
+            <BarChart3 className="h-4 w-4" />
+            <span>Deal Analysis</span>
+          </TabsTrigger>
+          <TabsTrigger value="next-steps" className="flex items-center gap-2 h-full">
+            <ArrowRight className="h-4 w-4" />
+            <span>Next Step Assistant</span>
+          </TabsTrigger>
+          <TabsTrigger value="history" className="flex items-center gap-2 h-full">
+            <History className="h-4 w-4" />
+            <span>Analysis History</span>
+          </TabsTrigger>
         </TabsList>
       </div>
       
