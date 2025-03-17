@@ -17,4 +17,10 @@ module.exports = {
     '!src/vite-env.d.ts',
     '!src/**/*.d.ts',
   ],
+  globals: {
+    'ts-jest': {
+      tsconfig: 'tsconfig.json',
+      isolatedModules: true,
+    },
+  },
 };

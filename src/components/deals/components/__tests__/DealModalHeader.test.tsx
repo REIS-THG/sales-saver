@@ -7,8 +7,13 @@ describe('DealModalHeader component', () => {
   const mockDeal = {
     id: '1',
     deal_name: 'Test Deal',
+    company_name: 'Test Company',
+    amount: 15000,
+    status: 'open' as const,
     health_score: 75,
-    status: 'open',
+    user_id: 'user-123',
+    notes: '',
+    custom_fields: {},
   };
   
   const mockProps = {

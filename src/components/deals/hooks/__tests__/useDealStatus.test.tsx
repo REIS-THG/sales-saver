@@ -3,6 +3,7 @@ import { renderHook, act } from '@testing-library/react-hooks';
 import { useDealStatus } from '../useDealStatus';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { Deal } from '@/types/types';
 
 // Mock dependencies
 jest.mock('@/integrations/supabase/client', () => ({
@@ -27,7 +28,17 @@ describe('useDealStatus hook', () => {
   });
 
   it('should initialize with deal status', () => {
-    const mockDeal = { id: '1', status: 'open' };
+    const mockDeal: Deal = { 
+      id: '1', 
+      status: 'open',
+      deal_name: 'Test Deal',
+      company_name: 'Test Company',
+      amount: 15000,
+      health_score: 75,
+      user_id: 'user-123',
+      notes: '',
+      custom_fields: {}
+    };
     const { result } = renderHook(() => useDealStatus(mockDeal));
     
     expect(result.current.status).toBe('open');
@@ -35,7 +46,17 @@ describe('useDealStatus hook', () => {
   });
 
   it('should update status when handleStatusChange is called successfully', async () => {
-    const mockDeal = { id: '1', status: 'open' };
+    const mockDeal: Deal = { 
+      id: '1', 
+      status: 'open',
+      deal_name: 'Test Deal',
+      company_name: 'Test Company',
+      amount: 15000,
+      health_score: 75,
+      user_id: 'user-123',
+      notes: '',
+      custom_fields: {}
+    };
     
     (supabase.from as jest.Mock).mockImplementation(() => ({
       update: jest.fn().mockReturnThis(),
@@ -57,7 +78,17 @@ describe('useDealStatus hook', () => {
   });
 
   it('should show error toast when status update fails', async () => {
-    const mockDeal = { id: '1', status: 'open' };
+    const mockDeal: Deal = { 
+      id: '1', 
+      status: 'open',
+      deal_name: 'Test Deal',
+      company_name: 'Test Company',
+      amount: 15000,
+      health_score: 75,
+      user_id: 'user-123',
+      notes: '',
+      custom_fields: {}
+    };
     
     (supabase.from as jest.Mock).mockImplementation(() => ({
       update: jest.fn().mockReturnThis(),

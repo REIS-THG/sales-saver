@@ -20,7 +20,7 @@ describe('DealDetailsModal component', () => {
     deal_name: 'Test Deal',
     company_name: 'Test Company',
     amount: 15000,
-    status: 'open',
+    status: 'open' as const,
     contact_first_name: 'John',
     contact_last_name: 'Doe',
     contact_email: 'john@example.com',
@@ -28,10 +28,20 @@ describe('DealDetailsModal component', () => {
     expected_close_date: '2023-03-15',
     health_score: 75,
     next_action: 'Follow up call',
+    user_id: 'user-123',
+    notes: '',
+    custom_fields: {},
   };
   
   const mockNotes = [
-    { id: '1', content: 'Note 1', created_at: '2023-01-01T12:00:00Z', sentiment_score: 50 },
+    { 
+      id: '1', 
+      content: 'Note 1', 
+      created_at: '2023-01-01T12:00:00Z', 
+      sentiment_score: 50,
+      deal_id: '1',
+      user_id: 'user-123',
+    },
   ];
   
   const mockProps = {

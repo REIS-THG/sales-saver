@@ -2,18 +2,18 @@
 import '@testing-library/jest-dom';
 
 // Mock window.matchMedia for components that might use it
-window.matchMedia = window.matchMedia || function() {
+window.matchMedia = ((query) => {
   return {
     matches: false,
-    addListener: function() {},
-    removeListener: function() {},
-    addEventListener: function() {},
-    removeEventListener: function() {},
-    dispatchEvent: function() {
-      return true;
-    },
+    media: query,
+    onchange: null,
+    addListener: () => {},
+    removeListener: () => {},
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    dispatchEvent: () => true,
   };
-};
+}) as any;
 
 // Mock ResizeObserver which might be used by some components
 global.ResizeObserver = class ResizeObserver {

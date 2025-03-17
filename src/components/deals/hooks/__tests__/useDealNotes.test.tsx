@@ -3,6 +3,7 @@ import { renderHook, act } from '@testing-library/react-hooks';
 import { useDealNotes } from '../useDealNotes';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { Deal } from '@/types/types';
 
 // Mock dependencies
 jest.mock('@/integrations/supabase/client', () => ({
@@ -41,7 +42,18 @@ describe('useDealNotes hook', () => {
   });
 
   it('should fetch notes when fetchNotes is called', async () => {
-    const mockDeal = { id: '1' };
+    const mockDeal: Deal = { 
+      id: '1',
+      deal_name: 'Test Deal',
+      company_name: 'Test Company',
+      amount: 15000,
+      status: 'open',
+      health_score: 75,
+      user_id: 'user-123',
+      notes: '',
+      custom_fields: {}
+    };
+    
     const mockNotes = [
       { id: '1', content: 'Note 1' },
       { id: '2', content: 'Note 2' },
@@ -63,7 +75,18 @@ describe('useDealNotes hook', () => {
   });
 
   it('should add a note and analyze it when handleAddNote is called', async () => {
-    const mockDeal = { id: '1' };
+    const mockDeal: Deal = { 
+      id: '1',
+      deal_name: 'Test Deal',
+      company_name: 'Test Company',
+      amount: 15000,
+      status: 'open',
+      health_score: 75,
+      user_id: 'user-123',
+      notes: '',
+      custom_fields: {}
+    };
+    
     const mockAnalysisResult = { 
       sentiment_score: 75,
       health_score: 80,
@@ -122,7 +145,17 @@ describe('useDealNotes hook', () => {
   });
 
   it('should show error toast when note addition fails', async () => {
-    const mockDeal = { id: '1' };
+    const mockDeal: Deal = { 
+      id: '1',
+      deal_name: 'Test Deal',
+      company_name: 'Test Company',
+      amount: 15000,
+      status: 'open',
+      health_score: 75,
+      user_id: 'user-123',
+      notes: '',
+      custom_fields: {}
+    };
     
     (supabase.functions.invoke as jest.Mock).mockResolvedValue({
       data: { sentiment_score: 75 },
@@ -166,7 +199,18 @@ describe('useDealNotes hook', () => {
   });
 
   it('should not add empty notes', async () => {
-    const mockDeal = { id: '1' };
+    const mockDeal: Deal = { 
+      id: '1',
+      deal_name: 'Test Deal',
+      company_name: 'Test Company',
+      amount: 15000,
+      status: 'open',
+      health_score: 75,
+      user_id: 'user-123',
+      notes: '',
+      custom_fields: {}
+    };
+    
     const { result } = renderHook(() => useDealNotes(mockDeal));
 
     act(() => {

@@ -16,6 +16,8 @@ describe('DealNotesSection component', () => {
         content: 'First note content',
         created_at: '2023-01-01T12:00:00Z',
         sentiment_score: 50,
+        deal_id: 'deal-1',
+        user_id: 'user-1',
         ai_analysis: {
           key_points: ['Point 1', 'Point 2'],
           next_actions: ['Action 1']
@@ -26,6 +28,8 @@ describe('DealNotesSection component', () => {
         content: 'Second note content',
         created_at: '2023-01-02T12:00:00Z',
         sentiment_score: -40,
+        deal_id: 'deal-1',
+        user_id: 'user-1',
         ai_analysis: null
       }
     ],
@@ -104,7 +108,7 @@ describe('DealNotesSection component', () => {
   it('should display spinner when analyzing', () => {
     render(<DealNotesSection {...mockProps} isAnalyzing={true} newNote="Test" />);
     
-    // Check if spinner is rendered (this will depend on your Spinner implementation)
+    // Check if spinner is rendered
     const spinner = document.querySelector('.animate-spin');
     expect(spinner).toBeInTheDocument();
   });
