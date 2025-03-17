@@ -37,6 +37,7 @@ declare module '@tanstack/react-table' {
     manualSorting?: boolean;
     manualFiltering?: boolean;
     manualPagination?: boolean;
+    globalFilterFn?: any;
   }
 
   export type SortingState = Array<{
@@ -74,6 +75,31 @@ declare module '@tanstack/react-table' {
     getToggleSelectedHandler: () => (event: unknown) => void;
     getVisibleCells: () => any[];
   }
+  
+  // Add missing Table type
+  export type Table<T extends object = {}> = {
+    getState: () => any;
+    getRowModel: () => { rows: Row<T>[] };
+    getColumn: (id: string) => any;
+    getAllColumns: () => any[];
+    getHeaderGroups: () => any[];
+    getFlatHeaders: () => any[];
+    getPreFilteredRowModel: () => any;
+    getFilteredRowModel: () => any;
+    getPaginationRowModel: () => any;
+    getSortedRowModel: () => any;
+    setPageIndex: (index: number) => void;
+    getPageCount: () => number;
+    getCanPreviousPage: () => boolean;
+    getCanNextPage: () => boolean;
+    previousPage: () => void;
+    nextPage: () => void;
+    setPageSize: (size: number) => void;
+    resetRowSelection: () => void;
+    resetColumnFilters: () => void;
+    resetGlobalFilter: () => void;
+    getSelectedRowModel: () => any;
+  };
 }
 
 declare module '@dnd-kit/core' {
@@ -100,8 +126,13 @@ declare module '@dnd-kit/core' {
     active: { id: string | number };
     over: { id: string | number } | null;
   }
-  export interface PointerSensor {}
-  export interface SensorDescriptor {}
+  export interface PointerSensor {
+    new(options?: any): any;
+  }
+  export interface SensorDescriptor<T = any> {
+    sensor: T;
+    options?: any;
+  }
 }
 
 declare module '@dnd-kit/sortable' {
@@ -175,6 +206,84 @@ declare module '@supabase/supabase-js' {
   }
 
   export function createClient(url: string, key: string, options?: any): SupabaseClient;
+}
+
+// Add testing library type declarations
+declare module '@testing-library/react' {
+  export function render(
+    ui: React.ReactElement, 
+    options?: any
+  ): {
+    container: HTMLElement;
+    baseElement: HTMLElement;
+    debug: (baseElement?: HTMLElement | HTMLElement[]) => void;
+    rerender: (ui: React.ReactElement) => void;
+    unmount: () => boolean;
+    asFragment: () => DocumentFragment;
+    findByText: (text: string | RegExp) => Promise<HTMLElement>;
+    findAllByText: (text: string | RegExp) => Promise<HTMLElement[]>;
+    queryByText: (text: string | RegExp) => HTMLElement | null;
+    queryAllByText: (text: string | RegExp) => HTMLElement[];
+    getByText: (text: string | RegExp) => HTMLElement;
+    getAllByText: (text: string | RegExp) => HTMLElement[];
+    findByRole: (role: string, options?: any) => Promise<HTMLElement>;
+    findAllByRole: (role: string, options?: any) => Promise<HTMLElement[]>;
+    queryByRole: (role: string, options?: any) => HTMLElement | null;
+    queryAllByRole: (role: string, options?: any) => HTMLElement[];
+    getByRole: (role: string, options?: any) => HTMLElement;
+    getAllByRole: (role: string, options?: any) => HTMLElement[];
+    findByLabelText: (label: string | RegExp) => Promise<HTMLElement>;
+    findAllByLabelText: (label: string | RegExp) => Promise<HTMLElement[]>;
+    queryByLabelText: (label: string | RegExp) => HTMLElement | null;
+    queryAllByLabelText: (label: string | RegExp) => HTMLElement[];
+    getByLabelText: (label: string | RegExp) => HTMLElement;
+    getAllByLabelText: (label: string | RegExp) => HTMLElement[];
+    findByPlaceholderText: (placeholder: string | RegExp) => Promise<HTMLElement>;
+    findAllByPlaceholderText: (placeholder: string | RegExp) => Promise<HTMLElement[]>;
+    queryByPlaceholderText: (placeholder: string | RegExp) => HTMLElement | null;
+    queryAllByPlaceholderText: (placeholder: string | RegExp) => HTMLElement[];
+    getByPlaceholderText: (placeholder: string | RegExp) => HTMLElement;
+    getAllByPlaceholderText: (placeholder: string | RegExp) => HTMLElement[];
+    findByTestId: (testId: string | RegExp) => Promise<HTMLElement>;
+    findAllByTestId: (testId: string | RegExp) => Promise<HTMLElement[]>;
+    queryByTestId: (testId: string | RegExp) => HTMLElement | null;
+    queryAllByTestId: (testId: string | RegExp) => HTMLElement[];
+    getByTestId: (testId: string | RegExp) => HTMLElement;
+    getAllByTestId: (testId: string | RegExp) => HTMLElement[];
+  };
+  export function screen(): any;
+  export function fireEvent(element: HTMLElement, event: Event): boolean;
+  fireEvent.click = function(element: HTMLElement, options?: {}): boolean;
+  fireEvent.change = function(element: HTMLElement, options?: {}): boolean;
+}
+
+declare module '@testing-library/react-hooks' {
+  export function renderHook<TProps, TResult>(
+    callback: (props: TProps) => TResult,
+    options?: {
+      initialProps?: TProps;
+      wrapper?: React.ComponentType<any>;
+    }
+  ): {
+    result: {
+      current: TResult;
+      error?: Error;
+    };
+    rerender: (props?: TProps) => void;
+    unmount: () => void;
+    waitFor: (callback: () => boolean | void, options?: {
+      interval?: number;
+      timeout?: number;
+    }) => Promise<void>;
+    waitForNextUpdate: (options?: {
+      timeout?: number;
+    }) => Promise<void>;
+    waitForValueToChange: (selector: () => any, options?: {
+      timeout?: number;
+    }) => Promise<void>;
+  };
+  
+  export function act(callback: () => void | Promise<void>): Promise<void> | void;
 }
 
 // Make global test types available
