@@ -54,7 +54,10 @@ jest.mock('react-router-dom', () => ({
 // Mock lucide-react icons
 jest.mock('lucide-react', () => ({
   ...Object.keys(jest.requireActual('lucide-react')).reduce(
-    (acc, key) => ({ ...acc, [key]: () => <div data-testid={`icon-${key}`} /> }),
+    (acc, key) => ({ 
+      ...acc, 
+      [key]: () => <div data-testid={`icon-${key}`} /> 
+    }),
     {}
   )
 }));
