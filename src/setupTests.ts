@@ -2,7 +2,7 @@
 import '@testing-library/jest-dom';
 
 // Mock window.matchMedia for components that might use it
-window.matchMedia = ((query) => {
+window.matchMedia = (query) => {
   return {
     matches: false,
     media: query,
@@ -13,7 +13,7 @@ window.matchMedia = ((query) => {
     removeEventListener: () => {},
     dispatchEvent: () => true,
   };
-}) as any;
+};
 
 // Mock ResizeObserver which might be used by some components
 global.ResizeObserver = class ResizeObserver {
