@@ -1,37 +1,82 @@
 
+// jest-dom adds custom jest matchers for asserting on DOM nodes.
+// allows you to do things like:
+// expect(element).toHaveTextContent(/react/i)
 import '@testing-library/jest-dom';
 
-// Mock window.matchMedia for components that might use it
-window.matchMedia = (query) => {
-  return {
+// Mock the Supabase client
+jest.mock('@/integrations/supabase/client', () => ({
+  supabase: {
+    auth: {
+      getSession: jest.fn().mockResolvedValue({ data: { session: null }, error: null }),
+      getUser: jest.fn().mockResolvedValue({ data: { user: null }, error: null }),
+      signOut: jest.fn().mockResolvedValue({ error: null }),
+      onAuthStateChange: jest.fn().mockReturnValue({ data: { subscription: { unsubscribe: jest.fn() } } })
+    },
+    from: jest.fn().mockReturnValue({
+      select: jest.fn().mockReturnThis(),
+      insert: jest.fn().mockReturnThis(),
+      update: jest.fn().mockReturnThis(),
+      delete: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      single: jest.fn().mockReturnThis(),
+      order: jest.fn().mockReturnThis(),
+      then: jest.fn().mockImplementation(callback => Promise.resolve(callback({ data: [], error: null })))
+    }),
+    functions: {
+      invoke: jest.fn().mockResolvedValue({ data: {}, error: null })
+    }
+  }
+}));
+
+// Mock for @tanstack/react-query
+jest.mock('@tanstack/react-query', () => ({
+  ...jest.requireActual('@tanstack/react-query'),
+  useQuery: jest.fn().mockImplementation(({ queryFn }) => ({
+    data: [],
+    isLoading: false,
+    error: null,
+    refetch: jest.fn()
+  })),
+  useQueryClient: jest.fn().mockReturnValue({
+    invalidateQueries: jest.fn()
+  })
+}));
+
+// Mock for react-router-dom
+jest.mock('react-router-dom', () => ({
+  ...jest.requireActual('react-router-dom'),
+  useNavigate: jest.fn().mockReturnValue(jest.fn()),
+  useLocation: jest.fn().mockReturnValue({ pathname: '/dashboard' }),
+  Link: ({ children, ...props }) => <a {...props}>{children}</a>
+}));
+
+// Mock lucide-react icons
+jest.mock('lucide-react', () => ({
+  ...Object.keys(jest.requireActual('lucide-react')).reduce(
+    (acc, key) => ({ ...acc, [key]: () => <div data-testid={`icon-${key}`} /> }),
+    {}
+  )
+}));
+
+// Mock window.matchMedia
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: jest.fn().mockImplementation(query => ({
     matches: false,
     media: query,
     onchange: null,
-    addListener: () => {},
-    removeListener: () => {},
-    addEventListener: () => {},
-    removeEventListener: () => {},
-    dispatchEvent: () => true,
-  };
-};
+    addListener: jest.fn(),
+    removeListener: jest.fn(),
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    dispatchEvent: jest.fn(),
+  })),
+});
 
-// Mock ResizeObserver which might be used by some components
-global.ResizeObserver = class ResizeObserver {
-  observe() {}
-  unobserve() {}
-  disconnect() {}
-};
-
-// Suppress console errors during tests
-const originalConsoleError = console.error;
-console.error = (...args) => {
-  if (
-    typeof args[0] === 'string' && 
-    (args[0].includes('Error:') || 
-     args[0].includes('Warning:') ||
-     args[0].includes('act(...)'))
-  ) {
-    return;
-  }
-  originalConsoleError(...args);
-};
+// Global mocks
+global.ResizeObserver = jest.fn().mockImplementation(() => ({
+  observe: jest.fn(),
+  unobserve: jest.fn(),
+  disconnect: jest.fn(),
+}));
