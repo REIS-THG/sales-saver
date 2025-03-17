@@ -49,7 +49,7 @@ jest.mock('react-router-dom', () => ({
   ...jest.requireActual('react-router-dom'),
   useNavigate: jest.fn().mockReturnValue(jest.fn()),
   useLocation: jest.fn().mockReturnValue({ pathname: '/dashboard' }),
-  Link: ({ children, ...props }) => <a {...props}>{children}</a>
+  Link: ({ children, ...props }) => React.createElement('a', props, children)
 }));
 
 // Mock lucide-react icons
