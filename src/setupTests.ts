@@ -52,15 +52,18 @@ jest.mock('react-router-dom', () => ({
 }));
 
 // Mock lucide-react icons
-jest.mock('lucide-react', () => ({
-  ...Object.keys(jest.requireActual('lucide-react')).reduce(
-    (acc, key) => ({ 
-      ...acc, 
-      [key]: () => <div data-testid={`icon-${key}`} /> 
-    }),
-    {}
-  )
-}));
+jest.mock('lucide-react', () => {
+  const icons = Object.keys(jest.requireActual('lucide-react'));
+  const mockedIcons = {};
+  
+  icons.forEach(key => {
+    mockedIcons[key] = jest.fn().mockImplementation(() => 
+      React.createElement('div', { 'data-testid': `icon-${key}` })
+    );
+  });
+  
+  return mockedIcons;
+});
 
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
