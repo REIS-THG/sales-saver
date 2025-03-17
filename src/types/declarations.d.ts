@@ -35,15 +35,15 @@ declare module '@tanstack/react-table' {
     manualPagination?: boolean;
   }
 
-  export interface SortingState {
+  export type SortingState = Array<{
     id: string;
     desc: boolean;
-  }[]
+  }>;
 
-  export interface ColumnFiltersState {
+  export type ColumnFiltersState = Array<{
     id: string;
     value: any;
-  }[]
+  }>;
 
   export interface PaginationState {
     pageIndex: number;
@@ -88,7 +88,7 @@ declare module '@dnd-kit/sortable' {
 }
 
 declare module '@dnd-kit/utilities' {
-  export function CSS: {
+  export const CSS: {
     Transform: {
       toString(args?: any): string;
     };
@@ -99,7 +99,7 @@ declare module '@dnd-kit/utilities' {
 }
 
 declare module 'xlsx' {
-  export function utils: {
+  export const utils: {
     json_to_sheet<T extends object>(data: T[]): any;
     book_new(): any;
     book_append_sheet(workbook: any, worksheet: any, name?: string): void;
@@ -119,7 +119,7 @@ declare module 'react-i18next' {
     t: (key: string, options?: any) => string;
     i18n: any;
   };
-  export function initReactI18next: any;
+  export const initReactI18next: any;
 }
 
 declare module 'i18next-http-backend' {

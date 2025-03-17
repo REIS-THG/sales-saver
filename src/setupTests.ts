@@ -3,7 +3,7 @@
 // allows you to do things like:
 // expect(element).toHaveTextContent(/react/i)
 import '@testing-library/jest-dom';
-import React from 'react';
+import * as React from 'react';
 
 // Mock the Supabase client
 jest.mock('@/integrations/supabase/client', () => ({
