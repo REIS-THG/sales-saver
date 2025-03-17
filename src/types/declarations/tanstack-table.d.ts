@@ -36,6 +36,7 @@ declare module '@tanstack/react-table' {
     manualFiltering?: boolean;
     manualPagination?: boolean;
     globalFilterFn?: any;
+    enableSorting?: boolean;
   }
 
   export type SortingState = Array<{
@@ -97,5 +98,6 @@ declare module '@tanstack/react-table' {
     resetColumnFilters: () => void;
     resetGlobalFilter: () => void;
     getSelectedRowModel: () => any;
+    getFilteredSelectedRowModel: () => { rows: Row<T>[] };
   }
 }

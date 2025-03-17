@@ -13,9 +13,13 @@ declare module '@dnd-kit/core' {
   export function DndContext(props: DndContextProps & React.PropsWithChildren<{}>): JSX.Element;
   export function useSensor(sensor: any, options?: any): any;
   export function useSensors(...sensors: any[]): any[];
-  export function MouseSensor(options?: any): any;
-  export function TouchSensor(options?: any): any;
-  export function KeyboardSensor(options?: any): any;
+  
+  // Export as a value instead of just type
+  export const MouseSensor: any;
+  export const TouchSensor: any;
+  export const KeyboardSensor: any;
+  export const PointerSensor: any;
+  
   export function pointerWithin(args?: any): any;
   export function rectIntersection(args?: any): any;
   export function closestCenter(args?: any): any;
@@ -23,13 +27,11 @@ declare module '@dnd-kit/core' {
     active: { id: string | number };
     over: { id: string | number } | null;
   }
-  export interface PointerSensor {
-    new(options?: any): any;
-  }
-  export interface SensorDescriptor<T = any> {
-    sensor: T;
+  
+  export type SensorDescriptor = {
+    sensor: any;
     options?: any;
-  }
+  };
 }
 
 declare module '@dnd-kit/sortable' {

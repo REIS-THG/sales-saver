@@ -41,7 +41,40 @@ declare module '@testing-library/react' {
     getByTestId: (testId: string | RegExp) => HTMLElement;
     getAllByTestId: (testId: string | RegExp) => HTMLElement[];
   };
-  export function screen(): any;
+  
+  export const screen: {
+    findByText: (text: string | RegExp) => Promise<HTMLElement>;
+    findAllByText: (text: string | RegExp) => Promise<HTMLElement[]>;
+    queryByText: (text: string | RegExp) => HTMLElement | null;
+    queryAllByText: (text: string | RegExp) => HTMLElement[];
+    getByText: (text: string | RegExp) => HTMLElement;
+    getAllByText: (text: string | RegExp) => HTMLElement[];
+    findByRole: (role: string, options?: any) => Promise<HTMLElement>;
+    findAllByRole: (role: string, options?: any) => Promise<HTMLElement[]>;
+    queryByRole: (role: string, options?: any) => HTMLElement | null;
+    queryAllByRole: (role: string, options?: any) => HTMLElement[];
+    getByRole: (role: string, options?: any) => HTMLElement;
+    getAllByRole: (role: string, options?: any) => HTMLElement[];
+    findByLabelText: (label: string | RegExp) => Promise<HTMLElement>;
+    findAllByLabelText: (label: string | RegExp) => Promise<HTMLElement[]>;
+    queryByLabelText: (label: string | RegExp) => HTMLElement | null;
+    queryAllByLabelText: (label: string | RegExp) => HTMLElement[];
+    getByLabelText: (label: string | RegExp) => HTMLElement;
+    getAllByLabelText: (label: string | RegExp) => HTMLElement[];
+    findByPlaceholderText: (placeholder: string | RegExp) => Promise<HTMLElement>;
+    findAllByPlaceholderText: (placeholder: string | RegExp) => Promise<HTMLElement[]>;
+    queryByPlaceholderText: (placeholder: string | RegExp) => HTMLElement | null;
+    queryAllByPlaceholderText: (placeholder: string | RegExp) => HTMLElement[];
+    getByPlaceholderText: (placeholder: string | RegExp) => HTMLElement;
+    getAllByPlaceholderText: (placeholder: string | RegExp) => HTMLElement[];
+    findByTestId: (testId: string | RegExp) => Promise<HTMLElement>;
+    findAllByTestId: (testId: string | RegExp) => Promise<HTMLElement[]>;
+    queryByTestId: (testId: string | RegExp) => HTMLElement | null;
+    queryAllByTestId: (testId: string | RegExp) => HTMLElement[];
+    getByTestId: (testId: string | RegExp) => HTMLElement;
+    getAllByTestId: (testId: string | RegExp) => HTMLElement[];
+  };
+  
   export function fireEvent(element: HTMLElement, event: Event): boolean;
   export namespace fireEvent {
     export function click(element: HTMLElement, options?: {}): boolean;
@@ -91,14 +124,18 @@ declare global {
       mockRejectedValue(value: any): this;
       mockRejectedValueOnce(value: any): this;
     }
-  }
-
-  function jest(options?: any): any;
-  namespace jest {
-    function fn<T = any>(): Mock<T>;
+    
+    // Add the missing namespace members
     function mock(path: string, factory?: () => any): any;
+    function fn<T = any>(): jest.Mock<T>;
     function requireActual<T = any>(module: string): T;
   }
+
+  const jest: {
+    fn<T = any>(): jest.Mock<T>;
+    mock(path: string, factory?: () => any): any;
+    requireActual<T = any>(module: string): T;
+  };
 
   function describe(name: string, fn: () => void): void;
   function beforeEach(fn: () => void): void;
