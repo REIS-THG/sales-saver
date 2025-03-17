@@ -10,6 +10,7 @@ const AccountSettings = lazy(() => import("@/components/settings/AccountSettings
 const UserPreferences = lazy(() => import("@/components/settings/UserPreferences"));
 const CustomFieldsManager = lazy(() => import("@/components/settings/CustomFieldsManager"));
 const TeamSettings = lazy(() => import("@/components/settings/TeamSettings"));
+const IntegrationsManager = lazy(() => import("@/components/settings/integrations/IntegrationsManager"));
 
 export default function Settings() {
   const { user, isLoading } = useAuth();
@@ -57,6 +58,7 @@ export default function Settings() {
             <TabsTrigger value="account">Account</TabsTrigger>
             <TabsTrigger value="preferences">Preferences</TabsTrigger>
             <TabsTrigger value="customFields">Custom Fields</TabsTrigger>
+            <TabsTrigger value="integrations">Integrations</TabsTrigger>
             <TabsTrigger value="team">Team</TabsTrigger>
           </TabsList>
           <TabsContent value="account" className="space-y-4">
@@ -79,6 +81,11 @@ export default function Settings() {
           <TabsContent value="customFields" className="space-y-4">
             <Suspense fallback={<ReportsLoadingState />}>
               <CustomFieldsManager />
+            </Suspense>
+          </TabsContent>
+          <TabsContent value="integrations" className="space-y-4">
+            <Suspense fallback={<ReportsLoadingState />}>
+              <IntegrationsManager />
             </Suspense>
           </TabsContent>
           <TabsContent value="team" className="space-y-4">
