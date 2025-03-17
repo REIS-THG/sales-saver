@@ -11,6 +11,7 @@ import { ExportMenu } from "./components/ExportMenu";
 import { TablePagination } from "./components/TablePagination";
 import { TableHeader } from "./components/TableHeader";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export interface TableContainerProps {
   table: any;
@@ -38,6 +39,7 @@ export function TableContainer({
   onBulkDelete
 }: TableContainerProps) {
   const sensors = useDragSensors();
+  const isMobile = useIsMobile();
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -88,7 +90,7 @@ export function TableContainer({
           </div>
         )}
         <div className="overflow-auto">
-          <div className="min-w-[800px]">
+          <div className={isMobile ? "min-w-[650px]" : "min-w-[800px]"}>
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
