@@ -26,10 +26,14 @@ declare module '@tanstack/react-table' {
       sorting?: SortingState;
       columnFilters?: ColumnFiltersState;
       pagination?: PaginationState;
+      rowSelection?: Record<string, boolean>;
+      globalFilter?: string;
     };
     onSortingChange?: any;
     onColumnFiltersChange?: any;
     onPaginationChange?: any;
+    onRowSelectionChange?: any;
+    onGlobalFilterChange?: any;
     manualSorting?: boolean;
     manualFiltering?: boolean;
     manualPagination?: boolean;
@@ -56,6 +60,20 @@ declare module '@tanstack/react-table' {
   export function getFilteredRowModel(): any;
   export function getPaginationRowModel(): any;
   export function flexRender(component: any, props: any): React.ReactNode;
+  
+  export interface Row<T extends object = {}> {
+    id: string;
+    index: number;
+    original: T;
+    getIsSelected: () => boolean;
+    getIsSomeSelected: () => boolean;
+    getIsAllSubRowsSelected: () => boolean;
+    getCanSelect: () => boolean;
+    getCanMultiSelect: () => boolean;
+    getCanSelectSubRows: () => boolean;
+    getToggleSelectedHandler: () => (event: unknown) => void;
+    getVisibleCells: () => any[];
+  }
 }
 
 declare module '@dnd-kit/core' {
@@ -77,6 +95,13 @@ declare module '@dnd-kit/core' {
   export function KeyboardSensor(options?: any): any;
   export function pointerWithin(args?: any): any;
   export function rectIntersection(args?: any): any;
+  export function closestCenter(args?: any): any;
+  export interface DragEndEvent {
+    active: { id: string | number };
+    over: { id: string | number } | null;
+  }
+  export interface PointerSensor {}
+  export interface SensorDescriptor {}
 }
 
 declare module '@dnd-kit/sortable' {
@@ -85,6 +110,8 @@ declare module '@dnd-kit/sortable' {
   export function verticalListSortingStrategy(args?: any): any;
   export function horizontalListSortingStrategy(args?: any): any;
   export function rectSortingStrategy(args?: any): any;
+  export function arrayMove<T>(array: T[], from: number, to: number): T[];
+  export function sortableKeyboardCoordinates(args?: any): any;
 }
 
 declare module '@dnd-kit/utilities' {
@@ -103,8 +130,10 @@ declare module 'xlsx' {
     json_to_sheet<T extends object>(data: T[]): any;
     book_new(): any;
     book_append_sheet(workbook: any, worksheet: any, name?: string): void;
+    sheet_to_csv(worksheet: any): string;
   };
   export function write(workbook: any, options?: any): any;
+  export function writeFile(workbook: any, filename: string, opts?: any): void;
 }
 
 declare module 'i18next' {
@@ -134,6 +163,10 @@ declare module '@supabase/supabase-js' {
       getUser(): Promise<{ data: { user: any }; error: any }>;
       signOut(): Promise<{ error: any }>;
       onAuthStateChange(callback: (event: string, session: any) => void): { data: { subscription: { unsubscribe: () => void } } };
+      signInWithPassword(credentials: { email: string; password: string }): Promise<{ data: any; error: any }>;
+      signUp(credentials: { email: string; password: string; options?: any }): Promise<{ data: any; error: any }>;
+      updateUser(attributes: any): Promise<{ data: any; error: any }>;
+      resetPasswordForEmail(email: string, options?: any): Promise<{ data: any; error: any }>;
     };
     from(table: string): any;
     functions: {
