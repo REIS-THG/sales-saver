@@ -54,6 +54,7 @@
     "i18next": "^23.10.1",
     "i18next-http-backend": "^2.5.0",
     "input-otp": "^1.2.4",
+    "jest": "file:latest @testing-library/react@latest @testing-library/react-hooks@latest @testing-library/jest-dom@latest jest-environment-jsdom@latest",
     "lucide-react": "^0.462.0",
     "next-themes": "^0.3.0",
     "react": "^18.3.1",
