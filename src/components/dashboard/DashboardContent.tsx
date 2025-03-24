@@ -40,25 +40,25 @@ export function DashboardContent({
   };
 
   return (
-    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
-      <div className="mb-4 sm:mb-6">
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">Deal Dashboard</h1>
+    <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6">
+      <div className="mb-3 sm:mb-5">
+        <h1 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-gray-100">Deal Dashboard</h1>
         <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Manage and track your deals</p>
       </div>
 
       {!userData?.subscription_status && (
-        <Card className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gradient-to-r from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 border-amber-200 dark:border-amber-800">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
+        <Card className="mb-4 p-3 sm:p-4 bg-gradient-to-r from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 border-amber-200 dark:border-amber-800">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <div className="space-y-1">
               <p className="text-amber-800 dark:text-amber-200 font-medium text-sm sm:text-base">
                 Free plan: {deals.length}/{FREE_DEAL_LIMIT} deals used
               </p>
-              <p className="text-xs sm:text-sm text-amber-700/80 dark:text-amber-300/80">
+              <p className="text-xs text-amber-700/80 dark:text-amber-300/80">
                 Upgrade to Pro for unlimited deals
               </p>
             </div>
             <Link to="/subscription">
-              <Button variant="default" size={isMobile ? "sm" : "default"} className="bg-amber-600 hover:bg-amber-700 dark:bg-amber-700 dark:hover:bg-amber-600 text-white shadow-sm">
+              <Button variant="default" size="sm" className="bg-amber-600 hover:bg-amber-700 dark:bg-amber-700 dark:hover:bg-amber-600 text-white shadow-sm w-full sm:w-auto mt-2 sm:mt-0">
                 Upgrade to Pro
               </Button>
             </Link>
@@ -66,12 +66,12 @@ export function DashboardContent({
         </Card>
       )}
 
-      <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+      <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800/50 px-3 py-1 sm:px-4 sm:py-2 rounded-lg">
+                <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800/50 px-3 py-1 rounded-lg">
                   <Switch
                     id="custom-fields"
                     checked={showCustomFields}
@@ -80,38 +80,36 @@ export function DashboardContent({
                   <Label htmlFor="custom-fields" className="text-xs sm:text-sm cursor-pointer">
                     Custom Fields
                   </Label>
-                  {isMobile && (
-                    <InfoIcon className="h-3 w-3 text-gray-500" />
-                  )}
+                  <InfoIcon className="h-3 w-3 text-gray-500" />
                 </div>
               </TooltipTrigger>
-              <TooltipContent>
-                <p>Toggle to show or hide custom fields in the deals table</p>
+              <TooltipContent side={isMobile ? "bottom" : "right"}>
+                <p className="text-xs">Toggle to show or hide custom fields in the deals table</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
 
           {customFields.length > 0 && !isMobile && (
-            <span className="text-sm text-gray-500">
+            <span className="text-xs text-gray-500 ml-2">
               {customFields.length} {customFields.length === 1 ? 'field' : 'fields'} available
             </span>
           )}
         </div>
 
         {selectedDeals.length > 0 && (
-          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-            <span className="text-xs sm:text-sm text-gray-500">
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-end mt-2 sm:mt-0">
+            <span className="text-xs text-gray-500">
               {selectedDeals.length} {selectedDeals.length === 1 ? 'deal' : 'deals'} selected
             </span>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">
-                  <ListFilter className="h-4 w-4 mr-1 sm:mr-2" />
+                  <ListFilter className="h-4 w-4 mr-1" />
                   <span className="hidden xs:inline">Bulk Actions</span>
                   <span className="xs:hidden">Actions</span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+              <DropdownMenuContent align="end" className="z-50 bg-white dark:bg-gray-800">
                 <DropdownMenuItem onClick={() => handleBulkAction('won')}>
                   Mark as Won
                 </DropdownMenuItem>

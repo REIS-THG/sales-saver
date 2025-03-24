@@ -5,6 +5,7 @@ import { BulkImportDeals } from "@/components/deals/BulkImportDeals";
 import { Plus, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 import type { CustomField, User } from "@/types/types";
 
 interface DashboardHeaderProps {
@@ -23,6 +24,7 @@ export function DashboardHeader({
   userData
 }: DashboardHeaderProps) {
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   
   console.log('[DashboardHeader] Rendering with props:', {
     hasCustomFields: Array.isArray(customFields),
@@ -60,9 +62,9 @@ export function DashboardHeader({
           onBeforeCreate={onBeforeCreate}
           customFields={customFields}
           trigger={
-            <Button className="shadow-sm">
-              <Plus className="mr-2 h-4 w-4" />
-              Create Deal
+            <Button className="shadow-sm" size={isMobile ? "sm" : "default"}>
+              <Plus className="mr-1 sm:mr-2 h-4 w-4" />
+              <span className={isMobile ? "text-xs" : ""}>Create Deal</span>
             </Button>
           }
         />
@@ -70,9 +72,9 @@ export function DashboardHeader({
           <BulkImportDeals 
             onImportComplete={handleDealCreated}
             trigger={
-              <Button variant="outline" className="shadow-sm">
-                <Upload className="mr-2 h-4 w-4" />
-                Import Deals
+              <Button variant="outline" className="shadow-sm" size={isMobile ? "sm" : "default"}>
+                <Upload className="mr-1 sm:mr-2 h-4 w-4" />
+                <span className={isMobile ? "text-xs" : ""}>Import</span>
               </Button>
             }
           />

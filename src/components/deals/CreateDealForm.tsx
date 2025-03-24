@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Deal, CustomField } from "@/types/types";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface CreateDealFormProps {
   open: boolean;
@@ -34,23 +35,17 @@ export function CreateDealForm({
   trigger,
   customFields 
 }: CreateDealFormProps) {
-  console.log('[CreateDealForm] Initializing with props:', {
-    controlledOpen,
-    hasOnClose: !!controlledOnClose,
-    hasOnSuccess: !!onSuccess,
-    hasOnBeforeCreate: !!onBeforeCreate,
-    hasTrigger: !!trigger,
-    customFieldsCount: customFields?.length
-  });
-
   const [open, setOpen] = useState(controlledOpen);
   const [dealName, setDealName] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [amount, setAmount] = useState<number | undefined>(undefined);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   const isControlled = controlledOpen !== undefined;
   const isOpen = isControlled ? controlledOpen : open;
+  
   const onCloseWrapper = useCallback(() => {
     console.log('[CreateDealForm] Close handler triggered');
     if (controlledOnClose) {
@@ -98,13 +93,9 @@ export function CreateDealForm({
       }
 
       console.log('[CreateDealForm] Deal created successfully');
+      return true;
     } catch (error) {
       console.error("[CreateDealForm] Error creating deal:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to create deal. Please try again.",
-      });
       throw error;
     }
   };
@@ -112,6 +103,7 @@ export function CreateDealForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log('[CreateDealForm] Form submission started');
+    setIsSubmitting(true);
 
     try {
       if (!dealName || !companyName || !amount) {
@@ -119,8 +111,9 @@ export function CreateDealForm({
         toast({
           variant: "destructive",
           title: "Error",
-          description: "Please fill in all fields.",
+          description: "Please fill in all required fields.",
         });
+        setIsSubmitting(false);
         return;
       }
 
@@ -129,6 +122,7 @@ export function CreateDealForm({
         const canProceed = await onBeforeCreate();
         if (!canProceed) {
           console.log('[CreateDealForm] onBeforeCreate prevented submission');
+          setIsSubmitting(false);
           return;
         }
       }
@@ -141,6 +135,7 @@ export function CreateDealForm({
           title: "Error",
           description: "Not authenticated",
         });
+        setIsSubmitting(false);
         return;
       }
 
@@ -174,6 +169,8 @@ export function CreateDealForm({
         title: "Error",
         description: "An unexpected error occurred. Please try again.",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -182,13 +179,14 @@ export function CreateDealForm({
     setDealName("");
     setCompanyName("");
     setAmount(undefined);
+    setIsSubmitting(false);
     onCloseWrapper();
   };
 
   return (
     <AlertDialog open={isOpen} onOpenChange={isControlled ? onCloseWrapper : setOpen}>
       {trigger && React.cloneElement(trigger, { onClick: () => setOpen(true) })}
-      <AlertDialogContent>
+      <AlertDialogContent className={isMobile ? "w-[95%] max-w-md p-4" : ""}>
         <AlertDialogHeader>
           <AlertDialogTitle>Create New Deal</AlertDialogTitle>
           <AlertDialogDescription>
@@ -204,6 +202,7 @@ export function CreateDealForm({
               placeholder="Enter deal name"
               value={dealName}
               onChange={(e) => setDealName(e.target.value)}
+              required
             />
           </div>
           <div className="grid gap-2">
@@ -214,6 +213,7 @@ export function CreateDealForm({
               placeholder="Enter company name"
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
+              required
             />
           </div>
           <div className="grid gap-2">
@@ -224,13 +224,24 @@ export function CreateDealForm({
               placeholder="Enter amount"
               value={amount !== undefined ? amount.toString() : ""}
               onChange={(e) => setAmount(e.target.value ? parseFloat(e.target.value) : undefined)}
+              required
             />
           </div>
         </form>
-        <AlertDialogFooter>
-          <AlertDialogCancel onClick={handleClose}>Cancel</AlertDialogCancel>
-          <AlertDialogAction type="submit" onClick={handleSubmit}>
-            Create
+        <AlertDialogFooter className={isMobile ? "flex-col gap-2" : ""}>
+          <AlertDialogCancel 
+            onClick={handleClose}
+            className={isMobile ? "w-full mt-0" : ""}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </AlertDialogCancel>
+          <AlertDialogAction 
+            onClick={handleSubmit}
+            className={isMobile ? "w-full" : ""}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Creating...' : 'Create'}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
