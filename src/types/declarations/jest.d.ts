@@ -78,6 +78,7 @@ declare global {
       toBeInstanceOf(expected: any): void;
       resolves: JestMatchers<Promise<T>>;
       rejects: JestMatchers<Promise<T>>;
+      // Test helpers
       objectContaining(expected: object): object;
       any(constructor: any): any;
       // Additional DOM specific matchers

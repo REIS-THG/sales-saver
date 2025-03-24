@@ -88,8 +88,14 @@ Object.defineProperty(window, 'matchMedia', {
 });
 
 // Global mocks
-global.ResizeObserver = jest.fn().mockImplementation(() => ({
-  observe: jest.fn(),
-  unobserve: jest.fn(),
-  disconnect: jest.fn(),
-}));
+// Fix for ResizeObserver type error - using a constructor function pattern instead of a direct Jest mock
+class MockResizeObserver {
+  observe = jest.fn();
+  unobserve = jest.fn();
+  disconnect = jest.fn();
+  
+  constructor(callback: ResizeObserverCallback) {}
+}
+
+// Assign the mocked constructor to the global object
+global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
