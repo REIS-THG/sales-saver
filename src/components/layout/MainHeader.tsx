@@ -2,16 +2,23 @@
 import { Link, useLocation } from "react-router-dom";
 import { UserButton } from "@/components/dashboard/UserButton";
 import { Button } from "@/components/ui/button";
+import { MobileNavigation } from "./MobileNavigation";
 import type { User } from "@/types/types";
+import { useState } from "react";
+import { HelpCircle } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface MainHeaderProps {
   onSignOut?: () => void;
   userData?: User | null;
   children?: React.ReactNode;
+  onResetTour?: () => void;
 }
 
-export function MainHeader({ onSignOut, userData, children }: MainHeaderProps) {
+export function MainHeader({ onSignOut, userData, children, onResetTour }: MainHeaderProps) {
   const location = useLocation();
+  const isMobile = useIsMobile();
+  const [showHelpOptions, setShowHelpOptions] = useState(false);
 
   const isActivePath = (path: string) => {
     return location.pathname === path;
@@ -21,8 +28,12 @@ export function MainHeader({ onSignOut, userData, children }: MainHeaderProps) {
     <header className="bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <div className="flex items-center space-x-4">
-            <nav className="flex items-center gap-2 mr-4">
+          <div className="flex items-center">
+            {/* Mobile Navigation */}
+            <MobileNavigation />
+            
+            {/* Desktop Navigation */}
+            <nav className="hidden md:flex items-center gap-2 mr-4">
               <Button
                 asChild
                 variant={isActivePath('/dashboard') ? "default" : "ghost"}
@@ -68,7 +79,21 @@ export function MainHeader({ onSignOut, userData, children }: MainHeaderProps) {
             </nav>
             {children}
           </div>
-          <UserButton onSignOut={onSignOut} />
+          
+          <div className="flex items-center gap-3">
+            {/* Help Button */}
+            {onResetTour && (
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={onResetTour}
+                className="text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50"
+              >
+                <HelpCircle className="h-5 w-5" />
+              </Button>
+            )}
+            <UserButton onSignOut={onSignOut} />
+          </div>
         </div>
       </div>
     </header>

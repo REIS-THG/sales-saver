@@ -14,7 +14,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ChevronDown, MessageSquareMore } from "lucide-react";
+import { ChevronDown, MessageSquareMore, HelpCircle } from "lucide-react";
+import { HelpButton } from "@/components/ui/help-button";
 
 export interface TableContainerProps {
   table: any;
@@ -28,6 +29,7 @@ export interface TableContainerProps {
   onBulkStatusUpdate?: (selectedDeals: Deal[], newStatus: Deal["status"]) => Promise<void>;
   onBulkDelete?: (dealsToDelete: Deal[]) => Promise<void>;
   onQuickNote?: (deal: Deal) => void;
+  className?: string;
 }
 
 export function TableContainer({
@@ -41,7 +43,8 @@ export function TableContainer({
   selectedDeals = [],
   onBulkStatusUpdate,
   onBulkDelete,
-  onQuickNote
+  onQuickNote,
+  className
 }: TableContainerProps) {
   const sensors = useDragSensors();
   const isMobile = useIsMobile();
@@ -91,7 +94,7 @@ export function TableContainer({
   }
 
   return (
-    <div className="space-y-3 sm:space-y-4">
+    <div className={`space-y-3 sm:space-y-4 ${className}`}>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
         {isMobile ? (
           <div className="w-full flex justify-between items-center">
@@ -108,12 +111,24 @@ export function TableContainer({
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>
-            <ExportMenu deals={deals} />
+            <div className="flex items-center gap-2">
+              <HelpButton
+                tooltipContent="Tap on any deal to view details. Swipe to see more columns."
+                side="left"
+              />
+              <ExportMenu deals={deals} />
+            </div>
           </div>
         ) : (
           <>
             <TableFilters table={table} />
-            <ExportMenu deals={deals} />
+            <div className="flex items-center gap-2">
+              <HelpButton
+                tooltipContent="Click on any deal to view details. Drag and drop to reorder."
+                side="left"
+              />
+              <ExportMenu deals={deals} />
+            </div>
           </>
         )}
       </div>
@@ -125,7 +140,7 @@ export function TableContainer({
           </div>
         )}
         <div className="overflow-auto">
-          <div className="min-w-[650px]">
+          <div className={isMobile ? "min-w-[600px]" : "min-w-[650px]"}>
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
@@ -141,7 +156,7 @@ export function TableContainer({
                   }}
                   showSelection={!!onRowSelection}
                 />
-                <TableBody>
+                <TableBody className="deals-table">
                   <SortableContext
                     items={deals.map(d => d.id)}
                     strategy={verticalListSortingStrategy}
