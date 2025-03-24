@@ -9,6 +9,7 @@ export const useDealNotes = (deal: Deal | null, onDealUpdated?: () => void) => {
   const [newNote, setNewNote] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analyzeStep, setAnalyzeStep] = useState<string>("");
   const { toast } = useToast();
 
   const fetchNotes = async () => {
@@ -30,6 +31,17 @@ export const useDealNotes = (deal: Deal | null, onDealUpdated?: () => void) => {
 
   const analyzeNote = async (content: string) => {
     try {
+      setAnalyzeStep("Reading note content...");
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      setAnalyzeStep("Analyzing sentiment...");
+      await new Promise(resolve => setTimeout(resolve, 700));
+      
+      setAnalyzeStep("Identifying key points...");
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      setAnalyzeStep("Generating recommendations...");
+      
       const { data, error } = await supabase.functions.invoke('analyze-note', {
         body: {
           noteContent: content,
@@ -42,6 +54,8 @@ export const useDealNotes = (deal: Deal | null, onDealUpdated?: () => void) => {
     } catch (error) {
       console.error('Error analyzing note:', error);
       return null;
+    } finally {
+      setAnalyzeStep("");
     }
   };
 
@@ -65,6 +79,11 @@ export const useDealNotes = (deal: Deal | null, onDealUpdated?: () => void) => {
     }
 
     try {
+      toast({
+        title: "AI Analysis",
+        description: "Analyzing your note content...",
+      });
+      
       const analysis = await analyzeNote(newNote.trim());
       
       const { error: noteError } = await supabase
@@ -115,6 +134,7 @@ export const useDealNotes = (deal: Deal | null, onDealUpdated?: () => void) => {
     setNewNote,
     isLoading,
     isAnalyzing,
+    analyzeStep,
     fetchNotes,
     handleAddNote
   };

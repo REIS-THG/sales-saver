@@ -13,6 +13,9 @@ import { MainHeader } from "@/components/layout/MainHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { AlertTriangle } from "lucide-react";
+import { AICapabilitiesExplainer } from "@/components/ai-analysis/AICapabilitiesExplainer";
+import { ExampleAnalyses } from "@/components/ai-analysis/ExampleAnalyses";
+import { AILoadingState } from "@/components/ai-analysis/AILoadingState";
 
 interface AnalysisParams {
   salesApproach: 'consultative_selling' | 'solution_selling' | 'transactional_selling' | 'value_based_selling';
@@ -52,6 +55,16 @@ const AIAnalysis = () => {
   const [activeTab, setActiveTab] = useState<string>("analysis");
   const [piiFilter, setPiiFilter] = useState(true);
   const [retainAnalysis, setRetainAnalysis] = useState(user?.subscription_status === 'pro');
+  const [isFirstVisit, setIsFirstVisit] = useState(false);
+
+  useEffect(() => {
+    // Check if this is the user's first visit
+    const hasVisitedAIAnalysis = localStorage.getItem('hasVisitedAIAnalysis');
+    if (!hasVisitedAIAnalysis) {
+      setIsFirstVisit(true);
+      localStorage.setItem('hasVisitedAIAnalysis', 'true');
+    }
+  }, []);
 
   useEffect(() => {
     if (!userLoading && !user) {
@@ -106,6 +119,13 @@ const AIAnalysis = () => {
     await analyzeDeal(dealId, params);
   };
 
+  const handleTryNow = () => {
+    setIsFirstVisit(false);
+    if (deals.length > 0 && !selectedDeal) {
+      handleDealSelect(deals[0].id);
+    }
+  };
+
   const isLoading = userLoading || dataLoading;
 
   if (isLoading) {
@@ -140,42 +160,60 @@ const AIAnalysis = () => {
           </Alert>
         )}
 
-        <div className="grid grid-cols-1 gap-6">
-          <Card className="overflow-hidden">
-            <CardContent className="p-0">
-              <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
-                <h2 className="text-xl font-semibold tracking-tight">AI-Powered Deal Intelligence</h2>
-                <p className="text-muted-foreground mt-1">
-                  Analyze your deals, get next step recommendations, and track progress over time
-                </p>
-              </div>
-              
-              <Separator />
-              
-              <AnalysisSettings
-                piiFilter={piiFilter}
-                setPiiFilter={setPiiFilter}
-                retainAnalysis={retainAnalysis}
-                setRetainAnalysis={setRetainAnalysis}
-                subscriptionTier={userSubscriptionTier}
-              />
+        {/* AI Capabilities Explainer - always visible */}
+        <AICapabilitiesExplainer />
 
-              <AnalysisTabs
-                activeTab={activeTab}
-                setActiveTab={setActiveTab}
-                deals={deals}
-                selectedDeal={selectedDeal}
-                isAnalyzing={isAnalyzing}
-                isAnalysisLimited={isAnalysisLimited}
-                insights={insights}
-                onDealSelect={handleDealSelect}
-                onAnalyze={handleAnalyze}
-                onFileUpload={handleFileUpload}
-                isLoading={isLoading}
-              />
-            </CardContent>
-          </Card>
-        </div>
+        {/* First-time user experience */}
+        {isFirstVisit && !isAnalyzing && (
+          <ExampleAnalyses onTryNow={handleTryNow} />
+        )}
+
+        {/* Show AILoadingState when analyzing */}
+        {isAnalyzing && (
+          <AILoadingState 
+            message={selectedDeal ? `Analyzing ${deals.find(d => d.id === selectedDeal)?.deal_name || 'deal'}...` : "Analyzing data..."} 
+          />
+        )}
+
+        {/* Main Analysis UI - hide during first visit until they click "Try Now" */}
+        {(!isFirstVisit || selectedDeal) && (
+          <div className="grid grid-cols-1 gap-6 mt-6">
+            <Card className="overflow-hidden">
+              <CardContent className="p-0">
+                <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
+                  <h2 className="text-xl font-semibold tracking-tight">AI-Powered Deal Intelligence</h2>
+                  <p className="text-muted-foreground mt-1">
+                    Analyze your deals, get next step recommendations, and track progress over time
+                  </p>
+                </div>
+                
+                <Separator />
+                
+                <AnalysisSettings
+                  piiFilter={piiFilter}
+                  setPiiFilter={setPiiFilter}
+                  retainAnalysis={retainAnalysis}
+                  setRetainAnalysis={setRetainAnalysis}
+                  subscriptionTier={userSubscriptionTier}
+                />
+
+                <AnalysisTabs
+                  activeTab={activeTab}
+                  setActiveTab={setActiveTab}
+                  deals={deals}
+                  selectedDeal={selectedDeal}
+                  isAnalyzing={isAnalyzing}
+                  isAnalysisLimited={isAnalysisLimited}
+                  insights={insights}
+                  onDealSelect={handleDealSelect}
+                  onAnalyze={handleAnalyze}
+                  onFileUpload={handleFileUpload}
+                  isLoading={isLoading}
+                />
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   );

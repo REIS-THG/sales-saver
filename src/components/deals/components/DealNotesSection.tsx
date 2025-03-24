@@ -1,6 +1,6 @@
 
 import { format } from "date-fns";
-import { MessageSquare, Activity } from "lucide-react";
+import { MessageSquare, Activity, Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Spinner } from "@/components/ui/spinner";
@@ -12,6 +12,7 @@ interface DealNotesSectionProps {
   newNote: string;
   isLoading: boolean;
   isAnalyzing: boolean;
+  analyzeStep?: string;
   onNoteChange: (value: string) => void;
   onAddNote: () => void;
 }
@@ -21,6 +22,7 @@ export const DealNotesSection = ({
   newNote,
   isLoading,
   isAnalyzing,
+  analyzeStep = "",
   onNoteChange,
   onAddNote
 }: DealNotesSectionProps) => {
@@ -41,12 +43,21 @@ export const DealNotesSection = ({
           <Button 
             onClick={onAddNote} 
             disabled={isLoading || !newNote.trim()}
-            className="sm:self-start whitespace-nowrap"
+            className="sm:self-start whitespace-nowrap flex items-center gap-2"
           >
-            {isAnalyzing && <Spinner size="sm" />}
-            Add Note
+            {isAnalyzing ? <Spinner size="sm" /> : null}
+            {isAnalyzing ? "Analyzing..." : "Add Note"}
           </Button>
         </div>
+        
+        {/* AI analysis steps indicator */}
+        {isAnalyzing && analyzeStep && (
+          <div className="flex items-center gap-2 text-sm text-blue-600 animate-pulse">
+            <Brain className="h-4 w-4" />
+            <span>{analyzeStep}</span>
+          </div>
+        )}
+        
         <div className="space-y-3 max-h-[300px] overflow-y-auto">
           {notes.map((note) => (
             <div key={note.id} className="bg-gray-50 p-3 rounded-md space-y-2">

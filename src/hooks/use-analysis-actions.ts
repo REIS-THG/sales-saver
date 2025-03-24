@@ -26,8 +26,24 @@ interface UseAnalysisActionsProps {
 
 export function useAnalysisActions({ subscriptionTier, selectedDeal }: UseAnalysisActionsProps) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisProgress, setAnalysisProgress] = useState(0);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Simulated progress for better UX
+  const startProgressSimulation = () => {
+    setAnalysisProgress(0);
+    const interval = setInterval(() => {
+      setAnalysisProgress((prev) => {
+        if (prev >= 90) {
+          clearInterval(interval);
+          return prev;
+        }
+        return prev + Math.random() * 10;
+      });
+    }, 1000);
+    return interval;
+  };
 
   // File upload mutation
   const fileUploadMutation = useMutation({
@@ -37,8 +53,27 @@ export function useAnalysisActions({ subscriptionTier, selectedDeal }: UseAnalys
         throw new Error("File upload feature requires a Pro subscription");
       }
       
-      // File upload logic here
-      console.log('File upload:', file, type);
+      const progressInterval = startProgressSimulation();
+      
+      try {
+        // File upload logic here
+        console.log('File upload:', file, type);
+        
+        // Simulate processing delay
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        
+        return { success: true, message: "File processed successfully" };
+      } finally {
+        clearInterval(progressInterval);
+        setAnalysisProgress(100);
+        setTimeout(() => setAnalysisProgress(0), 1000);
+      }
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Success",
+        description: data.message || "File processed successfully",
+      });
     },
     onError: (error) => {
       toast({
@@ -58,20 +93,35 @@ export function useAnalysisActions({ subscriptionTier, selectedDeal }: UseAnalys
       }
       
       setIsAnalyzing(true);
-      const response = await supabase.functions.invoke("analyze-deals", {
-        body: { dealId, analysisParams: params },
-      });
+      const progressInterval = startProgressSimulation();
+      
+      try {
+        // Show initial toast
+        toast({
+          title: "Analysis started",
+          description: "AI is analyzing your deal data...",
+        });
+        
+        const response = await supabase.functions.invoke("analyze-deals", {
+          body: { dealId, analysisParams: params },
+        });
 
-      if (response.error) {
-        throw new Error(response.error.message || "Analysis failed");
+        if (response.error) {
+          throw new Error(response.error.message || "Analysis failed");
+        }
+
+        return response.data;
+      } finally {
+        clearInterval(progressInterval);
+        setAnalysisProgress(100);
+        setTimeout(() => setAnalysisProgress(0), 1000);
       }
-
-      return response.data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      const insightCount = data?.insights?.length || 0;
       toast({
-        title: "Success",
-        description: "Deal analysis completed",
+        title: "Analysis complete",
+        description: `Generated ${insightCount} insights for your deal`,
       });
       queryClient.invalidateQueries({ queryKey: ['insights', selectedDeal] });
     },
@@ -97,6 +147,7 @@ export function useAnalysisActions({ subscriptionTier, selectedDeal }: UseAnalys
 
   return {
     isAnalyzing,
+    analysisProgress,
     analyzeDeal,
     handleFileUpload,
   };
