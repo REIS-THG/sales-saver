@@ -1,201 +1,199 @@
 
-import { useEffect, useState } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { useDashboard } from "@/hooks/use-dashboard";
+import { BulkActionsMenu } from "@/components/dashboard/BulkActionsMenu";
+import { useApiError } from "@/hooks/use-api-error";
+import { useAuth } from "@/hooks/useAuth";
+import { ReportsLoadingState } from "@/components/reports/ReportsLoadingState";
+import { QuickNoteModal } from "@/components/dashboard/QuickNoteModal";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardContent } from "@/components/dashboard/DashboardContent";
-import { DashboardWidgets } from "@/components/dashboard/DashboardWidgets";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { AlertCircle, RefreshCw } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AutomationSettings, AutomationSettingsDialog } from "@/components/dashboard/AutomationSettingsDialog";
-import { QuickNoteModal } from "@/components/dashboard/QuickNoteModal";
-import { Deal } from "@/types/types";
-import { supabase } from "@/integrations/supabase/client";
+import { AutomationSettingsDialog } from "@/components/dashboard/AutomationSettingsDialog";
 
-const FREE_DEAL_LIMIT = 5;
+const CreateDealForm = lazy(() => import("@/components/deals/CreateDealForm"));
 
-// Default automation settings
-const DEFAULT_AUTOMATION_SETTINGS: AutomationSettings = {
-  enableTimeDecay: false,
-  timeDecayRate: 5,
-  enableActivityBoost: true,
-  activityBoostRate: 5,
-  enableAutoStatusChange: false,
-};
+export default function Dashboard() {
+  const navigate = useNavigate();
+  const [showCreateDealModal, setShowCreateDealModal] = useState(false);
+  const [showAutomationSettings, setShowAutomationSettings] = useState(false);
+  const { user, isLoading: isAuthLoading, signOut } = useAuth();
+  const { handleAuthCheck, handleError, handleSuccess } = useApiError();
+  const [selectedDealId, setSelectedDealId] = useState<string | null>(null);
+  const [isQuickNoteModalOpen, setIsQuickNoteModalOpen] = useState(false);
 
-const Dashboard = () => {
+  // Dashboard state and handlers
   const {
     deals,
+    isLoading,
+    selectedDeals,
+    setSelectedDeals,
     customFields,
-    loading,
-    error,
-    showCustomFields,
-    setShowCustomFields,
-    userData,
-    showUpgradeDialog,
-    setShowUpgradeDialog,
-    fetchUserData,
-    fetchCustomFields,
     fetchDeals,
-    handleSignOut
+    handleStatusChange,
+    handleDealDelete,
+    handleSearch,
+    handleFilterChange,
+    sortField,
+    setSortField,
+    sortDirection,
+    setSortDirection,
+    filters,
   } = useDashboard();
-  
-  const [automationSettings, setAutomationSettings] = useState<AutomationSettings>(DEFAULT_AUTOMATION_SETTINGS);
-  const [quickNoteModalOpen, setQuickNoteModalOpen] = useState(false);
-  const [selectedDealForNote, setSelectedDealForNote] = useState<Deal | null>(null);
-  
-  const isMobile = useIsMobile();
 
+  // Check if user is authenticated
   useEffect(() => {
-    fetchUserData();
-  }, []);
-
-  useEffect(() => {
-    if (userData) {
-      fetchDeals();
-      fetchCustomFields();
-      
-      // Load automation settings from user data if available
-      if (userData.deal_automation_settings) {
-        setAutomationSettings(userData.deal_automation_settings as AutomationSettings);
+    const checkAuth = async () => {
+      const userId = await handleAuthCheck();
+      if (!userId) {
+        navigate("/auth");
       }
-    }
-  }, [userData]);
+    };
+    checkAuth();
+  }, [navigate, handleAuthCheck]);
 
-  const handleCreateDeal = async () => {
-    if (!userData?.subscription_status && deals.length >= FREE_DEAL_LIMIT) {
-      setShowUpgradeDialog(true);
+  // Handle sign out
+  const handleSignOut = async () => {
+    try {
+      const { error } = await signOut();
+      if (error) throw error;
+      navigate("/auth");
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  };
+
+  // Handle creating a new deal
+  const handleDealCreated = async () => {
+    await fetchDeals();
+    setShowCreateDealModal(false);
+  };
+
+  // Check before creating a deal if the user has subscription status
+  const handleBeforeCreate = async () => {
+    try {
+      const userId = await handleAuthCheck();
+      if (!userId) return false;
+
+      // Get user data to check subscription status
+      const { data: userData, error } = await supabase
+        .from("users")
+        .select("subscription_status")
+        .eq("user_id", userId)
+        .single();
+
+      if (error) {
+        handleError(error, "Failed to check subscription status");
+        return false;
+      }
+
+      // If the user is not a paid subscriber, they have a deal limit
+      const freeUserDealLimit = 10;
+      if (!userData.subscription_status && deals.length >= freeUserDealLimit) {
+        handleError(
+          new Error(`Free accounts are limited to ${freeUserDealLimit} deals`),
+          "Subscription Limit Reached"
+        );
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Error checking subscription:", error);
       return false;
     }
-    return true;
   };
-  
+
+  // Handle opening quick note modal for a deal
   const handleQuickNote = (deal: Deal) => {
-    setSelectedDealForNote(deal);
-    setQuickNoteModalOpen(true);
+    setSelectedDealId(deal.id);
+    setIsQuickNoteModalOpen(true);
   };
 
-  if (loading && !deals.length) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <Spinner size="lg" className="mb-4" />
-        <p className="text-gray-500 dark:text-gray-400 animate-pulse">Loading your dashboard...</p>
-      </div>
-    );
-  }
+  // Handle when a note is added
+  const handleNoteAdded = async () => {
+    await fetchDeals();
+    setIsQuickNoteModalOpen(false);
+    setSelectedDealId(null);
+  };
 
-  if (error && !deals.length) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
-        <div className="max-w-md w-full">
-          <Alert variant="destructive" className="mb-4">
-            <AlertCircle className="h-4 w-4 mr-2" />
-            <AlertTitle>Error loading dashboard</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-          <Button 
-            onClick={fetchDeals} 
-            variant="outline" 
-            className="w-full"
-            disabled={loading}
-          >
-            {loading ? (
-              <>
-                <Spinner size="sm" className="mr-2" />
-                Retrying...
-              </>
-            ) : (
-              <>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Retry
-              </>
-            )}
-          </Button>
-        </div>
-      </div>
-    );
+  if (isAuthLoading) {
+    return <ReportsLoadingState />;
   }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {showUpgradeDialog && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg max-w-md w-full mx-auto">
-            <h3 className="text-lg font-semibold mb-2">Upgrade to Pro</h3>
-            <p className="text-gray-600 dark:text-gray-300 mb-4 text-sm sm:text-base">
-              You've reached the limit of {FREE_DEAL_LIMIT} deals on the free plan. 
-              Upgrade to Pro for unlimited deals and more features!
-            </p>
-            <div className={`flex ${isMobile ? 'flex-col' : 'justify-end'} gap-2`}>
-              <Button 
-                variant="outline" 
-                onClick={() => setShowUpgradeDialog(false)}
-                className={isMobile ? "w-full" : ""}
-              >
-                Cancel
-              </Button>
-              <Link to="/subscription" className={isMobile ? "w-full" : ""}>
-                <Button className={isMobile ? "w-full" : ""}>Upgrade Now</Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
-      
       <DashboardHeader
-        onDealCreated={fetchDeals}
-        customFields={customFields}
-        onBeforeCreate={handleCreateDeal}
+        onCreateDeal={() => setShowCreateDealModal(true)}
         onSignOut={handleSignOut}
-        userData={userData}
-      >
-        {userData && (
-          <AutomationSettingsDialog 
-            userId={userData.user_id} 
-            settings={automationSettings}
-            onSettingsChange={setAutomationSettings}
+        onOpenAutomationSettings={() => setShowAutomationSettings(true)}
+        userData={user}
+      />
+
+      <main className="flex-1 px-4 sm:px-6 py-6 max-w-7xl mx-auto">
+        {selectedDeals.length > 0 && (
+          <BulkActionsMenu
+            selectedDeals={selectedDeals}
+            onStatusChange={handleStatusChange}
+            onDelete={handleDealDelete}
+            onClearSelection={() => setSelectedDeals([])}
           />
         )}
-      </DashboardHeader>
-      
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6">
-        {error && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-        
-        <DashboardWidgets 
-          deals={deals} 
-          userData={userData}
-          loading={loading}
-          error={error}
-        />
-        
+
         <DashboardContent
           deals={deals}
-          customFields={customFields}
-          showCustomFields={showCustomFields}
-          setShowCustomFields={setShowCustomFields}
-          userData={userData}
-          fetchDeals={fetchDeals}
+          isLoading={isLoading}
+          selectedDeals={selectedDeals}
+          onDealSelect={(deal, selected) => {
+            if (selected) {
+              setSelectedDeals((prev) => [...prev, deal]);
+            } else {
+              setSelectedDeals((prev) =>
+                prev.filter((d) => d.id !== deal.id)
+              );
+            }
+          }}
+          onSelectAll={(allDeals) => setSelectedDeals(allDeals)}
+          onSearch={handleSearch}
+          onFilterChange={handleFilterChange}
+          filters={filters}
+          sortField={sortField}
+          setSortField={setSortField}
+          sortDirection={sortDirection}
+          setSortDirection={setSortDirection}
+          onDealDelete={handleDealDelete}
+          onFetchDeals={fetchDeals}
           onQuickNote={handleQuickNote}
+          customFields={customFields}
+          userData={user}
         />
-      </div>
-      
+      </main>
+
+      {showCreateDealModal && (
+        <Suspense fallback={<ReportsLoadingState />}>
+          <CreateDealForm
+            onDealCreated={handleDealCreated}
+            onBeforeCreate={handleBeforeCreate}
+            customFields={customFields}
+            onSignOut={handleSignOut}
+            userData={user}
+          />
+        </Suspense>
+      )}
+
       <QuickNoteModal
-        deal={selectedDealForNote}
-        isOpen={quickNoteModalOpen}
-        onClose={() => setQuickNoteModalOpen(false)}
-        onNoteAdded={fetchDeals}
+        deal={deals.find((d) => d.id === selectedDealId) || null}
+        isOpen={isQuickNoteModalOpen}
+        onClose={() => setIsQuickNoteModalOpen(false)}
+        onNoteAdded={handleNoteAdded}
+      />
+
+      <AutomationSettingsDialog
+        isOpen={showAutomationSettings}
+        onClose={() => setShowAutomationSettings(false)}
+        userData={user}
       />
     </div>
   );
-};
-
-export default Dashboard;
+}

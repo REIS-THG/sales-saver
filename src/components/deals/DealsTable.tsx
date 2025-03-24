@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -7,6 +6,7 @@ import { Deal, CustomField, User } from "@/types/types";
 import { useDealsTable } from "@/hooks/use-deals-table";
 import { TableContainer } from "./table/TableContainer";
 import DealDetailsModal from "./DealDetailsModal";
+import { supabase } from "@/integrations/supabase/client";
 
 interface DealsTableProps {
   deals: Deal[];
@@ -38,8 +38,6 @@ export function DealsTable({
   };
 
   const handleDealsReorder = async (newDeals: Deal[]) => {
-    // This is where we would handle reordering deals if needed
-    // For now, this is just a placeholder
     console.log("Deals reordered:", newDeals);
   };
 
@@ -49,11 +47,9 @@ export function DealsTable({
   };
 
   const handleBulkStatusUpdate = async (dealsToUpdate: Deal[], newStatus: Deal["status"]) => {
-    // Implementation moved to BulkActionsMenu
   };
 
   const handleBulkDelete = async (dealsToDelete: Deal[]) => {
-    // Implementation moved to BulkActionsMenu
   };
 
   const onDealDelete = async (deal: Deal) => {

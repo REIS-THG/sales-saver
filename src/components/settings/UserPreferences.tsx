@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { Sun, Moon, Palette, Languages, Layout } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface UserPreferencesProps {
   theme: string;
@@ -28,17 +29,69 @@ export function UserPreferences({
   const [localTheme, setLocalTheme] = useState(theme);
   const [localDefaultView, setLocalDefaultView] = useState(defaultView);
   const [localLanguage, setLocalLanguage] = useState(language);
+  const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
-  const handleSavePreferences = () => {
-    onThemeChange(localTheme);
-    onDefaultViewChange(localDefaultView);
-    onLanguageChange(localLanguage);
-    
-    toast({
-      title: "Preferences saved",
-      description: "Your preferences have been updated",
-    });
+  useEffect(() => {
+    // Update local state when props change
+    setLocalTheme(theme);
+    setLocalDefaultView(defaultView);
+    setLocalLanguage(language);
+  }, [theme, defaultView, language]);
+
+  const handleSavePreferences = async () => {
+    setIsSaving(true);
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) {
+        throw new Error("User not authenticated");
+      }
+
+      const { error } = await supabase
+        .from("users")
+        .update({
+          theme: localTheme,
+          default_deal_view: localDefaultView,
+          preferred_language: localLanguage,
+        })
+        .eq("user_id", userData.user.id);
+
+      if (error) throw error;
+
+      // Update parent component state
+      onThemeChange(localTheme);
+      onDefaultViewChange(localDefaultView);
+      onLanguageChange(localLanguage);
+      
+      // Apply theme change immediately
+      if (localTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else if (localTheme === 'light') {
+        document.documentElement.classList.remove('dark');
+      } else {
+        // System preference
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (prefersDark) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      }
+      
+      toast({
+        title: "Preferences saved",
+        description: "Your preferences have been updated",
+      });
+    } catch (error) {
+      console.error("Error saving preferences:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to save preferences",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -117,7 +170,9 @@ export function UserPreferences({
           </Select>
         </div>
 
-        <Button onClick={handleSavePreferences}>Save Preferences</Button>
+        <Button onClick={handleSavePreferences} disabled={isSaving}>
+          {isSaving ? "Saving..." : "Save Preferences"}
+        </Button>
       </CardContent>
     </Card>
   );

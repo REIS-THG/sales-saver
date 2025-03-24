@@ -10,6 +10,7 @@ import { DefaultValueField } from "./form-fields/DefaultValueField";
 import { OptionsField } from "./form-fields/OptionsField";
 import { FieldFlags } from "./form-fields/FieldFlags";
 import { HelpTextField } from "./form-fields/HelpTextField";
+import { ProductFieldSettings } from "./form-fields/ProductFieldSettings";
 
 interface CustomFieldFormProps {
   onSubmit: (data: CustomFieldFormData) => void;
@@ -25,10 +26,12 @@ export function CustomFieldForm({ onSubmit, initialData }: CustomFieldFormProps)
       is_required: initialData?.is_required || false,
       allow_multiple: initialData?.allow_multiple || false,
       options: initialData?.options || [],
+      product_options: initialData?.product_options || [],
       validation_rules: initialData?.validation_rules || {},
       default_value: initialData?.default_value || "",
       placeholder: initialData?.placeholder || "",
-      help_text: initialData?.help_text || ""
+      help_text: initialData?.help_text || "",
+      include_in_documents: initialData?.include_in_documents !== false,
     },
   });
 
@@ -41,15 +44,28 @@ export function CustomFieldForm({ onSubmit, initialData }: CustomFieldFormProps)
         
         <DefaultValueField form={form} fieldType={fieldType} />
         
-        <OptionsField form={form} fieldType={fieldType} />
+        {fieldType === "multi-select" && (
+          <OptionsField form={form} fieldType={fieldType} />
+        )}
+        
+        {fieldType === "product" && (
+          <ProductFieldSettings form={form} />
+        )}
         
         <FieldFlags form={form} />
         
         <HelpTextField form={form} />
 
-        <div className="flex gap-2">
-          <Button type="submit">{initialData ? "Update" : "Add"} Custom Field</Button>
-          {initialData && <Button type="button" variant="outline" onClick={() => onSubmit(form.getValues())}>Cancel</Button>}
+        <div className="flex items-center space-x-2">
+          <div className="flex-1">
+            <Button type="submit">{initialData ? "Update" : "Add"} Custom Field</Button>
+          </div>
+          
+          {initialData && (
+            <Button type="button" variant="outline" onClick={() => onSubmit(form.getValues())}>
+              Cancel
+            </Button>
+          )}
         </div>
       </form>
     </Form>

@@ -6,6 +6,12 @@ export interface CustomFieldOption {
   value: string;
 }
 
+export interface ProductOption {
+  product_id: string;
+  include_in_documents: boolean;
+  display_price: boolean;
+}
+
 export interface CustomFieldValidation {
   min?: number;
   max?: number;
@@ -21,6 +27,7 @@ export interface CustomField {
   is_required: boolean;
   allow_multiple?: boolean;
   options?: CustomFieldOption[];
+  product_options?: ProductOption[];
   validation_rules?: CustomFieldValidation;
   default_value?: any;
   placeholder?: string;
@@ -30,5 +37,5 @@ export interface CustomField {
   is_active?: boolean;
   custom_fields?: Record<string, any>;
   health_score?: number;
+  include_in_documents?: boolean;
 }
-
