@@ -1,11 +1,15 @@
+
 import { useEffect } from "react";
 import { useDashboard } from "@/hooks/use-dashboard";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardContent } from "@/components/dashboard/DashboardContent";
+import { DashboardWidgets } from "@/components/dashboard/DashboardWidgets";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { AlertCircle, RefreshCw } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const FREE_DEAL_LIMIT = 5;
 
@@ -47,20 +51,42 @@ const Dashboard = () => {
     return true;
   };
 
-  if (loading) {
+  if (loading && !deals.length) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Spinner size="lg" />
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <Spinner size="lg" className="mb-4" />
+        <p className="text-gray-500 dark:text-gray-400 animate-pulse">Loading your dashboard...</p>
       </div>
     );
   }
 
   if (error && !deals.length) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center p-4">
-          <p className="text-red-500 mb-4">{error}</p>
-          <Button onClick={fetchDeals} variant="outline">Retry</Button>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
+        <div className="max-w-md w-full">
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4 mr-2" />
+            <AlertTitle>Error loading dashboard</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+          <Button 
+            onClick={fetchDeals} 
+            variant="outline" 
+            className="w-full"
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <Spinner size="sm" className="mr-2" />
+                Retrying...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Retry
+              </>
+            )}
+          </Button>
         </div>
       </div>
     );
@@ -99,14 +125,32 @@ const Dashboard = () => {
         onSignOut={handleSignOut}
         userData={userData}
       />
-      <DashboardContent
-        deals={deals}
-        customFields={customFields}
-        showCustomFields={showCustomFields}
-        setShowCustomFields={setShowCustomFields}
-        userData={userData}
-        fetchDeals={fetchDeals}
-      />
+      
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6">
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        
+        <DashboardWidgets 
+          deals={deals} 
+          userData={userData}
+          loading={loading}
+          error={error}
+        />
+        
+        <DashboardContent
+          deals={deals}
+          customFields={customFields}
+          showCustomFields={showCustomFields}
+          setShowCustomFields={setShowCustomFields}
+          userData={userData}
+          fetchDeals={fetchDeals}
+        />
+      </div>
     </div>
   );
 };
