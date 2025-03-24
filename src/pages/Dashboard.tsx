@@ -11,10 +11,11 @@ import { QuickNoteModal } from "@/components/dashboard/QuickNoteModal";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardContent } from "@/components/dashboard/DashboardContent";
 import { AutomationSettingsDialog } from "@/components/dashboard/AutomationSettingsDialog";
+import { CreateDealForm } from "@/components/deals/CreateDealForm";
 import type { Deal } from "@/types/types";
 
-// Use lazy loading for the create deal form to improve performance
-const CreateDealForm = lazy(() => import("@/components/deals/CreateDealForm"));
+// Instead of lazy loading, we'll import the component directly
+// const CreateDealForm = lazy(() => import("@/components/deals/CreateDealForm"));
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -65,8 +66,7 @@ export default function Dashboard() {
   // Handle sign out
   const handleLocalSignOut = async () => {
     try {
-      const { error } = await signOut();
-      if (error) throw error;
+      await signOut();
       navigate("/auth");
     } catch (error) {
       console.error("Error signing out:", error);
@@ -86,14 +86,14 @@ export default function Dashboard() {
       if (!userId) return false;
 
       // Get user data to check subscription status
-      const { data: userData, error } = await supabase
+      const { data: userData, error: fetchError } = await supabase
         .from("users")
         .select("subscription_status")
         .eq("user_id", userId)
         .single();
 
-      if (error) {
-        handleError(error, "Failed to check subscription status");
+      if (fetchError) {
+        handleError(fetchError, "Failed to check subscription status");
         return false;
       }
 
@@ -181,15 +181,13 @@ export default function Dashboard() {
       </main>
 
       {showCreateDealModal && (
-        <Suspense fallback={<ReportsLoadingState />}>
-          <CreateDealForm
-            open={showCreateDealModal}
-            onClose={() => setShowCreateDealModal(false)}
-            onSuccess={handleDealCreated}
-            onBeforeCreate={handleBeforeCreate}
-            customFields={customFields}
-          />
-        </Suspense>
+        <CreateDealForm
+          open={showCreateDealModal}
+          onClose={() => setShowCreateDealModal(false)}
+          onSuccess={handleDealCreated}
+          onBeforeCreate={handleBeforeCreate}
+          customFields={customFields}
+        />
       )}
 
       <QuickNoteModal
