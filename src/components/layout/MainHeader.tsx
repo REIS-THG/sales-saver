@@ -13,9 +13,10 @@ interface MainHeaderProps {
   userData?: User | null;
   children?: React.ReactNode;
   onResetTour?: () => void;
+  className?: string; // Added className prop
 }
 
-export function MainHeader({ onSignOut, userData, children, onResetTour }: MainHeaderProps) {
+export function MainHeader({ onSignOut, userData, children, onResetTour, className }: MainHeaderProps) {
   const location = useLocation();
   const isMobile = useIsMobile();
   const [showHelpOptions, setShowHelpOptions] = useState(false);
@@ -25,7 +26,7 @@ export function MainHeader({ onSignOut, userData, children, onResetTour }: MainH
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+    <header className={`bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700 ${className || ''}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">

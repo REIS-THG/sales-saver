@@ -15,6 +15,8 @@ import { CreateDealForm } from "@/components/deals/CreateDealForm";
 import { useTour } from "@/hooks/use-tour";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { HelpButton } from "@/components/ui/help-button";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react"; // Added Plus icon import
 import type { Deal } from "@/types/types";
 
 export default function Dashboard() {
@@ -28,7 +30,6 @@ export default function Dashboard() {
   const isMobile = useIsMobile();
   const { TourComponent, resetTour } = useTour('dashboard');
 
-  // Dashboard state and handlers
   const {
     deals,
     customFields,
@@ -50,7 +51,6 @@ export default function Dashboard() {
     filters
   } = useDashboard();
 
-  // Check if user is authenticated
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -65,7 +65,6 @@ export default function Dashboard() {
     checkAuth();
   }, [navigate, handleAuthCheck]);
 
-  // Handle sign out
   const handleLocalSignOut = async () => {
     try {
       await signOut();
@@ -75,19 +74,16 @@ export default function Dashboard() {
     }
   };
 
-  // Handle creating a new deal
   const handleDealCreated = async () => {
     await fetchDeals();
     setShowCreateDealModal(false);
   };
 
-  // Check before creating a deal if the user has subscription status
   const handleBeforeCreate = async () => {
     try {
       const userId = await handleAuthCheck();
       if (!userId) return false;
 
-      // Get user data to check subscription status
       const { data: userData, error: fetchError } = await supabase
         .from("users")
         .select("subscription_status")
@@ -99,7 +95,6 @@ export default function Dashboard() {
         return false;
       }
 
-      // If the user is not a paid subscriber, they have a deal limit
       const freeUserDealLimit = 10;
       if (!userData.subscription_status && deals.length >= freeUserDealLimit) {
         handleError(
@@ -116,13 +111,11 @@ export default function Dashboard() {
     }
   };
 
-  // Handle opening quick note modal for a deal
   const handleQuickNote = (deal: Deal) => {
     setSelectedDealId(deal.id);
     setIsQuickNoteModalOpen(true);
   };
 
-  // Handle when a note is added
   const handleNoteAdded = async () => {
     await fetchDeals();
     setIsQuickNoteModalOpen(false);
@@ -135,11 +128,10 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Tour Component */}
       <TourComponent />
       
       <DashboardHeader
-        onDealCreated={handleDealCreated}
+        onDealCreated={() => setShowCreateDealModal(true)}
         customFields={customFields}
         onBeforeCreate={handleBeforeCreate}
         onSignOut={handleLocalSignOut}
@@ -160,6 +152,7 @@ export default function Dashboard() {
               className="create-deal-button bg-indigo-600 hover:bg-indigo-700 text-white"
               size={isMobile ? "sm" : "default"}
             >
+              <Plus className="h-4 w-4 mr-1" />
               Create Deal
             </Button>
           </div>

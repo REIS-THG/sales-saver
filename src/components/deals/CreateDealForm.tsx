@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from "react";
 import {
   AlertDialog,
@@ -25,6 +24,7 @@ interface CreateDealFormProps {
   onBeforeCreate?: () => Promise<boolean>;
   trigger?: React.ReactElement;
   customFields: CustomField[];
+  className?: string;
 }
 
 export function CreateDealForm({ 
@@ -33,7 +33,8 @@ export function CreateDealForm({
   onSuccess,
   onBeforeCreate,
   trigger,
-  customFields 
+  customFields,
+  className
 }: CreateDealFormProps) {
   const [open, setOpen] = useState(controlledOpen);
   const [dealName, setDealName] = useState("");
@@ -186,7 +187,7 @@ export function CreateDealForm({
   return (
     <AlertDialog open={isOpen} onOpenChange={isControlled ? onCloseWrapper : setOpen}>
       {trigger && React.cloneElement(trigger, { onClick: () => setOpen(true) })}
-      <AlertDialogContent className={isMobile ? "w-[95%] max-w-md p-4" : ""}>
+      <AlertDialogContent className={`${className || ''} ${isMobile ? "w-[95%] max-w-md p-4" : ""}`}>
         <AlertDialogHeader>
           <AlertDialogTitle>Create New Deal</AlertDialogTitle>
           <AlertDialogDescription>

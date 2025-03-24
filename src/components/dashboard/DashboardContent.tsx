@@ -21,6 +21,7 @@ interface DashboardContentProps {
   onQuickNote?: (deal: Deal) => void;
   customFields: CustomField[];
   userData?: User | null;
+  className?: string; // Added className prop
 }
 
 export function DashboardContent({
@@ -40,7 +41,8 @@ export function DashboardContent({
   onFetchDeals,
   onQuickNote,
   customFields,
-  userData
+  userData,
+  className
 }: DashboardContentProps) {
   const [showCustomFields, setShowCustomFields] = useState(false);
 
@@ -57,6 +59,7 @@ export function DashboardContent({
       fetchDeals={onFetchDeals}
       userData={userData}
       onQuickNote={onQuickNote}
+      className={className}
     />
   );
 }
