@@ -29,7 +29,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal, ArrowUpDown, Activity } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Deal, CustomField } from "@/types/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
@@ -45,6 +44,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useApiError } from "@/hooks/use-api-error";
+import { Deal, CustomField } from "@/types/types";
 
 // Status configuration with colors
 const statusConfig = {
@@ -118,7 +118,6 @@ export function DealsTable({
     }
   };
 
-  // Generate columns based on standard and custom fields
   const generateColumns = (): ColumnDef<Deal>[] => {
     const standardColumns: ColumnDef<Deal>[] = [
       {
@@ -316,7 +315,6 @@ export function DealsTable({
     },
   });
 
-  // Update selected deals when row selection changes
   useEffect(() => {
     const selectedRows = table.getSelectedRowModel().rows;
     const selectedDeals = selectedRows.map(row => row.original);

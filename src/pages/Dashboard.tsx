@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { useDashboard } from "@/hooks/use-dashboard";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";

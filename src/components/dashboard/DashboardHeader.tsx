@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { CustomField, User } from "@/types/types";
+import { useState } from "react";
 
 interface DashboardHeaderProps {
   onDealCreated: () => void;
@@ -25,6 +26,7 @@ export function DashboardHeader({
 }: DashboardHeaderProps) {
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  const [isCreateDealOpen, setIsCreateDealOpen] = useState(false);
   
   console.log('[DashboardHeader] Rendering with props:', {
     hasCustomFields: Array.isArray(customFields),
@@ -37,6 +39,7 @@ export function DashboardHeader({
     console.log('[DashboardHeader] Deal created callback triggered');
     try {
       onDealCreated();
+      setIsCreateDealOpen(false);
     } catch (error) {
       console.error('[DashboardHeader] Error in onDealCreated callback:', error);
       toast({
@@ -51,9 +54,10 @@ export function DashboardHeader({
     <MainHeader onSignOut={onSignOut} userData={userData}>
       <div className="flex items-center gap-2">
         <CreateDealForm
-          open={false}
+          open={isCreateDealOpen}
           onClose={() => {
             console.log('[DashboardHeader] CreateDealForm close triggered');
+            setIsCreateDealOpen(false);
           }}
           onSuccess={() => {
             console.log('[DashboardHeader] CreateDealForm success triggered');
@@ -62,7 +66,11 @@ export function DashboardHeader({
           onBeforeCreate={onBeforeCreate}
           customFields={customFields}
           trigger={
-            <Button className="shadow-sm" size={isMobile ? "sm" : "default"}>
+            <Button 
+              className="shadow-sm" 
+              size={isMobile ? "sm" : "default"}
+              onClick={() => setIsCreateDealOpen(true)}
+            >
               <Plus className="mr-1 sm:mr-2 h-4 w-4" />
               <span className={isMobile ? "text-xs" : ""}>Create Deal</span>
             </Button>
