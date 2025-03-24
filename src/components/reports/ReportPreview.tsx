@@ -16,7 +16,7 @@ import {
 import { format, parseISO } from "date-fns";
 import { ReportPreviewProps } from "./types";
 import { ErrorBoundary } from "../ui/error-boundary";
-import { useMemo, memo } from "react";
+import { useMemo, memo, useState } from "react";
 import { ReportErrorDisplay } from "./ReportErrorDisplay";
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
@@ -140,6 +140,8 @@ const MemoizedPieChart = memo(({ data, config }: {
 ));
 
 export const ReportPreview = ({ config, data, onRetry }: ReportPreviewProps & { onRetry?: () => void }) => {
+  const [error, setError] = useState<Error | null>(null);
+
   // If no dimensions or metrics have been selected, or data is empty
   if (!data || data.length === 0) {
     return (
@@ -200,31 +202,42 @@ export const ReportPreview = ({ config, data, onRetry }: ReportPreviewProps & { 
     );
   }, [data, config.dimensions, config.metrics, formatXAxis]);
 
+  // Custom error boundary fallback component
+  const ErrorFallback = () => (
+    <ReportErrorDisplay 
+      error="An error occurred while rendering the report. Please try again with different settings."
+      onRetry={onRetry || (() => {})}
+    />
+  );
+
   return (
-    <ErrorBoundary
-      fallback={
-        <ReportErrorDisplay 
-          error="An error occurred while rendering the report. Please try again with different settings."
-          onRetry={onRetry || (() => {})}
-        />
-      }
-    >
+    <ErrorBoundary>
       {(() => {
-        switch (config.visualization) {
-          case 'bar':
-            return <MemoizedBarChart data={data} config={config} formatXAxis={formatXAxis} />;
-          case 'line':
-            return <MemoizedLineChart data={data} config={config} formatXAxis={formatXAxis} />;
-          case 'pie':
-            return <MemoizedPieChart data={data} config={config} />;
-          case 'table':
-            return renderTable;
-          default:
-            return (
-              <div className="h-64 flex items-center justify-center border rounded p-4 bg-gray-50 dark:bg-gray-800">
-                <p className="text-gray-500 dark:text-gray-400">Please select a visualization type.</p>
-              </div>
-            );
+        try {
+          switch (config.visualization) {
+            case 'bar':
+              return <MemoizedBarChart data={data} config={config} formatXAxis={formatXAxis} />;
+            case 'line':
+              return <MemoizedLineChart data={data} config={config} formatXAxis={formatXAxis} />;
+            case 'pie':
+              return <MemoizedPieChart data={data} config={config} />;
+            case 'table':
+              return renderTable;
+            default:
+              return (
+                <div className="h-64 flex items-center justify-center border rounded p-4 bg-gray-50 dark:bg-gray-800">
+                  <p className="text-gray-500 dark:text-gray-400">Please select a visualization type.</p>
+                </div>
+              );
+          }
+        } catch (err) {
+          // If an error occurs during rendering, show the error display
+          return (
+            <ReportErrorDisplay 
+              error="An error occurred while rendering the report. Please try again with different settings."
+              onRetry={onRetry || (() => {})}
+            />
+          );
         }
       })()}
     </ErrorBoundary>

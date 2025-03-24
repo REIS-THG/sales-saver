@@ -6,6 +6,7 @@ import type { ReportConfiguration } from "@/components/reports/types";
 export const reportTemplates: ReportConfiguration[] = [
   {
     id: "template-sales-by-status",
+    user_id: "template", // Added user_id property
     name: "Sales by Status",
     description: "Visualize your pipeline distribution by deal status",
     config: {
@@ -19,6 +20,7 @@ export const reportTemplates: ReportConfiguration[] = [
   },
   {
     id: "template-monthly-sales",
+    user_id: "template", // Added user_id property
     name: "Monthly Sales Trend",
     description: "Track your sales performance over time",
     config: {
@@ -32,6 +34,7 @@ export const reportTemplates: ReportConfiguration[] = [
   },
   {
     id: "template-top-deals",
+    user_id: "template", // Added user_id property
     name: "Top 10 Deals",
     description: "View your highest value opportunities",
     config: {
@@ -45,6 +48,7 @@ export const reportTemplates: ReportConfiguration[] = [
   },
   {
     id: "template-health-analysis",
+    user_id: "template", // Added user_id property
     name: "Deal Health Analysis",
     description: "Analyze the health of your deals",
     config: {
