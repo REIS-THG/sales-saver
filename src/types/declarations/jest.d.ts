@@ -4,32 +4,8 @@
 // Explicitly augment the global scope with Jest types
 declare global {
   // Re-export Jest namespace to make it available globally
-  const jest: typeof import('jest');
-  
-  // Test functions
-  function describe(name: string, fn: () => void): void;
-  function describe(name: string, options: {timeout?: number}, fn: () => void): void;
-  function fdescribe(name: string, fn: () => void): void;
-  function xdescribe(name: string, fn: () => void): void;
-  
-  function beforeAll(fn: () => void | Promise<void>, timeout?: number): void;
-  function beforeEach(fn: () => void | Promise<void>, timeout?: number): void;
-  function afterAll(fn: () => void | Promise<void>, timeout?: number): void;
-  function afterEach(fn: () => void | Promise<void>, timeout?: number): void;
-  
-  function it(name: string, fn: () => void | Promise<void>, timeout?: number): void;
-  function it(name: string, options: {timeout?: number}, fn: () => void | Promise<void>): void;
-  function fit(name: string, fn: () => void | Promise<void>, timeout?: number): void;
-  function xit(name: string, fn: () => void | Promise<void>, timeout?: number): void;
-  
-  function test(name: string, fn: () => void | Promise<void>, timeout?: number): void;
-  function test(name: string, options: {timeout?: number}, fn: () => void | Promise<void>): void;
-  
-  // Matchers
-  function expect<T = any>(actual: T): jest.Matchers<T>;
-  
   namespace jest {
-    // Re-export Jest namespace members
+    // Add commonly used Jest matchers and utilities
     function fn<T = any>(): jest.Mock<T>;
     function spyOn<T, K extends keyof T>(object: T, method: K): jest.SpyInstance;
     function mock(moduleName: string, factory?: () => unknown): typeof jest;
@@ -69,42 +45,69 @@ declare global {
       mockRestore(): void;
     }
     
-    interface Matchers<R> {
-      toEqual(expected: any): R;
-      toStrictEqual(expected: any): R;
-      toBe(expected: any): R;
-      toBeDefined(): R;
-      toBeUndefined(): R;
-      toBeNull(): R;
-      toBeNaN(): R;
-      toBeTruthy(): R;
-      toBeFalsy(): R;
-      toBeGreaterThan(expected: number | bigint): R;
-      toBeGreaterThanOrEqual(expected: number | bigint): R;
-      toBeLessThan(expected: number | bigint): R;
-      toBeLessThanOrEqual(expected: number | bigint): R;
-      toContain(expected: any): R;
-      toContainEqual(expected: any): R;
-      toHaveLength(expected: number): R;
-      toHaveProperty(property: string, value?: any): R;
-      toMatch(expected: string | RegExp): R;
-      toMatchObject(expected: object): R;
-      toMatchSnapshot(hint?: string): R;
-      toThrow(expected?: any): R;
-      toThrowError(expected?: any): R;
-      toBeCalled(): R;
-      toBeCalledWith(...args: any[]): R;
-      toBeCalledTimes(times: number): R;
-      toBeInstanceOf(expected: any): R;
-      toHaveBeenCalled(): R;
-      toHaveBeenCalledWith(...args: any[]): R;
-      toHaveBeenCalledTimes(times: number): R;
-      toHaveBeenLastCalledWith(...args: any[]): R;
-      not: Matchers<R>;
-      resolves: Matchers<Promise<R>>;
-      rejects: Matchers<Promise<R>>;
-    }
+    type JestMatchers<T> = {
+      not: JestMatchers<T>;
+      toEqual(expected: any): void;
+      toStrictEqual(expected: any): void;
+      toBe(expected: any): void;
+      toBeDefined(): void;
+      toBeUndefined(): void;
+      toBeNull(): void;
+      toBeNaN(): void;
+      toBeTruthy(): void;
+      toBeFalsy(): void;
+      toBeGreaterThan(expected: number | bigint): void;
+      toBeGreaterThanOrEqual(expected: number | bigint): void;
+      toBeLessThan(expected: number | bigint): void;
+      toBeLessThanOrEqual(expected: number | bigint): void;
+      toContain(expected: any): void;
+      toContainEqual(expected: any): void;
+      toHaveLength(expected: number): void;
+      toHaveProperty(property: string, value?: any): void;
+      toMatch(expected: string | RegExp): void;
+      toMatchObject(expected: object): void;
+      toMatchSnapshot(hint?: string): void;
+      toThrow(expected?: any): void;
+      toThrowError(expected?: any): void;
+      toBeCalled(): void;
+      toBeCalledWith(...args: any[]): void;
+      toBeCalledTimes(times: number): void;
+      toBeInstanceOf(expected: any): void;
+      resolves: JestMatchers<Promise<T>>;
+      rejects: JestMatchers<Promise<T>>;
+      objectContaining(expected: object): object;
+      any(constructor: any): any;
+    };
+
+    interface Matchers<R> extends JestMatchers<R> {}
+    
+    function expect<T = any>(actual: T): Matchers<T>;
   }
+  
+  // Test functions
+  function describe(name: string, fn: () => void): void;
+  function describe(name: string, options: {timeout?: number}, fn: () => void): void;
+  function fdescribe(name: string, fn: () => void): void;
+  function xdescribe(name: string, fn: () => void): void;
+  
+  function beforeAll(fn: () => void | Promise<void>, timeout?: number): void;
+  function beforeEach(fn: () => void | Promise<void>, timeout?: number): void;
+  function afterAll(fn: () => void | Promise<void>, timeout?: number): void;
+  function afterEach(fn: () => void | Promise<void>, timeout?: number): void;
+  
+  function it(name: string, fn: () => void | Promise<void>, timeout?: number): void;
+  function it(name: string, options: {timeout?: number}, fn: () => void | Promise<void>): void;
+  function fit(name: string, fn: () => void | Promise<void>, timeout?: number): void;
+  function xit(name: string, fn: () => void | Promise<void>, timeout?: number): void;
+  
+  function test(name: string, fn: () => void | Promise<void>, timeout?: number): void;
+  function test(name: string, options: {timeout?: number}, fn: () => void | Promise<void>): void;
+  
+  // Matchers
+  function expect<T = any>(actual: T): jest.Matchers<T>;
+  
+  // Jest object
+  const jest: typeof jest;
 }
 
 // Make the module a proper module
