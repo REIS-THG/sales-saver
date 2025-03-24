@@ -5,8 +5,6 @@
 import '@testing-library/jest-dom';
 import * as React from 'react';
 
-// These type definitions from the testing.d.ts file should make the jest references valid
-
 // Mock the Supabase client
 jest.mock('@/integrations/supabase/client', () => ({
   supabase: {

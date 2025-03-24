@@ -8,5 +8,6 @@
 /// <reference path="./declarations/utils.d.ts" />
 /// <reference path="./declarations/supabase.d.ts" />
 /// <reference path="./declarations/i18n.d.ts" />
+/// <reference path="./declarations/jest.d.ts" />
 
 // Any additional type declarations not covered by specific files can go here:
