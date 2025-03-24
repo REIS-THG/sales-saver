@@ -16,6 +16,7 @@ interface DealsTableProps {
   fetchDeals: () => Promise<void>;
   userData?: User | null;
   onQuickNote?: (deal: Deal) => void;
+  className?: string; // Added className prop
 }
 
 export function DealsTable({ 
@@ -25,7 +26,8 @@ export function DealsTable({
   onSelectionChange,
   fetchDeals,
   userData,
-  onQuickNote
+  onQuickNote,
+  className
 }: DealsTableProps) {
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
   const [updatingDeals, setUpdatingDeals] = useState(false);
@@ -85,7 +87,7 @@ export function DealsTable({
   );
 
   return (
-    <div>
+    <div className={className}>
       <TableContainer
         table={table}
         deals={deals}
@@ -94,6 +96,7 @@ export function DealsTable({
         onRowSelection={onSelectionChange}
         isUpdating={updatingDeals}
         onQuickNote={onQuickNote}
+        className={className}
       />
 
       {selectedDeal && (
