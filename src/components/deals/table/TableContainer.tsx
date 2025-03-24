@@ -14,7 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, MessageSquareMore } from "lucide-react";
 
 export interface TableContainerProps {
   table: any;
@@ -27,6 +27,7 @@ export interface TableContainerProps {
   selectedDeals?: Deal[];
   onBulkStatusUpdate?: (selectedDeals: Deal[], newStatus: Deal["status"]) => Promise<void>;
   onBulkDelete?: (dealsToDelete: Deal[]) => Promise<void>;
+  onQuickNote?: (deal: Deal) => void;
 }
 
 export function TableContainer({
@@ -39,7 +40,8 @@ export function TableContainer({
   isUpdating = false,
   selectedDeals = [],
   onBulkStatusUpdate,
-  onBulkDelete
+  onBulkDelete,
+  onQuickNote
 }: TableContainerProps) {
   const sensors = useDragSensors();
   const isMobile = useIsMobile();
@@ -61,6 +63,15 @@ export function TableContainer({
           ? [...selectedDeals, deal]
           : selectedDeals.filter(d => d.id !== dealId);
         onRowSelection(updatedSelection);
+      }
+    }
+  };
+
+  const handleQuickNote = (dealId: string) => {
+    if (onQuickNote) {
+      const deal = deals.find(d => d.id === dealId);
+      if (deal) {
+        onQuickNote(deal);
       }
     }
   };
@@ -142,6 +153,8 @@ export function TableContainer({
                         onClick={() => onDealClick(row.original)}
                         onSelection={(selected) => handleRowSelection(row.original.id, selected)}
                         isSelected={selectedDeals.some(d => d.id === row.original.id)}
+                        onQuickNote={() => handleQuickNote(row.original.id)}
+                        hasQuickNoteAction={!!onQuickNote}
                       />
                     ))}
                   </SortableContext>

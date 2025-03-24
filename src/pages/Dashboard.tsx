@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useDashboard } from "@/hooks/use-dashboard";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardContent } from "@/components/dashboard/DashboardContent";
@@ -10,8 +10,21 @@ import { Spinner } from "@/components/ui/spinner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AutomationSettings, AutomationSettingsDialog } from "@/components/dashboard/AutomationSettingsDialog";
+import { QuickNoteModal } from "@/components/dashboard/QuickNoteModal";
+import { Deal } from "@/types/types";
+import { supabase } from "@/integrations/supabase/client";
 
 const FREE_DEAL_LIMIT = 5;
+
+// Default automation settings
+const DEFAULT_AUTOMATION_SETTINGS: AutomationSettings = {
+  enableTimeDecay: false,
+  timeDecayRate: 5,
+  enableActivityBoost: true,
+  activityBoostRate: 5,
+  enableAutoStatusChange: false,
+};
 
 const Dashboard = () => {
   const {
@@ -30,6 +43,10 @@ const Dashboard = () => {
     handleSignOut
   } = useDashboard();
   
+  const [automationSettings, setAutomationSettings] = useState<AutomationSettings>(DEFAULT_AUTOMATION_SETTINGS);
+  const [quickNoteModalOpen, setQuickNoteModalOpen] = useState(false);
+  const [selectedDealForNote, setSelectedDealForNote] = useState<Deal | null>(null);
+  
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -40,6 +57,11 @@ const Dashboard = () => {
     if (userData) {
       fetchDeals();
       fetchCustomFields();
+      
+      // Load automation settings from user data if available
+      if (userData.deal_automation_settings) {
+        setAutomationSettings(userData.deal_automation_settings as AutomationSettings);
+      }
     }
   }, [userData]);
 
@@ -49,6 +71,11 @@ const Dashboard = () => {
       return false;
     }
     return true;
+  };
+  
+  const handleQuickNote = (deal: Deal) => {
+    setSelectedDealForNote(deal);
+    setQuickNoteModalOpen(true);
   };
 
   if (loading && !deals.length) {
@@ -124,7 +151,15 @@ const Dashboard = () => {
         onBeforeCreate={handleCreateDeal}
         onSignOut={handleSignOut}
         userData={userData}
-      />
+      >
+        {userData && (
+          <AutomationSettingsDialog 
+            userId={userData.user_id} 
+            settings={automationSettings}
+            onSettingsChange={setAutomationSettings}
+          />
+        )}
+      </DashboardHeader>
       
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6">
         {error && (
@@ -149,8 +184,16 @@ const Dashboard = () => {
           setShowCustomFields={setShowCustomFields}
           userData={userData}
           fetchDeals={fetchDeals}
+          onQuickNote={handleQuickNote}
         />
       </div>
+      
+      <QuickNoteModal
+        deal={selectedDealForNote}
+        isOpen={quickNoteModalOpen}
+        onClose={() => setQuickNoteModalOpen(false)}
+        onNoteAdded={fetchDeals}
+      />
     </div>
   );
 };

@@ -1,91 +1,54 @@
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Row } from "@tanstack/react-table";
-import { TableCell, TableRow } from "@/components/ui/table";
+import { TableRow, TableCell } from "@/components/ui/table";
 import { flexRender } from "@tanstack/react-table";
-import { GripVertical } from "lucide-react";
-import { type Deal } from "@/types/types";
-import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
+import { Row } from "@tanstack/react-table";
+import { GripVertical, MessageSquare } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { StatusSelect } from "./components/StatusSelect";
-import { useDealStatus } from "@/hooks/use-deal-status";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface SortableTableRowProps {
-  row: Row<Deal>;
+  row: Row<any>;
   onClick: () => void;
   onSelection?: (selected: boolean) => void;
   isSelected?: boolean;
+  onQuickNote?: () => void;
+  hasQuickNoteAction?: boolean;
 }
 
-export function SortableTableRow({ 
-  row, 
+export function SortableTableRow({
+  row,
   onClick,
   onSelection,
-  isSelected = false
+  isSelected = false,
+  onQuickNote,
+  hasQuickNoteAction = false
 }: SortableTableRowProps) {
-  const [isChecked, setIsChecked] = useState(isSelected);
-  const {
-    isUpdating,
-    updateError,
-    showStatusDialog,
-    pendingStatus,
-    setShowStatusDialog,
-    handleStatusChange,
-    handleStatusConfirm,
-  } = useDealStatus(row.original.status);
-  
   const {
     attributes,
     listeners,
+    setNodeRef,
     transform,
     transition,
-    setNodeRef,
     isDragging,
   } = useSortable({
     id: row.original.id,
   });
 
-  useEffect(() => {
-    setIsChecked(isSelected);
-  }, [isSelected]);
-
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition: isDragging ? undefined : transition,
-    opacity: isDragging ? 0.8 : undefined,
-    backgroundColor: isDragging ? "var(--muted)" : undefined,
-    cursor: isDragging ? "grabbing" : "pointer",
-    position: isDragging ? ("relative" as const) : undefined,
-    zIndex: isDragging ? 1 : undefined,
-    boxShadow: isDragging ? "0 8px 24px rgba(0, 0, 0, 0.15)" : undefined,
-  };
+    transition,
+    zIndex: isDragging ? 1 : 0,
+    opacity: isDragging ? 0.8 : 1,
+    position: isDragging ? "relative" : "static",
+    backgroundColor: isDragging ? "var(--bg-muted)" : undefined,
+  } as React.CSSProperties;
 
   const handleCheckboxChange = (checked: boolean) => {
-    setIsChecked(checked);
-    onSelection?.(checked);
-  };
-
-  const handleRetry = () => {
-    if (updateError) {
-      handleStatusChange(row.original.status);
+    if (onSelection) {
+      onSelection(checked);
     }
   };
 
@@ -93,86 +56,58 @@ export function SortableTableRow({
     <TableRow
       ref={setNodeRef}
       style={style}
-      className={`group transition-all duration-200 ease-in-out hover:bg-gray-50 
-        ${isDragging ? "animate-pulse ring-2 ring-primary ring-offset-2 shadow-lg scale-[1.02]" : ""}
-        ${isUpdating ? "opacity-80" : ""}
-        ${isChecked ? "bg-blue-50" : ""}`}
+      className={`transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer 
+        ${isDragging ? "bg-gray-100 dark:bg-gray-800/80" : ""}`}
+      data-state={isSelected ? "selected" : undefined}
     >
       {onSelection && (
-        <TableCell className="w-12">
+        <TableCell className="w-10 px-2 py-2">
           <Checkbox
-            checked={isChecked}
+            checked={isSelected}
             onCheckedChange={handleCheckboxChange}
-            aria-label={`Select ${row.original.deal_name}`}
+            onClick={(e) => e.stopPropagation()}
+            className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
           />
         </TableCell>
       )}
-      <TableCell>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="flex items-center gap-2">
-                <span
-                  {...attributes}
-                  {...listeners}
-                  className={`cursor-grab active:cursor-grabbing transition-colors duration-200 ${
-                    isDragging ? "cursor-grabbing text-primary scale-110" : "text-gray-400"
-                  }`}
-                >
-                  <GripVertical className={`h-4 w-4 ${
-                    isDragging ? "scale-110" : "group-hover:scale-105"
-                  } transition-transform duration-200`} />
-                </span>
-                {flexRender(row.getVisibleCells()[0].column.columnDef.cell, row.getVisibleCells()[0].getContext())}
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Drag to reorder deals</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+      <TableCell className="w-12 p-0">
+        <div
+          {...attributes}
+          {...listeners}
+          className="flex h-full w-full items-center justify-center cursor-grab active:cursor-grabbing"
+        >
+          <GripVertical className="h-4 w-4 text-gray-400" />
+        </div>
       </TableCell>
-      {row.getVisibleCells().slice(1, -2).map((cell) => (
+      {row.getVisibleCells().map((cell) => (
         <TableCell key={cell.id} onClick={onClick}>
           {flexRender(cell.column.columnDef.cell, cell.getContext())}
         </TableCell>
       ))}
-      <TableCell onClick={(e) => e.stopPropagation()}>
-        <StatusSelect
-          status={row.original.status}
-          isUpdating={isUpdating}
-          updateError={updateError}
-          onStatusChange={handleStatusChange}
-          onRetry={handleRetry}
-        />
-      </TableCell>
-      <TableCell onClick={(e) => e.stopPropagation()}>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => onClick()}
-          className="w-full flex items-center gap-2"
-        >
-          View Details
-        </Button>
-      </TableCell>
-
-      <AlertDialog open={showStatusDialog} onOpenChange={setShowStatusDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Change Deal Status</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to change the status of this deal? This action will update the deal's health score and analytics.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => handleStatusConfirm(row.original.id)}>
-              Confirm
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {hasQuickNoteAction && (
+        <TableCell className="w-10 p-0">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onQuickNote) onQuickNote();
+                  }}
+                >
+                  <MessageSquare className="h-4 w-4 text-gray-500 hover:text-gray-800 dark:hover:text-gray-300" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="text-xs">Add a quick note</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </TableCell>
+      )}
     </TableRow>
   );
 }

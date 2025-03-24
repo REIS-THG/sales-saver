@@ -9,8 +9,8 @@ import { Settings2, ListFilter, InfoIcon } from "lucide-react";
 import type { Deal, CustomField, User } from "@/types/types";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { BulkActionsMenu } from "./BulkActionsMenu";
 
 interface DashboardContentProps {
   deals: Deal[];
@@ -19,6 +19,7 @@ interface DashboardContentProps {
   setShowCustomFields: (show: boolean) => void;
   userData: User | null;
   fetchDeals: () => Promise<void>;
+  onQuickNote: (deal: Deal) => void;
 }
 
 const FREE_DEAL_LIMIT = 5;
@@ -29,15 +30,11 @@ export function DashboardContent({
   showCustomFields,
   setShowCustomFields,
   userData,
-  fetchDeals
+  fetchDeals,
+  onQuickNote
 }: DashboardContentProps) {
   const [selectedDeals, setSelectedDeals] = useState<Deal[]>([]);
   const isMobile = useIsMobile();
-
-  const handleBulkAction = (action: 'won' | 'lost' | 'stalled' | 'delete') => {
-    console.log(`Bulk action ${action} for deals:`, selectedDeals);
-    // Handle bulk actions implementation
-  };
 
   return (
     <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6">
@@ -96,36 +93,10 @@ export function DashboardContent({
           )}
         </div>
 
-        {selectedDeals.length > 0 && (
-          <div className="flex items-center gap-2 w-full sm:w-auto justify-end mt-2 sm:mt-0">
-            <span className="text-xs text-gray-500">
-              {selectedDeals.length} {selectedDeals.length === 1 ? 'deal' : 'deals'} selected
-            </span>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <ListFilter className="h-4 w-4 mr-1" />
-                  <span className="hidden xs:inline">Bulk Actions</span>
-                  <span className="xs:hidden">Actions</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="z-50 bg-white dark:bg-gray-800">
-                <DropdownMenuItem onClick={() => handleBulkAction('won')}>
-                  Mark as Won
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleBulkAction('lost')}>
-                  Mark as Lost
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleBulkAction('stalled')}>
-                  Mark as Stalled
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleBulkAction('delete')} className="text-red-600">
-                  Delete Deals
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        )}
+        <BulkActionsMenu 
+          selectedDeals={selectedDeals} 
+          onActionComplete={fetchDeals} 
+        />
       </div>
 
       <DealsTable
@@ -134,6 +105,8 @@ export function DashboardContent({
         showCustomFields={showCustomFields}
         onSelectionChange={setSelectedDeals}
         fetchDeals={fetchDeals}
+        userData={userData}
+        onQuickNote={onQuickNote}
       />
     </main>
   );
