@@ -1,4 +1,4 @@
-export type FieldType = "text" | "number" | "boolean" | "date" | "product";
+export type FieldType = "text" | "number" | "boolean" | "date" | "product" | "multi-select";
 export type DealStatus = "open" | "won" | "lost" | "stalled";
 export type UserRole = "sales_rep" | "manager";
 export type SubscriptionStatus = "free" | "pro" | "enterprise";
@@ -10,6 +10,11 @@ export interface StandardField {
   field_type: "text" | "number" | "boolean" | "date" | "product";
 }
 
+export interface CustomFieldOption {
+  label: string;
+  value: string;
+}
+
 export interface CustomField {
   id: string;
   field_name: string;
@@ -18,6 +23,12 @@ export interface CustomField {
   user_id?: string;
   created_at?: string;
   updated_at?: string;
+  options?: CustomFieldOption[];
+  placeholder?: string;
+  help_text?: string;
+  allow_multiple?: boolean;
+  is_active?: boolean;
+  include_in_documents?: boolean;
 }
 
 export interface User {
