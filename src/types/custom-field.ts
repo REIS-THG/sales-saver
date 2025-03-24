@@ -39,3 +39,11 @@ export interface CustomField {
   health_score?: number;
   include_in_documents?: boolean;
 }
+
+export interface ExtractionProgress {
+  current: number;
+  total: number;
+  status: 'idle' | 'scraping' | 'analyzing' | 'processing' | 'complete' | 'error';
+  message?: string;
+  error?: string;
+}

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,13 +8,18 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import { Search, X, Plus, Globe, Building2, Binary, FileText, AlertTriangle } from "lucide-react";
+import { Search, X, Plus, Globe, Building2, Binary, FileText, AlertTriangle, Loader2, ArrowRight, Clock, CheckCircle2, Info } from "lucide-react";
 import type { Deal, DealSourceConfig, SourceType } from "@/types/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Spinner } from "@/components/ui/spinner";
 import { Progress } from "@/components/ui/progress";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Toaster } from "@/components/ui/sonner";
+import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ExtractionProgress } from "@/types/custom-field";
+import { SubscriptionStatus } from "@/types/types";
 
 interface PotentialDeal extends Omit<Deal, 'id' | 'user_id' | 'created_at' | 'updated_at'> {
   confidence_score?: number;
@@ -24,7 +30,11 @@ interface PotentialDeal extends Omit<Deal, 'id' | 'user_id' | 'created_at' | 'up
   custom_fields: Record<string, any>;
 }
 
-export function DealSourcingForm() {
+interface DealSourcingFormProps {
+  subscriptionTier: SubscriptionStatus;
+}
+
+export function DealSourcingForm({ subscriptionTier }: DealSourcingFormProps) {
   const [activeConfig, setActiveConfig] = useState<DealSourceConfig | null>(null);
   const [configs, setConfigs] = useState<DealSourceConfig[]>([]);
   const [keywords, setKeywords] = useState<string[]>([]);
@@ -36,10 +46,20 @@ export function DealSourcingForm() {
   const [sourceType, setSourceType] = useState<SourceType>('website');
   const [isLoading, setIsLoading] = useState(false);
   const [potentialDeals, setPotentialDeals] = useState<PotentialDeal[]>([]);
-  const [searchProgress, setSearchProgress] = useState(0);
   const [currentSourceIndex, setCurrentSourceIndex] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const { toast } = useToast();
+  const [batchSize, setBatchSize] = useState(3); // Default batch size
+  const [enableBatchProcessing, setEnableBatchProcessing] = useState(false);
+  const [extractionProgress, setExtractionProgress] = useState<ExtractionProgress>({
+    current: 0,
+    total: 0,
+    status: 'idle'
+  });
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const { toast: toastHook } = useToast();
+
+  // Maximum deals per source based on subscription
+  const MAX_DEALS_PER_SOURCE = subscriptionTier === 'pro' ? 10 : 3;
 
   useEffect(() => {
     fetchConfigs();
@@ -68,7 +88,7 @@ export function DealSourcingForm() {
       })) || []);
     } catch (error) {
       console.error('Error fetching configs:', error);
-      toast({
+      toastHook({
         variant: "destructive",
         title: "Error",
         description: "Failed to fetch source configurations",
@@ -101,11 +121,7 @@ export function DealSourcingForm() {
         setSourceUrls([...sourceUrls, newSourceUrl.trim()]);
         setNewSourceUrl('');
       } catch (error) {
-        toast({
-          variant: "destructive",
-          title: "Invalid URL",
-          description: "Please enter a valid URL including http:// or https://",
-        });
+        toast.error("Please enter a valid URL including http:// or https://");
       }
     }
   };
@@ -140,30 +156,19 @@ export function DealSourcingForm() {
 
       if (dealError) throw dealError;
 
-      toast({
-        title: "Success",
-        description: "Deal created successfully",
-      });
+      toast.success("Deal created successfully");
 
       setPotentialDeals(prev => prev.filter(d => d.deal_name !== deal.deal_name));
     } catch (error) {
       console.error('Error creating deal:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to create deal",
-      });
+      toast.error("Failed to create deal");
     }
   };
 
   const handleSaveConfig = async () => {
     try {
       if (!keywords.length || !sourceUrls.length) {
-        toast({
-          variant: "destructive",
-          title: "Missing Information",
-          description: "Please add at least one keyword and source URL",
-        });
+        toast.error("Please add at least one keyword and source URL");
         return;
       }
       
@@ -198,24 +203,29 @@ export function DealSourcingForm() {
 
       if (error) throw error;
 
-      toast({
-        title: "Success",
-        description: "Configuration saved successfully",
-      });
+      toast.success("Configuration saved successfully");
 
       fetchConfigs();
     } catch (error) {
       console.error('Error saving config:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to save configuration",
-      });
+      toast.error("Failed to save configuration");
     }
+  };
+
+  const updateProgress = (status: ExtractionProgress['status'], current: number, total: number, message?: string, error?: string) => {
+    setExtractionProgress({
+      status,
+      current,
+      total,
+      message,
+      error
+    });
   };
 
   const processWebsiteScraping = async (url: string) => {
     try {
+      updateProgress('scraping', currentSourceIndex + 1, sourceUrls.length, `Scraping ${url}`);
+
       const { data, error } = await supabase.functions.invoke('scrape-website', {
         body: {
           url,
@@ -231,7 +241,7 @@ export function DealSourcingForm() {
         return [];
       }
       
-      console.log('Scraped data:', data);
+      updateProgress('analyzing', currentSourceIndex + 1, sourceUrls.length, `Analyzing content from ${url}`);
       
       const aiResponse = await supabase.functions.invoke('ai-deal-extraction', {
         body: {
@@ -245,7 +255,11 @@ export function DealSourcingForm() {
         throw new Error('AI processing failed');
       }
       
-      const enhancedDeals = [...data.deals, ...aiResponse.data.deals].map(deal => ({
+      // Limit the number of deals based on subscription
+      const combinedDeals = [...data.deals, ...aiResponse.data.deals];
+      const limitedDeals = combinedDeals.slice(0, MAX_DEALS_PER_SOURCE);
+      
+      const enhancedDeals = limitedDeals.map(deal => ({
         ...deal,
         health_score: 50,
         custom_fields: {},
@@ -254,15 +268,18 @@ export function DealSourcingForm() {
       return enhancedDeals;
     } catch (e) {
       console.error('Error in website scraping for URL:', url, e);
+      updateProgress('error', currentSourceIndex + 1, sourceUrls.length, undefined, `Failed to process ${url}: ${e.message}`);
       return [];
     }
   };
 
   const processMarketplaceSource = async (url: string) => {
+    updateProgress('processing', currentSourceIndex + 1, sourceUrls.length, `Processing marketplace data from ${url}`);
+    
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     const deals: PotentialDeal[] = [];
-    const numDeals = Math.floor(Math.random() * 3) + 1;
+    const numDeals = Math.min(Math.floor(Math.random() * 3) + 1, MAX_DEALS_PER_SOURCE);
     
     for (let i = 0; i < numDeals; i++) {
       const randomKeyword = keywords[Math.floor(Math.random() * keywords.length)];
@@ -286,10 +303,12 @@ export function DealSourcingForm() {
   };
 
   const processAPISource = async (url: string) => {
+    updateProgress('processing', currentSourceIndex + 1, sourceUrls.length, `Processing API data from ${url}`);
+    
     await new Promise(resolve => setTimeout(resolve, 1500));
     
     const deals: PotentialDeal[] = [];
-    const numDeals = Math.floor(Math.random() * 2) + 1;
+    const numDeals = Math.min(Math.floor(Math.random() * 2) + 1, MAX_DEALS_PER_SOURCE);
     
     for (let i = 0; i < numDeals; i++) {
       const randomKeyword = keywords[Math.floor(Math.random() * keywords.length)];
@@ -313,10 +332,12 @@ export function DealSourcingForm() {
   };
 
   const processManualSource = async () => {
+    updateProgress('processing', currentSourceIndex + 1, sourceUrls.length, `Processing manual input`);
+    
     await new Promise(resolve => setTimeout(resolve, 500));
     
     const deals: PotentialDeal[] = [];
-    const numDeals = Math.floor(Math.random() * 2) + 1;
+    const numDeals = Math.min(Math.floor(Math.random() * 2) + 1, MAX_DEALS_PER_SOURCE);
     
     for (let i = 0; i < numDeals; i++) {
       const randomKeyword = keywords[Math.floor(Math.random() * keywords.length)];
@@ -341,70 +362,91 @@ export function DealSourcingForm() {
 
   const handleSearch = async () => {
     if (!keywords.length || !sourceUrls.length) {
-      toast({
-        variant: "destructive",
-        title: "Missing Information",
-        description: "Please add at least one keyword and source URL",
-      });
+      toast.error("Please add at least one keyword and source URL");
       return;
     }
 
     setIsLoading(true);
     setErrorMessage(null);
     setPotentialDeals([]);
-    setSearchProgress(0);
     setCurrentSourceIndex(0);
+    
+    // Create a new AbortController for this search operation
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
     
     try {
       const allDeals: PotentialDeal[] = [];
       
-      for (let i = 0; i < sourceUrls.length; i++) {
+      // Calculate the total number of sources to process
+      const totalSources = sourceUrls.length;
+      updateProgress('scraping', 0, totalSources, 'Starting extraction process');
+      
+      // Determine how many sources to process based on subscription and settings
+      const sourcesToProcess = subscriptionTier === 'pro' || !enableBatchProcessing 
+        ? sourceUrls 
+        : sourceUrls.slice(0, batchSize);
+      
+      for (let i = 0; i < sourcesToProcess.length; i++) {
+        // Check if the operation was aborted
+        if (signal.aborted) {
+          break;
+        }
+        
         setCurrentSourceIndex(i);
-        const url = sourceUrls[i];
+        const url = sourcesToProcess[i];
         
         let deals: PotentialDeal[] = [];
         
-        switch (sourceType) {
-          case 'website':
-            deals = await processWebsiteScraping(url);
-            break;
-          case 'marketplace':
-            deals = await processMarketplaceSource(url);
-            break;
-          case 'api':
-            deals = await processAPISource(url);
-            break;
-          case 'manual':
-            deals = await processManualSource();
-            break;
+        try {
+          switch (sourceType) {
+            case 'website':
+              deals = await processWebsiteScraping(url);
+              break;
+            case 'marketplace':
+              deals = await processMarketplaceSource(url);
+              break;
+            case 'api':
+              deals = await processAPISource(url);
+              break;
+            case 'manual':
+              deals = await processManualSource();
+              break;
+          }
+          
+          allDeals.push(...deals);
+        } catch (error) {
+          console.error(`Error processing source ${url}:`, error);
+          toast.error(`Failed to process ${url}: ${error.message}`);
+          // Continue with other sources even if one fails
         }
-        
-        allDeals.push(...deals);
-        
-        setSearchProgress(((i + 1) / sourceUrls.length) * 100);
       }
+      
+      updateProgress('complete', totalSources, totalSources, 'Extraction completed');
       
       if (allDeals.length === 0) {
         setErrorMessage("No potential deals found. Try different keywords or sources.");
       } else {
         setPotentialDeals(allDeals);
         
-        toast({
-          title: "Search Complete",
-          description: `Found ${allDeals.length} potential deals`,
-        });
+        toast.success(`Found ${allDeals.length} potential deals`);
       }
     } catch (error) {
       console.error('Error searching deals:', error);
       setErrorMessage("An error occurred during the search. Please try again.");
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to search for deals",
-      });
+      toast.error("Failed to search for deals");
+      updateProgress('error', 0, sourceUrls.length, undefined, error.message);
     } finally {
       setIsLoading(false);
-      setSearchProgress(100);
+    }
+  };
+
+  const handleCancelExtraction = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      updateProgress('idle', 0, 0, undefined);
+      setIsLoading(false);
+      toast.info("Extraction process canceled");
     }
   };
 
@@ -421,8 +463,67 @@ export function DealSourcingForm() {
     }
   };
 
+  const getProgressStatusIcon = () => {
+    switch (extractionProgress.status) {
+      case 'idle':
+        return null;
+      case 'scraping':
+        return <Globe className="w-4 h-4 animate-pulse text-blue-500" />;
+      case 'analyzing':
+        return <Loader2 className="w-4 h-4 animate-spin text-yellow-500" />;
+      case 'processing':
+        return <ArrowRight className="w-4 h-4 animate-pulse text-orange-500" />;
+      case 'complete':
+        return <CheckCircle2 className="w-4 h-4 text-green-500" />;
+      case 'error':
+        return <AlertTriangle className="w-4 h-4 text-red-500" />;
+      default:
+        return <Clock className="w-4 h-4 text-gray-500" />;
+    }
+  };
+
+  const renderProgressBar = () => {
+    if (extractionProgress.status === 'idle') return null;
+    
+    const progressValue = extractionProgress.total > 0 
+      ? Math.round((extractionProgress.current / extractionProgress.total) * 100) 
+      : 0;
+    
+    return (
+      <div className="space-y-2 mt-4">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            {getProgressStatusIcon()}
+            <span className="text-sm font-medium">
+              {extractionProgress.status === 'error' ? 'Error' : 
+               extractionProgress.status === 'complete' ? 'Complete' : 
+               `Processing source ${extractionProgress.current} of ${extractionProgress.total}`}
+            </span>
+          </div>
+          <span className="text-sm font-medium">{progressValue}%</span>
+        </div>
+        <Progress value={progressValue} className="w-full" />
+        {extractionProgress.message && (
+          <p className="text-xs text-gray-500">{extractionProgress.message}</p>
+        )}
+        {extractionProgress.error && (
+          <p className="text-xs text-red-500">{extractionProgress.error}</p>
+        )}
+      </div>
+    );
+  };
+
+  // Pro feature display helper
+  const ProFeatureBadge = () => (
+    <Badge variant="outline" className="ml-2 bg-yellow-50 text-yellow-700 border-yellow-300">
+      <Lock className="w-3 h-3 mr-1" />
+      Pro
+    </Badge>
+  );
+
   return (
     <div className="space-y-6 py-6">
+      <Toaster />
       <Tabs defaultValue="new" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="new">New Search</TabsTrigger>
@@ -484,6 +585,7 @@ export function DealSourcingForm() {
                 onChange={(e) => setNewSourceUrl(e.target.value)}
                 onKeyDown={handleAddSourceUrl}
                 placeholder={`Enter ${sourceType === 'manual' ? 'source identifier' : 'URL'} and press Enter`}
+                disabled={isLoading}
               />
               {sourceType === 'website' && (
                 <p className="text-xs text-gray-500 mt-1">
@@ -510,6 +612,7 @@ export function DealSourcingForm() {
                 onChange={(e) => setNewKeyword(e.target.value)}
                 onKeyDown={handleAddKeyword}
                 placeholder="Type and press Enter to add keywords"
+                disabled={isLoading}
               />
             </div>
 
@@ -531,20 +634,40 @@ export function DealSourcingForm() {
                 onChange={(e) => setNewExcludeKeyword(e.target.value)}
                 onKeyDown={handleAddExcludeKeyword}
                 placeholder="Type and press Enter to add exclude keywords"
+                disabled={isLoading}
               />
             </div>
 
-            {isLoading && (
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-500">
-                    Processing source {currentSourceIndex + 1} of {sourceUrls.length}
-                  </span>
-                  <span className="text-sm font-medium">{Math.round(searchProgress)}%</span>
+            {subscriptionTier === 'pro' && (
+              <div className="space-y-2 border p-4 rounded-md bg-gray-50">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="enable-batch">Enable Batch Processing</Label>
+                  <Switch 
+                    id="enable-batch" 
+                    checked={enableBatchProcessing}
+                    onCheckedChange={setEnableBatchProcessing}
+                    disabled={isLoading}
+                  />
                 </div>
-                <Progress value={searchProgress} className="w-full" />
+                
+                {enableBatchProcessing && (
+                  <div className="space-y-2 pt-2">
+                    <Label htmlFor="batch-size">Batch Size (sources per run)</Label>
+                    <Input 
+                      id="batch-size"
+                      type="number"
+                      min={1}
+                      max={10}
+                      value={batchSize}
+                      onChange={(e) => setBatchSize(Math.min(10, Math.max(1, parseInt(e.target.value) || 1)))}
+                      disabled={isLoading}
+                    />
+                  </div>
+                )}
               </div>
             )}
+
+            {renderProgressBar()}
 
             {errorMessage && (
               <Alert variant="destructive">
@@ -554,23 +677,25 @@ export function DealSourcingForm() {
             )}
 
             <div className="flex gap-4">
-              <Button 
-                className="flex-1" 
-                onClick={handleSearch}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Spinner size="sm" />
-                    <span className="ml-2">Searching...</span>
-                  </>
-                ) : (
-                  <>
-                    <Search className="w-4 h-4 mr-2" />
-                    Search Deals
-                  </>
-                )}
-              </Button>
+              {!isLoading ? (
+                <Button 
+                  className="flex-1" 
+                  onClick={handleSearch}
+                  disabled={isLoading}
+                >
+                  <Search className="w-4 h-4 mr-2" />
+                  Search Deals
+                </Button>
+              ) : (
+                <Button 
+                  className="flex-1" 
+                  variant="destructive"
+                  onClick={handleCancelExtraction}
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Cancel Extraction
+                </Button>
+              )}
               
               <Button 
                 variant="outline" 
@@ -609,13 +734,11 @@ export function DealSourcingForm() {
                           .eq('id', config.id);
 
                         if (error) {
-                          toast({
-                            variant: "destructive",
-                            title: "Error",
-                            description: "Failed to update configuration",
-                          });
+                          toast.error("Failed to update configuration");
+                        } else {
+                          toast.success("Configuration updated");
+                          fetchConfigs();
                         }
-                        fetchConfigs();
                       }}
                     />
                   </div>
@@ -660,12 +783,9 @@ export function DealSourcingForm() {
                           .eq('id', config.id);
 
                         if (error) {
-                          toast({
-                            variant: "destructive",
-                            title: "Error",
-                            description: "Failed to delete configuration",
-                          });
+                          toast.error("Failed to delete configuration");
                         } else {
+                          toast.success("Configuration deleted");
                           fetchConfigs();
                         }
                       }}
@@ -682,7 +802,15 @@ export function DealSourcingForm() {
 
       {potentialDeals.length > 0 && (
         <div className="space-y-4">
-          <h3 className="font-semibold">Potential Deals ({potentialDeals.length})</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold">Potential Deals ({potentialDeals.length})</h3>
+            {subscriptionTier !== 'pro' && (
+              <div className="flex items-center">
+                <Info className="w-4 h-4 text-yellow-500 mr-1" />
+                <span className="text-xs text-gray-500">Limited to {MAX_DEALS_PER_SOURCE} deals per source</span>
+              </div>
+            )}
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {potentialDeals.map((deal, index) => (
               <Card key={index} className="p-4">

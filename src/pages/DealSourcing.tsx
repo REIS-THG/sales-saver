@@ -1,9 +1,25 @@
 
+import { useState, useEffect } from "react";
 import { MainHeader } from "@/components/layout/MainHeader";
 import { DealSourcingForm } from "@/components/deals/DealSourcingForm";
 import { Card } from "@/components/ui/card";
+import { useSubscriptionStatus } from "@/hooks/use-subscription-status";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertTriangle, Lock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 const DealSourcing = () => {
+  const { status, isLoading } = useSubscriptionStatus();
+  const [showLimitedFeatures, setShowLimitedFeatures] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isLoading && status !== 'pro') {
+      setShowLimitedFeatures(true);
+    }
+  }, [isLoading, status]);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <MainHeader />
@@ -13,8 +29,28 @@ const DealSourcing = () => {
           <p className="text-sm text-gray-500">Find and extract potential deals from websites and other sources</p>
         </div>
         
+        {showLimitedFeatures && (
+          <Alert variant="warning" className="mb-6">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Limited functionality</AlertTitle>
+            <AlertDescription className="flex flex-col gap-2">
+              <p>You're using the free version which limits deal extraction to 3 results per source and doesn't support batch processing.</p>
+              <div>
+                <Button 
+                  variant="default" 
+                  size="sm" 
+                  onClick={() => navigate('/subscription')}
+                  className="mt-2"
+                >
+                  Upgrade to Pro
+                </Button>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
+        
         <Card className="p-6">
-          <DealSourcingForm />
+          <DealSourcingForm subscriptionTier={status} />
         </Card>
       </main>
     </div>
