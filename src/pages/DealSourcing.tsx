@@ -5,20 +5,20 @@ import { DealSourcingForm } from "@/components/deals/DealSourcingForm";
 import { Card } from "@/components/ui/card";
 import { useSubscriptionStatus } from "@/hooks/use-subscription-status";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertTriangle, Lock } from "lucide-react";
+import { AlertTriangle, LockIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
 const DealSourcing = () => {
-  const { status, isLoading } = useSubscriptionStatus();
+  const { subscriptionTier, isLoading } = useSubscriptionStatus();
   const [showLimitedFeatures, setShowLimitedFeatures] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!isLoading && status !== 'pro') {
+    if (!isLoading && subscriptionTier !== 'pro') {
       setShowLimitedFeatures(true);
     }
-  }, [isLoading, status]);
+  }, [isLoading, subscriptionTier]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -30,7 +30,7 @@ const DealSourcing = () => {
         </div>
         
         {showLimitedFeatures && (
-          <Alert variant="warning" className="mb-6">
+          <Alert variant="default" className="mb-6">
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>Limited functionality</AlertTitle>
             <AlertDescription className="flex flex-col gap-2">
@@ -50,7 +50,7 @@ const DealSourcing = () => {
         )}
         
         <Card className="p-6">
-          <DealSourcingForm subscriptionTier={status} />
+          <DealSourcingForm subscriptionTier={subscriptionTier} />
         </Card>
       </main>
     </div>

@@ -64,7 +64,7 @@ export const CustomFieldsSection = ({
                 value={values[field.field_name] as string || ""}
                 onChange={(e) => onChange(field.field_name, e.target.value)}
                 required={field.is_required}
-                placeholder={field.placeholder}
+                placeholder={field.placeholder || ""}
               />
             )}
             {field.field_type === "number" && (
@@ -74,7 +74,7 @@ export const CustomFieldsSection = ({
                 value={values[field.field_name] as number || ""}
                 onChange={(e) => onChange(field.field_name, parseFloat(e.target.value))}
                 required={field.is_required}
-                placeholder={field.placeholder}
+                placeholder={field.placeholder || ""}
               />
             )}
             {field.field_type === "boolean" && (
@@ -152,7 +152,7 @@ export const CustomFieldsSection = ({
                   <SelectValue placeholder="Select an option" />
                 </SelectTrigger>
                 <SelectContent>
-                  {field.options.map((option) => (
+                  {(field.options || []).map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
                     </SelectItem>

@@ -11,8 +11,11 @@ import { QuickNoteModal } from "@/components/dashboard/QuickNoteModal";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardContent } from "@/components/dashboard/DashboardContent";
 import { AutomationSettingsDialog } from "@/components/dashboard/AutomationSettingsDialog";
+import type { Deal } from "@/types/types";
 
-const CreateDealForm = lazy(() => import("@/components/deals/CreateDealForm"));
+const CreateDealForm = lazy(() => 
+  import("@/components/deals/CreateDealForm").then(module => ({ default: module.default || module }))
+);
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -45,9 +48,13 @@ export default function Dashboard() {
   // Check if user is authenticated
   useEffect(() => {
     const checkAuth = async () => {
-      const userId = await handleAuthCheck();
-      if (!userId) {
-        navigate("/auth");
+      try {
+        const userId = await handleAuthCheck();
+        if (!userId) {
+          navigate("/auth");
+        }
+      } catch (err) {
+        console.error("Auth check error:", err);
       }
     };
     checkAuth();
@@ -125,25 +132,25 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <DashboardHeader
-        onCreateDeal={() => setShowCreateDealModal(true)}
-        onSignOut={handleSignOut}
-        onOpenAutomationSettings={() => setShowAutomationSettings(true)}
         userData={user}
+        onSignOut={handleSignOut}
+        onCreateDeal={() => setShowCreateDealModal(true)}
+        onOpenAutomationSettings={() => setShowAutomationSettings(true)}
       />
 
       <main className="flex-1 px-4 sm:px-6 py-6 max-w-7xl mx-auto">
         {selectedDeals.length > 0 && (
           <BulkActionsMenu
             selectedDeals={selectedDeals}
-            onStatusChange={handleStatusChange}
             onDelete={handleDealDelete}
+            onStatusChange={handleStatusChange}
             onClearSelection={() => setSelectedDeals([])}
           />
         )}
 
         <DashboardContent
           deals={deals}
-          isLoading={isLoading}
+          loading={isLoading}
           selectedDeals={selectedDeals}
           onDealSelect={(deal, selected) => {
             if (selected) {
@@ -190,7 +197,7 @@ export default function Dashboard() {
       />
 
       <AutomationSettingsDialog
-        isOpen={showAutomationSettings}
+        open={showAutomationSettings}
         onClose={() => setShowAutomationSettings(false)}
         userData={user}
       />

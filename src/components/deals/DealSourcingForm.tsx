@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import { Search, X, Plus, Globe, Building2, Binary, FileText, AlertTriangle, Loader2, ArrowRight, Clock, CheckCircle2, Info } from "lucide-react";
+import { Search, X, Plus, Globe, Building2, Binary, FileText, AlertTriangle, Loader2, ArrowRight, Clock, CheckCircle2, Info, LockIcon } from "lucide-react";
 import type { Deal, DealSourceConfig, SourceType } from "@/types/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -516,7 +516,7 @@ export function DealSourcingForm({ subscriptionTier }: DealSourcingFormProps) {
   // Pro feature display helper
   const ProFeatureBadge = () => (
     <Badge variant="outline" className="ml-2 bg-yellow-50 text-yellow-700 border-yellow-300">
-      <Lock className="w-3 h-3 mr-1" />
+      <LockIcon className="w-3 h-3 mr-1" />
       Pro
     </Badge>
   );
