@@ -1,5 +1,5 @@
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useDashboard } from "@/hooks/use-dashboard";
@@ -12,7 +12,9 @@ import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardContent } from "@/components/dashboard/DashboardContent";
 import { AutomationSettingsDialog } from "@/components/dashboard/AutomationSettingsDialog";
 import type { Deal } from "@/types/types";
-import { CreateDealForm } from "@/components/deals/CreateDealForm";
+
+// Use lazy loading for the create deal form to improve performance
+const CreateDealForm = lazy(() => import("@/components/deals/CreateDealForm"));
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -22,7 +24,6 @@ export default function Dashboard() {
   const { handleAuthCheck, handleError, handleSuccess } = useApiError();
   const [selectedDealId, setSelectedDealId] = useState<string | null>(null);
   const [isQuickNoteModalOpen, setIsQuickNoteModalOpen] = useState(false);
-  const [selectedDeals, setSelectedDeals] = useState<Deal[]>([]);
 
   // Dashboard state and handlers
   const {
@@ -31,7 +32,19 @@ export default function Dashboard() {
     loading,
     error,
     fetchDeals,
-    handleSignOut
+    fetchCustomFields,
+    handleSignOut,
+    selectedDeals,
+    setSelectedDeals,
+    handleStatusChange,
+    handleDealDelete,
+    handleSearch,
+    handleFilterChange,
+    sortField,
+    setSortField,
+    sortDirection,
+    setSortDirection,
+    filters
   } = useDashboard();
 
   // Check if user is authenticated
@@ -114,37 +127,6 @@ export default function Dashboard() {
     setSelectedDealId(null);
   };
 
-  // Handle status change for a deal
-  const handleStatusChange = async (dealId: string, newStatus: Deal['status']) => {
-    // Implementation would go here
-    console.log(`Changing deal ${dealId} status to ${newStatus}`);
-    await fetchDeals();
-  };
-
-  // Handle deleting a deal
-  const handleDealDelete = async (dealId: string) => {
-    // Implementation would go here
-    console.log(`Deleting deal ${dealId}`);
-    await fetchDeals();
-  };
-
-  // Handle search functionality
-  const handleSearch = (query: string) => {
-    console.log(`Searching for ${query}`);
-    // Implementation would go here
-  };
-
-  // Handle filter changes
-  const handleFilterChange = (filterKey: string, value: any) => {
-    console.log(`Filtering by ${filterKey}: ${value}`);
-    // Implementation would go here
-  };
-
-  // Sorting state
-  const [sortField, setSortField] = useState('created_at');
-  const [sortDirection, setSortDirection] = useState('desc');
-  const [filters, setFilters] = useState({});
-
   if (isAuthLoading) {
     return <ReportsLoadingState />;
   }
@@ -219,7 +201,7 @@ export default function Dashboard() {
 
       <AutomationSettingsDialog
         open={showAutomationSettings}
-        onOpenChange={() => setShowAutomationSettings(false)}
+        onOpenChange={setShowAutomationSettings}
         userData={user}
       />
     </div>

@@ -17,18 +17,23 @@ export interface CustomFieldOption {
 
 export interface CustomField {
   id: string;
+  user_id: string;
   field_name: string;
   field_type: FieldType;
   is_required: boolean;
-  user_id?: string;
-  created_at?: string;
-  updated_at?: string;
-  options?: CustomFieldOption[];
+  allow_multiple?: boolean;
+  options?: Array<{ label: string; value: string }>;
   placeholder?: string;
   help_text?: string;
-  allow_multiple?: boolean;
+  created_at: string;
+  updated_at: string;
   is_active?: boolean;
-  include_in_documents?: boolean;
+  validation_rules?: {
+    min?: number;
+    max?: number;
+    pattern?: string;
+  };
+  default_value?: any;
 }
 
 export interface User {
