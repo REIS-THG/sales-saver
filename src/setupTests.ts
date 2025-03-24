@@ -31,26 +31,32 @@ jest.mock('@/integrations/supabase/client', () => ({
 }));
 
 // Mock for @tanstack/react-query
-jest.mock('@tanstack/react-query', () => ({
-  ...jest.requireActual('@tanstack/react-query'),
-  useQuery: jest.fn().mockImplementation(({ queryFn }) => ({
-    data: [],
-    isLoading: false,
-    error: null,
-    refetch: jest.fn()
-  })),
-  useQueryClient: jest.fn().mockReturnValue({
-    invalidateQueries: jest.fn()
-  })
-}));
+jest.mock('@tanstack/react-query', () => {
+  const actual = jest.requireActual('@tanstack/react-query');
+  return {
+    ...actual,
+    useQuery: jest.fn().mockImplementation(({ queryFn }) => ({
+      data: [],
+      isLoading: false,
+      error: null,
+      refetch: jest.fn()
+    })),
+    useQueryClient: jest.fn().mockReturnValue({
+      invalidateQueries: jest.fn()
+    })
+  };
+});
 
 // Mock for react-router-dom
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
-  useNavigate: jest.fn().mockReturnValue(jest.fn()),
-  useLocation: jest.fn().mockReturnValue({ pathname: '/dashboard' }),
-  Link: ({ children, ...props }) => React.createElement('a', props, children)
-}));
+jest.mock('react-router-dom', () => {
+  const actual = jest.requireActual('react-router-dom');
+  return {
+    ...actual,
+    useNavigate: jest.fn().mockReturnValue(jest.fn()),
+    useLocation: jest.fn().mockReturnValue({ pathname: '/dashboard' }),
+    Link: ({ children, ...props }) => React.createElement('a', props, children)
+  };
+});
 
 // Mock lucide-react icons
 jest.mock('lucide-react', () => {

@@ -22,6 +22,7 @@ declare global {
       (...args: Y): T;
       mockReturnValue: (value: T) => this;
       mockReturnValueOnce: (value: T) => this;
+      mockReturnThis: () => this;
       mockImplementation: (fn: (...args: Y) => T) => this;
       mockImplementationOnce: (fn: (...args: Y) => T) => this;
       mockResolvedValue: (value: T) => this;
@@ -44,8 +45,8 @@ declare global {
     interface SpyInstance<T = any, Y extends any[] = any[]> extends Mock<T, Y> {
       mockRestore(): void;
     }
-    
-    type JestMatchers<T> = {
+
+    interface JestMatchers<T> {
       not: JestMatchers<T>;
       toEqual(expected: any): void;
       toStrictEqual(expected: any): void;
@@ -71,17 +72,26 @@ declare global {
       toThrowError(expected?: any): void;
       toBeCalled(): void;
       toBeCalledWith(...args: any[]): void;
+      toHaveBeenCalled(): void;
+      toHaveBeenCalledWith(...args: any[]): void;
       toBeCalledTimes(times: number): void;
       toBeInstanceOf(expected: any): void;
       resolves: JestMatchers<Promise<T>>;
       rejects: JestMatchers<Promise<T>>;
       objectContaining(expected: object): object;
       any(constructor: any): any;
-    };
+      // Additional DOM specific matchers
+      toBeInTheDocument(): void;
+      toBeEmptyDOMElement(): void;
+      toHaveClass(className: string): void;
+      toBeDisabled(): void;
+      toHaveTextContent(content: string | RegExp): void;
+      toBeVisible(): void;
+    }
 
     interface Matchers<R> extends JestMatchers<R> {}
     
-    function expect<T = any>(actual: T): Matchers<T>;
+    function expect<T = any>(actual: T): JestMatchers<T>;
   }
   
   // Test functions
@@ -104,7 +114,7 @@ declare global {
   function test(name: string, options: {timeout?: number}, fn: () => void | Promise<void>): void;
   
   // Matchers
-  function expect<T = any>(actual: T): jest.Matchers<T>;
+  function expect<T = any>(actual: T): jest.JestMatchers<T>;
   
   // Jest object
   const jest: typeof jest;
