@@ -88,14 +88,17 @@ Object.defineProperty(window, 'matchMedia', {
 });
 
 // Global mocks
-// Fix for ResizeObserver type error - using a constructor function pattern instead of a direct Jest mock
+// Fix for ResizeObserver
 class MockResizeObserver {
   observe = jest.fn();
   unobserve = jest.fn();
   disconnect = jest.fn();
   
-  constructor(callback: ResizeObserverCallback) {}
+  constructor() {}
 }
 
 // Assign the mocked constructor to the global object
 global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
+
+// Add expect.objectContaining and expect.any to global Jest
+// This is just for TypeScript typing - Jest already provides these

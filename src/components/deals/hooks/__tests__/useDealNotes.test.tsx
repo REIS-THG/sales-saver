@@ -47,7 +47,10 @@ describe('useDealNotes hook', () => {
     status: 'open',
     health_score: 75,
     user_id: 'test-user-id',
-    notes: ''
+    notes: '',
+    custom_fields: {},
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
   };
   
   const userId = 'test-user-id';

@@ -78,21 +78,16 @@ declare global {
       toBeInstanceOf(expected: any): void;
       resolves: JestMatchers<Promise<T>>;
       rejects: JestMatchers<Promise<T>>;
-      // Test helpers
-      objectContaining(expected: object): object;
-      any(constructor: any): any;
-      // Additional DOM specific matchers
-      toBeInTheDocument(): void;
-      toBeEmptyDOMElement(): void;
-      toHaveClass(className: string): void;
-      toBeDisabled(): void;
-      toHaveTextContent(content: string | RegExp): void;
-      toBeVisible(): void;
     }
 
     interface Matchers<R> extends JestMatchers<R> {}
     
     function expect<T = any>(actual: T): JestMatchers<T>;
+    
+    namespace expect {
+      function objectContaining<T extends object>(expected: Partial<T>): T;
+      function any(constructor: any): any;
+    }
   }
   
   // Test functions
@@ -115,7 +110,7 @@ declare global {
   function test(name: string, options: {timeout?: number}, fn: () => void | Promise<void>): void;
   
   // Matchers
-  function expect<T = any>(actual: T): jest.JestMatchers<T>;
+  const expect: typeof jest.expect;
   
   // Jest object
   const jest: typeof jest;
