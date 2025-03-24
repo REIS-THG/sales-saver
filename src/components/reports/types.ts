@@ -1,4 +1,3 @@
-
 export interface ReportDimension {
   field: string;
   type: 'standard' | 'custom';
@@ -63,6 +62,7 @@ export interface ReportConfigurationProps {
 export interface ReportPreviewProps {
   config: ReportConfig;
   data: any[];
+  onRetry?: () => void;
 }
 
 export interface ReportExportButtonProps {

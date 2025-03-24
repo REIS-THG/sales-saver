@@ -4,8 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Pencil, Save, Star, StarOff, Trash2 } from "lucide-react";
 import type { ReportConfiguration } from "@/components/reports/types";
-import { ReportExportButton } from "./ReportExportButton";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { ReportActionBar } from "./ReportActionBar";
 
 interface ReportCardProps {
   report: ReportConfiguration;
@@ -70,11 +70,6 @@ export const ReportCard = ({
             <CardDescription>{report.description}</CardDescription>
           </div>
           <div className="flex gap-2">
-            <ReportExportButton 
-              report={report}
-              onExportExcel={onExportExcel}
-              onExportGoogleSheets={onExportGoogleSheets}
-            />
             <Button
               variant="ghost"
               size="icon"
@@ -99,7 +94,7 @@ export const ReportCard = ({
           </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
         <Button 
           variant="outline" 
           className="w-full"
@@ -107,6 +102,12 @@ export const ReportCard = ({
         >
           View Report
         </Button>
+        
+        <ReportActionBar 
+          report={report}
+          onExportExcel={onExportExcel}
+          onExportGoogleSheets={onExportGoogleSheets}
+        />
       </CardContent>
     </Card>
   );

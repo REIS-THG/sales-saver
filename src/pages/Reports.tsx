@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useReports } from "@/hooks/use-reports";
 import { useNavigate } from "react-router-dom";
 import type { ReportConfiguration } from "@/components/reports/types";
+import { TemplatesList } from "@/components/reports/templates/TemplatesList";
+import { ReportErrorDisplay } from "@/components/reports/ReportErrorDisplay";
 
 export default function ReportsPage() {
   const navigate = useNavigate();
@@ -43,8 +46,12 @@ export default function ReportsPage() {
     }
   }, [userLoading, user, navigate]);
 
-  const handleCreateReport = () => {
-    setShowEditor(true);
+  const handleCreateReport = async () => {
+    const newReport = await createReport();
+    if (newReport) {
+      setEditingReportId(newReport.id);
+      setShowEditor(true);
+    }
   };
 
   const handleCloseEditor = () => {
@@ -77,12 +84,34 @@ export default function ReportsPage() {
     await deleteReport(reportId);
   };
 
+  const handleUseTemplate = async (template: ReportConfiguration) => {
+    // Create a new report based on the template
+    const newReport = await createReport();
+    if (newReport) {
+      // Apply template configuration to the new report
+      await updateReport(newReport.id, {
+        name: template.name,
+        description: template.description,
+        config: template.config
+      });
+      
+      // Navigate to editor with the new report
+      setEditingReportId(newReport.id);
+      setEditingName(template.name);
+      setShowEditor(true);
+    }
+  };
+
   const handleExportExcel = async (report: ReportConfiguration) => {
     console.log("Export to Excel:", report);
+    // Simulated delay for export process
+    await new Promise(resolve => setTimeout(resolve, 1000));
   };
 
   const handleExportGoogleSheets = async (report: ReportConfiguration) => {
     console.log("Export to Google Sheets:", report);
+    // Simulated delay for export process
+    await new Promise(resolve => setTimeout(resolve, 1000));
   };
 
   const handlePageChange = (page: number) => {
@@ -120,7 +149,7 @@ export default function ReportsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <MainHeader userData={user} />
       <div className="flex flex-col h-full">
         <ReportsHeader 
@@ -130,12 +159,21 @@ export default function ReportsPage() {
         />
 
         <div className="flex-1 space-y-4 p-8 pt-6">
+          {error && (
+            <ReportErrorDisplay 
+              error={error} 
+              onRetry={() => fetchReports(currentPage)}
+              isRetrying={reportsLoading}
+            />
+          )}
+          
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList>
               <TabsTrigger value="my-reports">My Reports</TabsTrigger>
               <TabsTrigger value="templates">Templates</TabsTrigger>
               <TabsTrigger value="shared">Shared with me</TabsTrigger>
             </TabsList>
+            
             <TabsContent value="my-reports" className="space-y-4">
               {reports.length > 0 ? (
                 <ReportsList 
@@ -177,6 +215,7 @@ export default function ReportsPage() {
                 </Card>
               )}
             </TabsContent>
+            
             <TabsContent value="templates">
               <Card>
                 <CardHeader>
@@ -186,12 +225,11 @@ export default function ReportsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground">
-                    Report templates are coming soon...
-                  </p>
+                  <TemplatesList onUseTemplate={handleUseTemplate} />
                 </CardContent>
               </Card>
             </TabsContent>
+            
             <TabsContent value="shared">
               <Card>
                 <CardHeader>
