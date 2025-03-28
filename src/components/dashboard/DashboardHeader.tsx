@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { HelpButton } from "@/components/ui/help-button";
+import { ContextualHelp } from "@/components/ui/contextual-help";
 import type { User, CustomField } from "@/types/types";
 
 interface DashboardHeaderProps {
@@ -68,18 +69,22 @@ export function DashboardHeader({
         )}
         
         {!isMobile && (
-          <HelpButton
-            tooltipContent={
-              <div>
-                <p>Need help with your dashboard?</p>
-                <ul className="list-disc pl-4 mt-1">
-                  <li>Click "Create Deal" to add a new deal</li>
-                  <li>Use filters to find specific deals</li>
-                  <li>Click on any deal to view details</li>
+          <ContextualHelp
+            id="dashboard-help"
+            title="Dashboard Overview"
+            description={
+              <div className="space-y-2 text-sm">
+                <p>Your dashboard helps you:</p>
+                <ul className="list-disc pl-4">
+                  <li>Track all your deals in one place</li>
+                  <li>Create new deals and opportunities</li>
+                  <li>Filter and sort to find what you need</li>
+                  <li>Get insights about deal progress</li>
                 </ul>
-                <p className="mt-1 text-xs">Click the help icon in the header to restart the tour</p>
+                <p className="mt-2 text-xs text-muted-foreground">Click the "Create Deal" button to add a new deal to your pipeline</p>
               </div>
             }
+            initialShow={true}
           />
         )}
       </div>

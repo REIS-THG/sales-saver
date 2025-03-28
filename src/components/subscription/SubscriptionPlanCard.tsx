@@ -8,6 +8,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface PlanFeature {
   feature: string;
@@ -22,7 +23,7 @@ export interface Plan {
   price: string;
   billingPeriod?: string;
   priceId?: string;
-  productId?: string; // Added productId property
+  productId?: string;
   description: string;
   features: string[];
   limitations?: string[];
@@ -37,10 +38,12 @@ interface SubscriptionPlanCardProps {
 }
 
 export function SubscriptionPlanCard({ plan, onUpgrade }: SubscriptionPlanCardProps) {
+  const isMobile = useIsMobile();
+
   const Feature = ({ feature }: PlanFeature) => (
     <div className="flex items-start gap-2">
       <Check className="h-5 w-5 text-primary mt-0.5" />
-      <span>{feature}</span>
+      <span className={isMobile ? "text-sm" : ""}>{feature}</span>
     </div>
   );
 
@@ -70,10 +73,10 @@ export function SubscriptionPlanCard({ plan, onUpgrade }: SubscriptionPlanCardPr
 
   return (
     <Card 
-      className={`flex flex-col ${plan.current ? 'border-primary ring-2 ring-primary' : ''} ${plan.name === 'Pro' ? 'md:-mt-4 md:mb-4' : ''}`}
+      className={`flex flex-col ${plan.current ? 'border-primary ring-2 ring-primary' : ''} ${plan.name === 'Pro' && !isMobile ? 'md:-mt-4 md:mb-4' : ''}`}
     >
-      <CardHeader>
-        <CardTitle className="text-2xl flex items-center gap-2">
+      <CardHeader className={isMobile ? "p-4" : ""}>
+        <CardTitle className={`${isMobile ? "text-xl" : "text-2xl"} flex items-center gap-2`}>
           {plan.name}
           {plan.name === 'Pro' && (
             <span className="text-xs font-medium bg-primary text-primary-foreground px-2 py-1 rounded-full">
@@ -83,23 +86,23 @@ export function SubscriptionPlanCard({ plan, onUpgrade }: SubscriptionPlanCardPr
         </CardTitle>
         <CardDescription className="space-y-2">
           <div className="flex items-baseline gap-1">
-            <span className="text-3xl font-bold">
+            <span className={`${isMobile ? "text-2xl" : "text-3xl"} font-bold`}>
               {plan.price === "Custom" ? "Contact Us" : `$${plan.price}`}
             </span>
             {plan.billingPeriod && (
               <span className="text-sm text-muted-foreground">/{plan.billingPeriod}</span>
             )}
           </div>
-          <p>{plan.description}</p>
+          <p className={isMobile ? "text-sm" : ""}>{plan.description}</p>
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex-1">
-        <div className="space-y-4">
+      <CardContent className={`flex-1 ${isMobile ? "p-4 pt-0" : ""}`}>
+        <div className="space-y-3">
           {plan.features.map((feature) => (
             <Feature key={feature} feature={feature} />
           ))}
           {plan.limitations && (
-            <div className="mt-4 pt-4 border-t">
+            <div className="mt-4 pt-3 border-t">
               <p className="text-sm text-muted-foreground mb-2">Limitations:</p>
               {plan.limitations.map((limitation) => (
                 <Limitation key={limitation} limitation={limitation} />
@@ -108,7 +111,7 @@ export function SubscriptionPlanCard({ plan, onUpgrade }: SubscriptionPlanCardPr
           )}
         </div>
       </CardContent>
-      <CardFooter className="p-6">
+      <CardFooter className={isMobile ? "p-4" : "p-6"}>
         {plan.current ? (
           <Button className="w-full" disabled>
             Current Plan

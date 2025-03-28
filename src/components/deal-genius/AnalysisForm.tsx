@@ -6,13 +6,15 @@ import { useState } from "react";
 import { Deal, Insight } from "@/types/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle, RefreshCw, Loader2, Sparkles } from "lucide-react";
+import { AlertTriangle, RefreshCw, Loader2, Sparkles, HelpCircle } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { ContextualHelp } from "@/components/ui/contextual-help";
 
 interface AnalysisFormProps {
   deals: Deal[];
@@ -41,7 +43,8 @@ export function AnalysisForm({
   const [industry, setIndustry] = useState('');
   const [purposeNotes, setPurposeNotes] = useState('');
   const [error, setError] = useState<string | null>(null);
-
+  const isMobile = useIsMobile();
+  
   const handleAnalyze = async () => {
     if (!selectedDeal) {
       setError("Please select a deal to analyze");
@@ -83,14 +86,31 @@ export function AnalysisForm({
       )}
 
       <div className="grid grid-cols-1 gap-6">
-        <div>
+        <div className="flex justify-between items-center">
           <label className="text-sm font-medium mb-2 block">Select Deal</label>
-          <DealSelector
-            deals={deals}
-            selectedDeal={selectedDeal}
-            onDealChange={onDealChange}
+          
+          <ContextualHelp
+            id="analysis-form-help"
+            title="How to analyze a deal"
+            description={
+              <ol className="list-decimal pl-4 text-sm space-y-2">
+                <li>Select the deal you want to analyze</li>
+                <li>Choose the sales approach that best fits your strategy</li>
+                <li>Enter the industry to get contextual insights</li>
+                <li>Add optional notes to guide the analysis</li>
+                <li>Click "Analyze Deal" to start the AI analysis</li>
+              </ol>
+            }
+            tooltipOnly={isMobile}
+            initialShow={false}
           />
         </div>
+        
+        <DealSelector
+          deals={deals}
+          selectedDeal={selectedDeal}
+          onDealChange={onDealChange}
+        />
 
         <AnalysisParameters
           salesApproach={salesApproach}
@@ -108,22 +128,23 @@ export function AnalysisForm({
                 onClick={handleAnalyze} 
                 disabled={!selectedDeal || isAnalyzing || isLimited}
                 className="w-full flex items-center justify-center gap-2"
+                size={isMobile ? "sm" : "default"}
               >
                 {isAnalyzing ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Analyzing Deal...
+                    {!isMobile ? "Analyzing Deal..." : "Analyzing..."}
                   </>
                 ) : (
                   <>
                     <Sparkles className="h-4 w-4" />
-                    Analyze Deal
+                    {!isMobile ? "Analyze Deal" : "Analyze"}
                   </>
                 )}
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Run AI analysis on the selected deal</p>
+              <p>{isLimited ? "Free plan limited to 1 analysis per month" : "Run AI analysis on the selected deal"}</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>

@@ -5,13 +5,16 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SubscriptionPlanCard } from "@/components/subscription/SubscriptionPlanCard";
 import { subscriptionPlans } from "@/components/subscription/plans-data";
-import { ArrowLeft, CheckCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle, CreditCard, BarChart, Headphones } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { ReportsLoadingState } from "@/components/reports/ReportsLoadingState";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { SubscriptionUsageStats } from "@/components/subscription/SubscriptionUsageStats";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useTour } from "@/hooks/use-tour";
+import { ContextualHelp } from "@/components/ui/contextual-help";
 
 export default function SubscriptionPage() {
   const navigate = useNavigate();
@@ -20,6 +23,10 @@ export default function SubscriptionPage() {
   const { user, isLoading } = useAuth();
   const [activeTab, setActiveTab] = useState("plans");
   const [currentPlan, setCurrentPlan] = useState<"free" | "pro" | "enterprise">("free");
+  const isMobile = useIsMobile();
+  
+  // Initialize tour
+  const { TourComponent, resetTour } = useTour('subscription');
   
   // Check for success parameter in URL
   const queryParams = new URLSearchParams(location.search);
@@ -61,6 +68,8 @@ export default function SubscriptionPage() {
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+      <TourComponent />
+      
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <Button onClick={() => navigate(-1)} variant="outline" size="icon" className="h-8 w-8">
@@ -68,6 +77,22 @@ export default function SubscriptionPage() {
           </Button>
           <h2 className="text-3xl font-bold tracking-tight">Subscription</h2>
         </div>
+        
+        {!isMobile && (
+          <ContextualHelp
+            id="subscription-overview"
+            title="Manage your subscription"
+            description={
+              <ul className="list-disc pl-4 text-sm">
+                <li>Compare plan features and upgrade when needed</li>
+                <li>Monitor your usage against plan limits</li>
+                <li>Manage billing information and payment methods</li>
+              </ul>
+            }
+            initialShow={true}
+            tooltipOnly={false}
+          />
+        )}
       </div>
 
       {success === 'true' && (
@@ -81,14 +106,30 @@ export default function SubscriptionPage() {
       )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="plans">Plans</TabsTrigger>
-          <TabsTrigger value="usage">Usage</TabsTrigger>
-          <TabsTrigger value="billing">Billing</TabsTrigger>
-          <TabsTrigger value="contact">Contact Sales</TabsTrigger>
+        <TabsList className={`${isMobile ? 'grid-cols-4' : ''}`}>
+          <TabsTrigger value="plans" className="flex items-center gap-1">
+            {!isMobile && "Plans"}
+            <CreditCard className={`${isMobile ? 'h-4 w-4' : 'h-4 w-4 ml-1'}`} />
+            {isMobile && <span className="sr-only">Plans</span>}
+          </TabsTrigger>
+          <TabsTrigger value="usage" className="flex items-center gap-1">
+            {!isMobile && "Usage"}
+            <BarChart className={`${isMobile ? 'h-4 w-4' : 'h-4 w-4 ml-1'}`} />
+            {isMobile && <span className="sr-only">Usage</span>}
+          </TabsTrigger>
+          <TabsTrigger value="billing" className="flex items-center gap-1">
+            {!isMobile && "Billing"}
+            <CreditCard className={`${isMobile ? 'h-4 w-4' : 'h-4 w-4 ml-1'}`} />
+            {isMobile && <span className="sr-only">Billing</span>}
+          </TabsTrigger>
+          <TabsTrigger value="contact" className="flex items-center gap-1">
+            {!isMobile && "Contact"}
+            <Headphones className={`${isMobile ? 'h-4 w-4' : 'h-4 w-4 ml-1'}`} />
+            {isMobile && <span className="sr-only">Contact</span>}
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="plans" className="space-y-4">
-          <div className="grid gap-6 md:grid-cols-3 lg:gap-8 pt-6">
+          <div className={`grid gap-6 ${isMobile ? 'grid-cols-1' : 'md:grid-cols-3'} lg:gap-8 pt-6`}>
             {subscriptionPlans.map((plan) => (
               <SubscriptionPlanCard
                 key={plan.name}
