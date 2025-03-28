@@ -27,6 +27,7 @@ export interface Plan {
   limitations?: string[];
   contact?: boolean;
   current: boolean;
+  directLink?: string;
 }
 
 interface SubscriptionPlanCardProps {
@@ -57,6 +58,14 @@ export function SubscriptionPlanCard({ plan, onUpgrade }: SubscriptionPlanCardPr
       <span className="text-sm text-muted-foreground">{limitation}</span>
     </div>
   );
+
+  const handleUpgrade = () => {
+    if (plan.name === "Pro" && plan.directLink) {
+      window.open(plan.directLink, "_blank");
+    } else {
+      onUpgrade(plan.name.toLowerCase() as "free" | "pro" | "enterprise");
+    }
+  };
 
   return (
     <Card 
@@ -103,17 +112,10 @@ export function SubscriptionPlanCard({ plan, onUpgrade }: SubscriptionPlanCardPr
           <Button className="w-full" disabled>
             Current Plan
           </Button>
-        ) : plan.name === "Pro" ? (
-          <div className="w-full [&>stripe-buy-button]:block [&>stripe-buy-button]:w-full [&>stripe-buy-button]:[&>iframe]:!w-full [&>stripe-buy-button]:[&>iframe]:!min-h-[40px] [&>stripe-buy-button]:[&>iframe]:!max-h-[40px]">
-            <stripe-buy-button
-              buy-button-id="buy_btn_1QtdHaDaihWQpHM6vSaLMfRh"
-              publishable-key="pk_live_51Qtb8WDaihWQpHM6zckr56vWVg2BeBX6sFXA9FgOrmbdN3H5HY3GBMiO3DaO5rYOuCDsOjUrQAQV9xdbtvh3VSXR005zCbf5Dz"
-            />
-          </div>
         ) : (
           <Button 
             className="w-full" 
-            onClick={() => onUpgrade(plan.name.toLowerCase() as "free" | "pro" | "enterprise")}
+            onClick={handleUpgrade}
             variant={plan.name === "Free" ? "outline" : "default"}
           >
             {plan.contact ? "Contact Sales" : `Get ${plan.name}`}

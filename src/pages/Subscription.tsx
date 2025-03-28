@@ -5,22 +5,46 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SubscriptionPlanCard } from "@/components/subscription/SubscriptionPlanCard";
 import { subscriptionPlans } from "@/components/subscription/plans-data";
-import { ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { ArrowLeft, CheckCircle } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { ReportsLoadingState } from "@/components/reports/ReportsLoadingState";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useToast } from "@/hooks/use-toast";
+import { SubscriptionUsageStats } from "@/components/subscription/SubscriptionUsageStats";
 
 export default function SubscriptionPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { toast } = useToast();
   const { user, isLoading } = useAuth();
   const [activeTab, setActiveTab] = useState("plans");
   const [currentPlan, setCurrentPlan] = useState<"free" | "pro" | "enterprise">("free");
+  
+  // Check for success parameter in URL
+  const queryParams = new URLSearchParams(location.search);
+  const success = queryParams.get('success');
   
   useEffect(() => {
     if (user?.subscription_status) {
       setCurrentPlan(user.subscription_status);
     }
   }, [user]);
+
+  useEffect(() => {
+    // Show success toast when redirected from successful payment
+    if (success === 'true') {
+      toast({
+        title: "Subscription Successful",
+        description: "Your Pro subscription has been activated! Enjoy all premium features.",
+        variant: "default",
+      });
+      
+      // Clear the URL parameter after showing the toast
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, newUrl);
+    }
+  }, [success, toast]);
 
   const handleUpgrade = (planType: "free" | "pro" | "enterprise") => {
     if (planType === "enterprise") {
@@ -46,9 +70,20 @@ export default function SubscriptionPage() {
         </div>
       </div>
 
+      {success === 'true' && (
+        <Alert className="bg-green-50 border-green-200">
+          <CheckCircle className="h-4 w-4 text-green-600" />
+          <AlertTitle>Subscription Successful!</AlertTitle>
+          <AlertDescription>
+            Your Pro subscription has been activated. You now have full access to all premium features.
+          </AlertDescription>
+        </Alert>
+      )}
+
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="plans">Plans</TabsTrigger>
+          <TabsTrigger value="usage">Usage</TabsTrigger>
           <TabsTrigger value="billing">Billing</TabsTrigger>
           <TabsTrigger value="contact">Contact Sales</TabsTrigger>
         </TabsList>
@@ -65,6 +100,9 @@ export default function SubscriptionPage() {
               />
             ))}
           </div>
+        </TabsContent>
+        <TabsContent value="usage" className="space-y-4">
+          <SubscriptionUsageStats currentPlan={currentPlan} userId={user?.user_id} />
         </TabsContent>
         <TabsContent value="billing" className="space-y-4">
           <Card>
