@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { DealsTable } from "@/components/deals/DealsTable";
 import type { Deal, CustomField, User } from "@/types/types";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface DashboardContentProps {
   deals: Deal[];
@@ -21,7 +22,7 @@ interface DashboardContentProps {
   onQuickNote?: (deal: Deal) => void;
   customFields: CustomField[];
   userData?: User | null;
-  className?: string; // Added className prop
+  className?: string;
 }
 
 export function DashboardContent({
@@ -45,21 +46,24 @@ export function DashboardContent({
   className
 }: DashboardContentProps) {
   const [showCustomFields, setShowCustomFields] = useState(false);
+  const isMobile = useIsMobile();
 
   return (
-    <DealsTable
-      deals={deals}
-      customFields={customFields}
-      showCustomFields={showCustomFields}
-      onSelectionChange={(selectedDeals) => {
-        selectedDeals.forEach(deal => {
-          onDealSelect(deal, true);
-        });
-      }}
-      fetchDeals={onFetchDeals}
-      userData={userData}
-      onQuickNote={onQuickNote}
-      className={className}
-    />
+    <div className={`w-full overflow-x-auto ${isMobile ? "px-2" : "px-4"} ${className || ""}`}>
+      <DealsTable
+        deals={deals}
+        customFields={customFields}
+        showCustomFields={showCustomFields}
+        onSelectionChange={(selectedDeals) => {
+          selectedDeals.forEach(deal => {
+            onDealSelect(deal, true);
+          });
+        }}
+        fetchDeals={onFetchDeals}
+        userData={userData}
+        onQuickNote={onQuickNote}
+        className={className}
+      />
+    </div>
   );
 }

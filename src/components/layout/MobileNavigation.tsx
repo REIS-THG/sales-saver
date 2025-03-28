@@ -15,7 +15,8 @@ import {
   FileText,
   BrainCircuit,
   Settings,
-  HelpCircle
+  HelpCircle,
+  X
 } from "lucide-react";
 
 export function MobileNavigation() {
@@ -33,20 +34,25 @@ export function MobileNavigation() {
 
   const isActive = (path: string) => location.pathname === path;
 
+  const closeMenu = () => setOpen(false);
+
   return (
     <div className="md:hidden">
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
-          <Button variant="ghost" size="icon" className="mr-2" aria-label="Menu">
-            <Menu className="h-5 w-5" />
+          <Button variant="ghost" size="sm" className="mr-2 h-10 w-10 px-0" aria-label="Menu">
+            <Menu className="h-6 w-6" />
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="w-[280px] sm:w-[350px] pt-10">
           <div className="flex flex-col gap-6">
-            <div className="px-2">
-              <h2 className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-4">
+            <div className="px-2 flex justify-between items-center">
+              <h2 className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
                 Sales Saver
               </h2>
+              <Button variant="ghost" size="icon" onClick={closeMenu} className="h-8 w-8 p-0" aria-label="Close menu">
+                <X className="h-5 w-5" />
+              </Button>
             </div>
             <nav className="flex flex-col space-y-1">
               {navItems.map((item) => (
@@ -55,7 +61,7 @@ export function MobileNavigation() {
                   asChild
                   variant={isActive(item.path) ? "default" : "ghost"}
                   className="justify-start"
-                  onClick={() => setOpen(false)}
+                  onClick={closeMenu}
                 >
                   <Link to={item.path}>
                     {item.icon}
@@ -65,7 +71,7 @@ export function MobileNavigation() {
               ))}
             </nav>
             <div className="mt-auto pt-4 border-t">
-              <Button variant="outline" className="w-full justify-start" asChild>
+              <Button variant="outline" className="w-full justify-start" asChild onClick={closeMenu}>
                 <Link to="/help">
                   <HelpCircle className="h-5 w-5 mr-2" />
                   Help & Resources

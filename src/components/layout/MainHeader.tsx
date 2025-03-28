@@ -13,7 +13,7 @@ interface MainHeaderProps {
   userData?: User | null;
   children?: React.ReactNode;
   onResetTour?: () => void;
-  className?: string; // Added className prop
+  className?: string;
 }
 
 export function MainHeader({ onSignOut, userData, children, onResetTour, className }: MainHeaderProps) {
@@ -27,13 +27,13 @@ export function MainHeader({ onSignOut, userData, children, onResetTour, classNa
 
   return (
     <header className={`bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700 ${className || ''}`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
             {/* Mobile Navigation */}
             <MobileNavigation />
             
-            {/* Desktop Navigation */}
+            {/* Desktop Navigation - Hidden on mobile */}
             <nav className="hidden md:flex items-center gap-2 mr-4">
               <Button
                 asChild
@@ -81,16 +81,18 @@ export function MainHeader({ onSignOut, userData, children, onResetTour, classNa
             {children}
           </div>
           
-          <div className="flex items-center gap-3">
-            {/* Help Button */}
+          <div className="flex items-center gap-2">
+            {/* Help Button - Slightly larger on mobile */}
             {onResetTour && (
               <Button 
                 variant="ghost" 
-                size="icon" 
+                size={isMobile ? "sm" : "icon"} 
                 onClick={onResetTour}
                 className="text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50"
+                aria-label="Help"
               >
-                <HelpCircle className="h-5 w-5" />
+                <HelpCircle className={`${isMobile ? "h-6 w-6" : "h-5 w-5"}`} />
+                {isMobile && <span className="sr-only">Help</span>}
               </Button>
             )}
             <UserButton onSignOut={onSignOut} />

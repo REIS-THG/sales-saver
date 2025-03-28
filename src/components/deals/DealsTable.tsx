@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -7,6 +8,7 @@ import { useDealsTable } from "@/hooks/use-deals-table";
 import { TableContainer } from "./table/TableContainer";
 import DealDetailsModal from "./DealDetailsModal";
 import { supabase } from "@/integrations/supabase/client";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface DealsTableProps {
   deals: Deal[];
@@ -16,7 +18,7 @@ interface DealsTableProps {
   fetchDeals: () => Promise<void>;
   userData?: User | null;
   onQuickNote?: (deal: Deal) => void;
-  className?: string; // Added className prop
+  className?: string;
 }
 
 export function DealsTable({ 
@@ -34,6 +36,7 @@ export function DealsTable({
   const navigate = useNavigate();
   const { toast } = useToast();
   const { handleAuthCheck, handleError, handleSuccess } = useApiError();
+  const isMobile = useIsMobile();
 
   const handleDealClick = (deal: Deal) => {
     setSelectedDeal(deal);
@@ -87,7 +90,7 @@ export function DealsTable({
   );
 
   return (
-    <div className={className}>
+    <div className={`${isMobile ? 'px-0 max-w-full overflow-x-auto' : ''} ${className || ''}`}>
       <TableContainer
         table={table}
         deals={deals}
