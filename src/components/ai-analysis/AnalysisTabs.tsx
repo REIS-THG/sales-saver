@@ -38,7 +38,7 @@ export function AnalysisTabs({
   const isMobile = useIsMobile();
 
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full analysis-tabs">
       <div className={`${isMobile ? 'p-2' : 'p-6'}`}>
         <TabsList className="w-full grid grid-cols-3 h-auto min-h-14">
           <TabsTrigger value="analysis" className={`flex items-center gap-2 py-3 ${isMobile ? 'px-1 text-xs' : ''}`}>

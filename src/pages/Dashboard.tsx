@@ -3,20 +3,14 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useDashboard } from "@/hooks/use-dashboard";
-import { BulkActionsMenu } from "@/components/dashboard/BulkActionsMenu";
 import { useApiError } from "@/hooks/use-api-error";
 import { useAuth } from "@/hooks/useAuth";
-import { ReportsLoadingState } from "@/components/reports/ReportsLoadingState";
-import { QuickNoteModal } from "@/components/dashboard/QuickNoteModal";
-import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
-import { DashboardContent } from "@/components/dashboard/DashboardContent";
-import { AutomationSettingsDialog } from "@/components/dashboard/AutomationSettingsDialog";
-import { CreateDealForm } from "@/components/deals/CreateDealForm";
 import { useTour } from "@/hooks/use-tour";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { HelpButton } from "@/components/ui/help-button";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react"; // Added Plus icon import
+import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
+import { DashboardContent } from "@/components/dashboard/DashboardContent";
+import { DashboardActions } from "@/components/dashboard/DashboardActions";
+import { DashboardModals } from "@/components/dashboard/DashboardModals";
+import { DashboardWidgetsSection } from "@/components/dashboard/DashboardWidgetsSection";
 import type { Deal } from "@/types/types";
 
 export default function Dashboard() {
@@ -27,7 +21,6 @@ export default function Dashboard() {
   const { handleAuthCheck, handleError, handleSuccess } = useApiError();
   const [selectedDealId, setSelectedDealId] = useState<string | null>(null);
   const [isQuickNoteModalOpen, setIsQuickNoteModalOpen] = useState(false);
-  const isMobile = useIsMobile();
   const { TourComponent, resetTour } = useTour('dashboard');
 
   const {
@@ -122,104 +115,78 @@ export default function Dashboard() {
     setSelectedDealId(null);
   };
 
-  if (isAuthLoading) {
-    return <ReportsLoadingState />;
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <DashboardLayout
+      isLoading={isAuthLoading}
+      userData={user}
+      onSignOut={handleLocalSignOut}
+      onDealCreated={handleDealCreated}
+      customFields={customFields}
+      onBeforeCreate={handleBeforeCreate}
+      showCreateDealModal={showCreateDealModal}
+      setShowCreateDealModal={setShowCreateDealModal}
+      resetTour={resetTour}
+    >
       <TourComponent />
       
-      <DashboardHeader
-        onDealCreated={() => setShowCreateDealModal(true)}
-        customFields={customFields}
-        onBeforeCreate={handleBeforeCreate}
-        onSignOut={handleLocalSignOut}
-        userData={user}
-        onResetTour={resetTour}
-        className="dashboard-header"
+      <DashboardWidgetsSection 
+        deals={deals} 
+        userData={user} 
+        loading={loading} 
+        error={error} 
+      />
+      
+      <DashboardActions
+        selectedDeals={selectedDeals}
+        onDeleteDeals={handleDealDelete}
+        onChangeStatus={handleStatusChange}
+        onClearSelection={() => setSelectedDeals([])}
       />
 
-      <main className="flex-1 px-4 sm:px-6 py-6 max-w-7xl mx-auto">
-        {isMobile && deals.length > 0 && (
-          <div className="mb-4 flex justify-between items-center">
-            <HelpButton
-              tooltipContent="Tap on any deal to view details or add notes. Use the filters to narrow down your view."
-              side="bottom"
-            />
-            <Button
-              onClick={() => setShowCreateDealModal(true)}
-              className="create-deal-button bg-indigo-600 hover:bg-indigo-700 text-white"
-              size={isMobile ? "sm" : "default"}
-            >
-              <Plus className="h-4 w-4 mr-1" />
-              Create Deal
-            </Button>
-          </div>
-        )}
+      <DashboardContent
+        deals={deals}
+        isLoading={loading}
+        selectedDeals={selectedDeals}
+        onDealSelect={(deal, selected) => {
+          if (selected) {
+            setSelectedDeals((prev) => [...prev, deal]);
+          } else {
+            setSelectedDeals((prev) =>
+              prev.filter((d) => d.id !== deal.id)
+            );
+          }
+        }}
+        onSelectAll={(allDeals) => setSelectedDeals(allDeals)}
+        onSearch={handleSearch}
+        onFilterChange={handleFilterChange}
+        filters={filters}
+        sortField={sortField}
+        setSortField={setSortField}
+        sortDirection={sortDirection}
+        setSortDirection={setSortDirection}
+        onDeleteDeal={handleDealDelete}
+        onFetchDeals={fetchDeals}
+        onQuickNote={handleQuickNote}
+        customFields={customFields}
+        userData={user}
+        className="dashboard-content"
+      />
 
-        {selectedDeals.length > 0 && (
-          <BulkActionsMenu
-            selectedDeals={selectedDeals}
-            onDeleteDeals={handleDealDelete}
-            onChangeStatus={handleStatusChange}
-            onClearSelection={() => setSelectedDeals([])}
-          />
-        )}
-
-        <DashboardContent
-          deals={deals}
-          isLoading={loading}
-          selectedDeals={selectedDeals}
-          onDealSelect={(deal, selected) => {
-            if (selected) {
-              setSelectedDeals((prev) => [...prev, deal]);
-            } else {
-              setSelectedDeals((prev) =>
-                prev.filter((d) => d.id !== deal.id)
-              );
-            }
-          }}
-          onSelectAll={(allDeals) => setSelectedDeals(allDeals)}
-          onSearch={handleSearch}
-          onFilterChange={handleFilterChange}
-          filters={filters}
-          sortField={sortField}
-          setSortField={setSortField}
-          sortDirection={sortDirection}
-          setSortDirection={setSortDirection}
-          onDeleteDeal={handleDealDelete}
-          onFetchDeals={fetchDeals}
-          onQuickNote={handleQuickNote}
-          customFields={customFields}
-          userData={user}
-          className="dashboard-content"
-        />
-      </main>
-
-      {showCreateDealModal && (
-        <CreateDealForm
-          open={showCreateDealModal}
-          onClose={() => setShowCreateDealModal(false)}
-          onSuccess={handleDealCreated}
-          onBeforeCreate={handleBeforeCreate}
-          customFields={customFields}
-          className="deal-form"
-        />
-      )}
-
-      <QuickNoteModal
-        deal={deals.find((d) => d.id === selectedDealId) || null}
-        isOpen={isQuickNoteModalOpen}
-        onClose={() => setIsQuickNoteModalOpen(false)}
+      <DashboardModals
+        showCreateDealModal={showCreateDealModal}
+        onCloseCreateModal={() => setShowCreateDealModal(false)}
+        onDealCreated={handleDealCreated}
+        onBeforeCreate={handleBeforeCreate}
+        customFields={customFields}
+        showAutomationSettings={showAutomationSettings}
+        setShowAutomationSettings={setShowAutomationSettings}
+        userData={user}
+        isQuickNoteModalOpen={isQuickNoteModalOpen}
+        setIsQuickNoteModalOpen={setIsQuickNoteModalOpen}
+        selectedDealId={selectedDealId}
+        selectedDeal={deals.find((d) => d.id === selectedDealId) || null}
         onNoteAdded={handleNoteAdded}
       />
-
-      <AutomationSettingsDialog
-        open={showAutomationSettings}
-        onOpenChange={setShowAutomationSettings}
-        userData={user}
-      />
-    </div>
+    </DashboardLayout>
   );
 }
