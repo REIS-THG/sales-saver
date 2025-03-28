@@ -2,20 +2,14 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAIAnalysis } from "@/hooks/use-ai-analysis";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AnalysisHeader } from "@/components/ai-analysis/AnalysisHeader";
-import { AnalysisSettings } from "@/components/ai-analysis/AnalysisSettings";
-import { AnalysisTabs } from "@/components/ai-analysis/AnalysisTabs";
-import { ReportsLoadingState } from "@/components/reports/ReportsLoadingState";
-import { Insight } from "@/types/types";
 import { useAuth } from "@/hooks/useAuth";
 import { MainHeader } from "@/components/layout/MainHeader";
-import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { AlertTriangle } from "lucide-react";
-import { AICapabilitiesExplainer } from "@/components/ai-analysis/AICapabilitiesExplainer";
-import { ExampleAnalyses } from "@/components/ai-analysis/ExampleAnalyses";
-import { AILoadingState } from "@/components/ai-analysis/AILoadingState";
+import { Insight } from "@/types/types";
+import { AnalysisAlerts } from "@/components/ai-analysis/AnalysisAlerts";
+import { FirstTimeExperience } from "@/components/ai-analysis/FirstTimeExperience";
+import { AnalysisContent } from "@/components/ai-analysis/AnalysisContent";
+import { AnalysisLoadingStates } from "@/components/ai-analysis/AnalysisLoadingStates";
 
 interface AnalysisParams {
   salesApproach: 'consultative_selling' | 'solution_selling' | 'transactional_selling' | 'value_based_selling';
@@ -128,13 +122,19 @@ const AIAnalysis = () => {
 
   const isLoading = userLoading || dataLoading;
 
+  // Render loading states
+  const loadingState = (
+    <AnalysisLoadingStates
+      isLoading={isLoading}
+      isAnalyzing={isAnalyzing}
+      user={user}
+      selectedDeal={selectedDeal}
+      deals={deals}
+    />
+  );
+
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <MainHeader userData={user} />
-        <ReportsLoadingState />
-      </div>
-    );
+    return loadingState;
   }
 
   return (
@@ -144,74 +144,38 @@ const AIAnalysis = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <AnalysisHeader subscriptionTier={userSubscriptionTier} />
 
-        {error && (
-          <Alert variant="destructive" className="mb-6">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
+        <AnalysisAlerts error={error} isAnalysisLimited={isAnalysisLimited} />
 
-        {isAnalysisLimited && (
-          <Alert className="mb-6">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Analysis Limit Reached</AlertTitle>
-            <AlertDescription>
-              You've reached your free analysis limit. Upgrade to Pro for unlimited analysis and additional features.
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {/* AI Capabilities Explainer - always visible */}
-        <AICapabilitiesExplainer />
-
-        {/* First-time user experience */}
-        {isFirstVisit && !isAnalyzing && (
-          <ExampleAnalyses onTryNow={handleTryNow} />
-        )}
+        <FirstTimeExperience 
+          isFirstVisit={isFirstVisit} 
+          isAnalyzing={isAnalyzing}
+          onTryNow={handleTryNow} 
+        />
 
         {/* Show AILoadingState when analyzing */}
-        {isAnalyzing && (
-          <AILoadingState 
-            message={selectedDeal ? `Analyzing ${deals.find(d => d.id === selectedDeal)?.deal_name || 'deal'}...` : "Analyzing data..."} 
-          />
-        )}
+        {isAnalyzing && loadingState}
 
         {/* Main Analysis UI - hide during first visit until they click "Try Now" */}
         {(!isFirstVisit || selectedDeal) && (
           <div className="grid grid-cols-1 gap-6 mt-6">
-            <Card className="overflow-hidden">
-              <CardContent className="p-0">
-                <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
-                  <h2 className="text-xl font-semibold tracking-tight">AI-Powered Deal Intelligence</h2>
-                  <p className="text-muted-foreground mt-1">
-                    Analyze your deals, get next step recommendations, and track progress over time
-                  </p>
-                </div>
-                
-                <Separator />
-                
-                <AnalysisSettings
-                  piiFilter={piiFilter}
-                  setPiiFilter={setPiiFilter}
-                  retainAnalysis={retainAnalysis}
-                  setRetainAnalysis={setRetainAnalysis}
-                  subscriptionTier={userSubscriptionTier}
-                />
-
-                <AnalysisTabs
-                  activeTab={activeTab}
-                  setActiveTab={setActiveTab}
-                  deals={deals}
-                  selectedDeal={selectedDeal}
-                  isAnalyzing={isAnalyzing}
-                  isAnalysisLimited={isAnalysisLimited}
-                  insights={insights}
-                  onDealSelect={handleDealSelect}
-                  onAnalyze={handleAnalyze}
-                  onFileUpload={handleFileUpload}
-                  isLoading={isLoading}
-                />
-              </CardContent>
-            </Card>
+            <AnalysisContent
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              deals={deals}
+              selectedDeal={selectedDeal}
+              isAnalyzing={isAnalyzing}
+              isAnalysisLimited={isAnalysisLimited}
+              insights={insights}
+              onDealSelect={handleDealSelect}
+              onAnalyze={handleAnalyze}
+              onFileUpload={handleFileUpload}
+              isLoading={isLoading}
+              piiFilter={piiFilter}
+              setPiiFilter={setPiiFilter}
+              retainAnalysis={retainAnalysis}
+              setRetainAnalysis={setRetainAnalysis}
+              subscriptionTier={userSubscriptionTier}
+            />
           </div>
         )}
       </div>
