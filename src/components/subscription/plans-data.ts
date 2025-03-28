@@ -26,6 +26,7 @@ export const subscriptionPlans = [
     price: "30",
     billingPeriod: "per user/month",
     priceId: import.meta.env.VITE_STRIPE_PRO_PRICE_ID,
+    productId: "prod_RnC56ZM4DtYl8u", // Added correct product ID
     directLink: "https://buy.stripe.com/28o3eSbhd6W40z63cc",
     description: "For growing sales teams and serious professionals",
     features: [

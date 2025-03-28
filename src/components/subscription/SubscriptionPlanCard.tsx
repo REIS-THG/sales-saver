@@ -22,6 +22,7 @@ export interface Plan {
   price: string;
   billingPeriod?: string;
   priceId?: string;
+  productId?: string; // Added productId property
   description: string;
   features: string[];
   limitations?: string[];
