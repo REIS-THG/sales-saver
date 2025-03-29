@@ -5,8 +5,8 @@ import { DealAnalysisTab } from "./DealAnalysisTab";
 import { NextStepsTab } from "./NextStepsTab";
 import { AnalysisHistoryTab } from "./AnalysisHistoryTab";
 import { Deal, Insight } from "@/types/types";
-import { BarChart3, ArrowRight, History } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { TabHeader } from "./components/TabHeader";
 
 interface AnalysisTabsProps {
   activeTab: string;
@@ -41,18 +41,23 @@ export function AnalysisTabs({
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full analysis-tabs">
       <div className={`${isMobile ? 'p-2' : 'p-6'}`}>
         <TabsList className="w-full grid grid-cols-3 h-auto min-h-14">
-          <TabsTrigger value="analysis" className={`flex items-center gap-2 py-3 ${isMobile ? 'px-1 text-xs' : ''}`}>
-            <BarChart3 className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
-            <span>{isMobile ? 'Analysis' : 'Deal Analysis'}</span>
-          </TabsTrigger>
-          <TabsTrigger value="next-steps" className={`flex items-center gap-2 py-3 ${isMobile ? 'px-1 text-xs' : ''}`}>
-            <ArrowRight className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
-            <span>{isMobile ? 'Next Steps' : 'Next Step Assistant'}</span>
-          </TabsTrigger>
-          <TabsTrigger value="history" className={`flex items-center gap-2 py-3 ${isMobile ? 'px-1 text-xs' : ''}`}>
-            <History className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
-            <span>History</span>
-          </TabsTrigger>
+          <TabHeader 
+            value="analysis" 
+            icon="chart" 
+            label="Deal Analysis" 
+            mobileLabel="Analysis"
+          />
+          <TabHeader 
+            value="next-steps" 
+            icon="arrow" 
+            label="Next Step Assistant" 
+            mobileLabel="Next Steps"
+          />
+          <TabHeader 
+            value="history" 
+            icon="history" 
+            label="History"
+          />
         </TabsList>
       </div>
       
