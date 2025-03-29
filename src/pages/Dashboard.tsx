@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -104,6 +103,12 @@ export default function Dashboard() {
     }
   };
 
+  const handleBulkDelete = async (dealIds: string[]) => {
+    for (const dealId of dealIds) {
+      await handleDealDelete(dealId);
+    }
+  };
+
   const handleQuickNote = (deal: Deal) => {
     setSelectedDealId(deal.id);
     setIsQuickNoteModalOpen(true);
@@ -138,7 +143,7 @@ export default function Dashboard() {
       
       <DashboardActions
         selectedDeals={selectedDeals}
-        onDeleteDeals={handleDealDelete}
+        onDeleteDeals={handleBulkDelete}
         onChangeStatus={handleStatusChange}
         onClearSelection={() => setSelectedDeals([])}
       />

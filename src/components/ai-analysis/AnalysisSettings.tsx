@@ -2,13 +2,14 @@
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { InfoIcon } from "lucide-react";
+import { SubscriptionStatus } from "@/types/types";
 
 interface AnalysisSettingsProps {
   piiFilter: boolean;
   setPiiFilter: (value: boolean) => void;
   retainAnalysis: boolean;
   setRetainAnalysis: (value: boolean) => void;
-  subscriptionTier: 'free' | 'pro' | 'enterprise';
+  subscriptionTier: SubscriptionStatus;
 }
 
 export function AnalysisSettings({

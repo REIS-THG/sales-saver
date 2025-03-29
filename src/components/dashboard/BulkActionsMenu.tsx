@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Trash2, Archive, CheckCircle, Clock, XCircle, ChevronDown } from "lucide-react";
@@ -13,7 +12,7 @@ import type { Deal } from "@/types/types";
 
 interface BulkActionsMenuProps {
   selectedDeals: Deal[];
-  onDeleteDeals: (dealId: string) => Promise<void>;
+  onDeleteDeals: (dealIds: string[]) => Promise<void>;
   onChangeStatus: (dealId: string, status: Deal['status']) => Promise<void>;
   onClearSelection: () => void;
 }
@@ -26,9 +25,8 @@ export function BulkActionsMenu({
 }: BulkActionsMenuProps) {
   const handleDelete = async () => {
     if (confirm(`Delete ${selectedDeals.length} selected deals?`)) {
-      for (const deal of selectedDeals) {
-        await onDeleteDeals(deal.id);
-      }
+      const dealIds = selectedDeals.map(deal => deal.id);
+      await onDeleteDeals(dealIds);
       onClearSelection();
     }
   };
