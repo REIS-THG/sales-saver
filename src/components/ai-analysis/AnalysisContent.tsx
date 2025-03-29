@@ -1,7 +1,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { AnalysisTabs } from "@/components/ai-analysis/AnalysisTabs";
-import { Deal, Insight } from "@/types/types";
+import { Deal, Insight, SubscriptionStatus } from "@/types/types";
 import { AnalysisSettingsPanel } from "@/components/ai-analysis/AnalysisSettingsPanel";
 
 interface AnalysisContentProps {
@@ -20,7 +20,7 @@ interface AnalysisContentProps {
   setPiiFilter: (value: boolean) => void;
   retainAnalysis: boolean;
   setRetainAnalysis: (value: boolean) => void;
-  subscriptionTier: string;
+  subscriptionTier: SubscriptionStatus;
 }
 
 export function AnalysisContent({

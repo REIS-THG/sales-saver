@@ -1,11 +1,10 @@
-
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAIAnalysis } from "@/hooks/use-ai-analysis";
 import { AnalysisHeader } from "@/components/ai-analysis/AnalysisHeader";
 import { useAuth } from "@/hooks/useAuth";
 import { MainHeader } from "@/components/layout/MainHeader";
-import { Insight } from "@/types/types";
+import { Insight, SubscriptionStatus } from "@/types/types";
 import { AnalysisAlerts } from "@/components/ai-analysis/AnalysisAlerts";
 import { FirstTimeExperience } from "@/components/ai-analysis/FirstTimeExperience";
 import { AnalysisContent } from "@/components/ai-analysis/AnalysisContent";
@@ -52,7 +51,6 @@ const AIAnalysis = () => {
   const [isFirstVisit, setIsFirstVisit] = useState(false);
 
   useEffect(() => {
-    // Check if this is the user's first visit
     const hasVisitedAIAnalysis = localStorage.getItem('hasVisitedAIAnalysis');
     if (!hasVisitedAIAnalysis) {
       setIsFirstVisit(true);
@@ -69,7 +67,6 @@ const AIAnalysis = () => {
     }
   }, [userLoading, user, navigate]);
 
-  // Transform insights to ensure they match the expected type
   const insights: Insight[] = rawInsights.map(insight => ({
     ...insight,
     priority: insight.priority as "high" | "medium" | "low",
@@ -87,7 +84,6 @@ const AIAnalysis = () => {
     }
   }, [searchParams, user]);
 
-  // Use user's subscription status directly to ensure consistency
   const userSubscriptionTier = user?.subscription_status || 'free';
   const isAnalysisLimited = userSubscriptionTier === 'free' && analysisCount >= 1;
 
@@ -122,7 +118,6 @@ const AIAnalysis = () => {
 
   const isLoading = userLoading || dataLoading;
 
-  // Render loading states
   const loadingState = (
     <AnalysisLoadingStates
       isLoading={isLoading}
@@ -152,10 +147,8 @@ const AIAnalysis = () => {
           onTryNow={handleTryNow} 
         />
 
-        {/* Show AILoadingState when analyzing */}
         {isAnalyzing && loadingState}
 
-        {/* Main Analysis UI - hide during first visit until they click "Try Now" */}
         {(!isFirstVisit || selectedDeal) && (
           <div className="grid grid-cols-1 gap-6 mt-6">
             <AnalysisContent
@@ -174,7 +167,7 @@ const AIAnalysis = () => {
               setPiiFilter={setPiiFilter}
               retainAnalysis={retainAnalysis}
               setRetainAnalysis={setRetainAnalysis}
-              subscriptionTier={userSubscriptionTier}
+              subscriptionTier={userSubscriptionTier as SubscriptionStatus}
             />
           </div>
         )}
