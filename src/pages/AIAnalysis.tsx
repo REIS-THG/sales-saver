@@ -11,6 +11,7 @@ import { FirstTimeExperience } from "@/components/ai-analysis/FirstTimeExperienc
 import { AnalysisContent } from "@/components/ai-analysis/AnalysisContent";
 import { AnalysisLoadingStates } from "@/components/ai-analysis/AnalysisLoadingStates";
 import { useTour } from "@/hooks/use-tour";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface AnalysisParams {
   salesApproach: 'consultative_selling' | 'solution_selling' | 'transactional_selling' | 'value_based_selling';
@@ -31,6 +32,7 @@ const AIAnalysis = () => {
   const navigate = useNavigate();
   const { user, isLoading: userLoading } = useAuth();
   const { TourComponent, resetTour } = useTour('ai-analysis');
+  const isMobile = useIsMobile();
   
   const {
     deals,
@@ -140,7 +142,7 @@ const AIAnalysis = () => {
       <TourComponent />
       <MainHeader userData={user} />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className={`mx-auto ${isMobile ? 'px-2' : 'px-4 sm:px-6 lg:px-8'} py-4 sm:py-6 max-w-7xl`}>
         <AnalysisHeader subscriptionTier={userSubscriptionTier} />
 
         <AnalysisAlerts error={error} isAnalysisLimited={isAnalysisLimited} />
@@ -154,7 +156,7 @@ const AIAnalysis = () => {
         {isAnalyzing && loadingState}
 
         {(!isFirstVisit || selectedDeal) && (
-          <div className="grid grid-cols-1 gap-6 mt-6">
+          <div className={`grid grid-cols-1 gap-4 sm:gap-6 ${isMobile ? 'mt-3' : 'mt-6'}`}>
             <AnalysisContent
               activeTab={activeTab}
               setActiveTab={setActiveTab}
