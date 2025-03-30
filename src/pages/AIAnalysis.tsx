@@ -4,6 +4,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAIAnalysis } from "@/hooks/use-ai-analysis";
 import { AnalysisHeader } from "@/components/ai-analysis/AnalysisHeader";
 import { useAuth } from "@/hooks/useAuth";
+import { useTeam } from "@/contexts/TeamContext";
 import { MainHeader } from "@/components/layout/MainHeader";
 import { Insight, SubscriptionStatus } from "@/types/types";
 import { AnalysisAlerts } from "@/components/ai-analysis/AnalysisAlerts";
@@ -12,6 +13,7 @@ import { AnalysisContent } from "@/components/ai-analysis/AnalysisContent";
 import { AnalysisLoadingStates } from "@/components/ai-analysis/AnalysisLoadingStates";
 import { useTour } from "@/hooks/use-tour";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { TeamPresence } from "@/components/team/TeamPresence";
 
 interface AnalysisParams {
   salesApproach: 'consultative_selling' | 'solution_selling' | 'transactional_selling' | 'value_based_selling';
@@ -31,6 +33,7 @@ const AIAnalysis = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user, isLoading: userLoading } = useAuth();
+  const { currentTeam } = useTeam();
   const { TourComponent, resetTour } = useTour('ai-analysis');
   const isMobile = useIsMobile();
   
@@ -87,7 +90,7 @@ const AIAnalysis = () => {
         fetchInsights(dealId);
       }
     }
-  }, [searchParams, user]);
+  }, [searchParams, user, currentTeam]);
 
   const userSubscriptionTier = user?.subscription_status || 'free';
   const isAnalysisLimited = userSubscriptionTier === 'free' && analysisCount >= 1;
@@ -143,7 +146,13 @@ const AIAnalysis = () => {
       <MainHeader userData={user} />
 
       <div className={`mx-auto ${isMobile ? 'px-2' : 'px-4 sm:px-6 lg:px-8'} py-4 sm:py-6 max-w-7xl`}>
-        <AnalysisHeader subscriptionTier={userSubscriptionTier} />
+        <div className="flex justify-between items-center">
+          <AnalysisHeader subscriptionTier={userSubscriptionTier} />
+          
+          {selectedDeal && currentTeam && (
+            <TeamPresence analysisId={selectedDeal} />
+          )}
+        </div>
 
         <AnalysisAlerts error={error} isAnalysisLimited={isAnalysisLimited} />
 
@@ -174,6 +183,7 @@ const AIAnalysis = () => {
               retainAnalysis={retainAnalysis}
               setRetainAnalysis={setRetainAnalysis}
               subscriptionTier={userSubscriptionTier as SubscriptionStatus}
+              teamContext={currentTeam ? true : false}
             />
           </div>
         )}

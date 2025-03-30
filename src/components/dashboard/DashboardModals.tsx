@@ -1,15 +1,16 @@
 
-import { CreateDealForm } from "@/components/deals/CreateDealForm";
-import { QuickNoteModal } from "@/components/dashboard/QuickNoteModal";
-import { AutomationSettingsDialog } from "@/components/dashboard/AutomationSettingsDialog";
-import type { Deal, User } from "@/types/types";
+import { useState } from "react";
+import { DealCreateModal } from "@/components/deals/DealCreateModal";
+import { DealAutomationSettings } from "@/components/deals/DealAutomationSettings";
+import { DealQuickNoteModal } from "@/components/deals/DealQuickNoteModal";
+import type { Deal, CustomField, User, Team } from "@/types/types";
 
 interface DashboardModalsProps {
   showCreateDealModal: boolean;
   onCloseCreateModal: () => void;
   onDealCreated: () => Promise<void>;
   onBeforeCreate: () => Promise<boolean>;
-  customFields: any[];
+  customFields: CustomField[];
   showAutomationSettings: boolean;
   setShowAutomationSettings: (show: boolean) => void;
   userData: User | null;
@@ -18,6 +19,7 @@ interface DashboardModalsProps {
   selectedDealId: string | null;
   selectedDeal: Deal | null;
   onNoteAdded: () => Promise<void>;
+  currentTeam?: Team | null;
 }
 
 export function DashboardModals({
@@ -33,32 +35,32 @@ export function DashboardModals({
   setIsQuickNoteModalOpen,
   selectedDealId,
   selectedDeal,
-  onNoteAdded
+  onNoteAdded,
+  currentTeam
 }: DashboardModalsProps) {
   return (
     <>
-      {showCreateDealModal && (
-        <CreateDealForm
-          open={showCreateDealModal}
-          onClose={onCloseCreateModal}
-          onSuccess={onDealCreated}
-          onBeforeCreate={onBeforeCreate}
-          customFields={customFields}
-          className="deal-form"
-        />
-      )}
-
-      <QuickNoteModal
-        deal={selectedDeal}
-        isOpen={isQuickNoteModalOpen}
-        onClose={() => setIsQuickNoteModalOpen(false)}
-        onNoteAdded={onNoteAdded}
+      <DealCreateModal
+        open={showCreateDealModal}
+        onOpenChange={onCloseCreateModal}
+        onDealCreated={onDealCreated}
+        customFields={customFields}
+        onBeforeCreate={onBeforeCreate}
+        teamId={currentTeam?.id}
       />
-
-      <AutomationSettingsDialog
+      
+      <DealAutomationSettings
         open={showAutomationSettings}
         onOpenChange={setShowAutomationSettings}
         userData={userData}
+      />
+      
+      <DealQuickNoteModal
+        open={isQuickNoteModalOpen}
+        onOpenChange={setIsQuickNoteModalOpen}
+        dealId={selectedDealId}
+        deal={selectedDeal}
+        onNoteAdded={onNoteAdded}
       />
     </>
   );

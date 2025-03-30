@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -5,6 +6,7 @@ import { useDashboard } from "@/hooks/use-dashboard";
 import { useApiError } from "@/hooks/use-api-error";
 import { useAuth } from "@/hooks/useAuth";
 import { useTour } from "@/hooks/use-tour";
+import { useTeam } from "@/contexts/TeamContext";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { DashboardContent } from "@/components/dashboard/DashboardContent";
 import { DashboardActions } from "@/components/dashboard/DashboardActions";
@@ -21,6 +23,7 @@ export default function Dashboard() {
   const [selectedDealId, setSelectedDealId] = useState<string | null>(null);
   const [isQuickNoteModalOpen, setIsQuickNoteModalOpen] = useState(false);
   const { TourComponent, resetTour } = useTour('dashboard');
+  const { currentTeam } = useTeam();
 
   const {
     deals,
@@ -56,6 +59,14 @@ export default function Dashboard() {
     };
     checkAuth();
   }, [navigate, handleAuthCheck]);
+
+  // Refetch deals when the team changes
+  useEffect(() => {
+    if (user) {
+      fetchDeals();
+      fetchCustomFields();
+    }
+  }, [user, currentTeam, fetchDeals, fetchCustomFields]);
 
   const handleLocalSignOut = async () => {
     try {
@@ -138,7 +149,8 @@ export default function Dashboard() {
         deals={deals} 
         userData={user} 
         loading={loading} 
-        error={error} 
+        error={error}
+        teamName={currentTeam?.name}
       />
       
       <DashboardActions
@@ -191,6 +203,7 @@ export default function Dashboard() {
         selectedDealId={selectedDealId}
         selectedDeal={deals.find((d) => d.id === selectedDealId) || null}
         onNoteAdded={handleNoteAdded}
+        currentTeam={currentTeam}
       />
     </DashboardLayout>
   );

@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { UserButton } from "@/components/dashboard/UserButton";
 import { Button } from "@/components/ui/button";
 import { MobileNavigation } from "./MobileNavigation";
+import { TeamSelector } from "@/components/team/TeamSelector";
 import type { User } from "@/types/types";
 import { useState } from "react";
 import { HelpCircle } from "lucide-react";
@@ -78,6 +79,10 @@ export function MainHeader({ onSignOut, userData, children, onResetTour, classNa
                 <Link to="/settings">Settings</Link>
               </Button>
             </nav>
+            
+            {/* Team Selector */}
+            {userData && <TeamSelector />}
+            
             {children}
           </div>
           

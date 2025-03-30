@@ -1,3 +1,4 @@
+
 export type FieldType = "text" | "number" | "boolean" | "date" | "product" | "multi-select";
 export type DealStatus = "open" | "won" | "lost" | "stalled";
 export type UserRole = "sales_rep" | "manager";
@@ -204,6 +205,8 @@ export interface Team {
   id: string;
   name: string;
   owner_id: string;
+  avatar_url?: string;
+  invite_code?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -213,8 +216,21 @@ export interface TeamMember {
   team_id: string;
   user_id: string;
   role: 'owner' | 'admin' | 'member';
+  status: 'active' | 'inactive' | 'pending';
   created_at?: string;
   updated_at?: string;
+  user?: User;
+}
+
+export interface TeamInvitation {
+  id: string;
+  team_id: string;
+  email: string;
+  role: 'admin' | 'member';
+  invited_by: string;
+  status: 'pending' | 'accepted' | 'rejected' | 'expired';
+  created_at?: string;
+  expires_at?: string;
 }
 
 export interface Product {

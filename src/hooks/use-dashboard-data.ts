@@ -1,9 +1,10 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useApiError } from "@/hooks/use-api-error";
+import { useTeam } from "@/contexts/TeamContext";
 import type { Deal, CustomField, User } from "@/types/types";
 
 export function useDashboardData() {
@@ -14,6 +15,7 @@ export function useDashboardData() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { handleAuthCheck, handleError } = useApiError();
+  const { currentTeam } = useTeam();
 
   const fetchDeals = useCallback(async () => {
     try {
@@ -23,10 +25,20 @@ export function useDashboardData() {
       const userId = await handleAuthCheck();
       if (!userId) return;
 
-      // Fetch both personal deals and team deals
-      const { data: dealsData, error: fetchError } = await supabase
+      let query = supabase
         .from("deals")
         .select("*");
+        
+      // Filter deals based on team context
+      if (currentTeam) {
+        // If team is selected, show team deals
+        query = query.eq('team_id', currentTeam.id);
+      } else {
+        // If no team selected, show personal deals
+        query = query.eq('user_id', userId).is('team_id', null);
+      }
+      
+      const { data: dealsData, error: fetchError } = await query;
 
       if (fetchError) {
         handleError(fetchError, "Failed to fetch deals");
@@ -66,7 +78,7 @@ export function useDashboardData() {
     } finally {
       setLoading(false);
     }
-  }, [handleAuthCheck, handleError]);
+  }, [handleAuthCheck, handleError, currentTeam]);
 
   const fetchCustomFields = useCallback(async () => {
     try {
@@ -98,6 +110,11 @@ export function useDashboardData() {
       setLoading(false);
     }
   }, [handleAuthCheck, handleError]);
+
+  // Refetch deals when the team context changes
+  useEffect(() => {
+    fetchDeals();
+  }, [fetchDeals, currentTeam]);
 
   return {
     deals,
