@@ -53,3 +53,11 @@ export interface TeamActivity {
   created_at: string;
   user_name?: string;
 }
+
+export interface TeamPresenceData {
+  user_id: string;
+  full_name: string;
+  avatar_url?: string;
+  last_seen: string;
+  page: string;
+}

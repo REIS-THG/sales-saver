@@ -5,15 +5,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { TeamPresenceData } from '@/types/team-types';
 
 type PresenceState = {
-  [key: string]: {
-    user_id: string;
-    full_name: string;
-    avatar_url?: string;
-    last_seen: string;
-    page: string;
-  }[];
+  [key: string]: TeamPresenceData[];
 };
 
 export function TeamPresence() {
@@ -57,7 +52,7 @@ export function TeamPresence() {
         await presenceChannel.track({
           user_id: user.user_id,
           full_name: user.full_name || 'Unknown User',
-          avatar_url: user.avatar_url || null,
+          avatar_url: user.user_metadata?.avatar_url || null,
           last_seen: new Date().toISOString(),
           page: pathname,
         });
@@ -82,7 +77,7 @@ export function TeamPresence() {
         await channel.track({
           user_id: user.user_id,
           full_name: user.full_name || 'Unknown User',
-          avatar_url: user.avatar_url || null,
+          avatar_url: user.user_metadata?.avatar_url || null,
           last_seen: new Date().toISOString(),
           page: pathname,
         });

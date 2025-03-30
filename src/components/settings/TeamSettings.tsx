@@ -1,67 +1,27 @@
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { 
-  Plus, 
-  UserPlus, 
-  Users, 
-  Mail, 
-  Shield, 
-  Check, 
-  X, 
-  Clock, 
-  Trash2,
-  UserX, 
-  Download,
-  FileText
-} from "lucide-react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useTeam } from "@/contexts/TeamContext";
-import { TeamInvitation, TeamMember } from "@/types/types";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { updateTeamMemberRole, cancelTeamInvitation } from "@/services/team-service";
+import { cancelTeamInvitation, updateTeamMemberRole } from "@/services/team-service";
 import { TeamReportsAccess } from "@/components/team/TeamReportsAccess";
+
+// Import refactored components
+import { TeamSettingsHeader } from "./team/TeamSettingsHeader";
+import { MembersTab } from "./team/MembersTab";
+import { InvitationsTab } from "./team/InvitationsTab";
 import { TeamActivityLog } from "@/components/team/TeamActivityLog";
+import { NoTeamState } from "./team/NoTeamState";
 
 export function TeamSettings() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<"admin" | "member">("member");
-  const [members, setMembers] = useState<TeamMember[]>([]);
-  const [invitations, setInvitations] = useState<TeamInvitation[]>([]);
+  const [members, setMembers] = useState([]);
+  const [invitations, setInvitations] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("members");
-  const [confirmDelete, setConfirmDelete] = useState<{ open: boolean, memberId: string | null }>({
-    open: false,
-    memberId: null
-  });
-  const [confirmCancelInvite, setConfirmCancelInvite] = useState<{ open: boolean, invitationId: string | null }>({
-    open: false,
-    invitationId: null
-  });
-  const [editingRole, setEditingRole] = useState<{ memberId: string, currentRole: string } | null>(null);
   
   const { 
     currentTeam, 
@@ -74,7 +34,7 @@ export function TeamSettings() {
   } = useTeam();
   
   const { toast } = useToast();
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState(null);
 
   useEffect(() => {
     if (currentTeam) {
@@ -108,8 +68,8 @@ export function TeamSettings() {
         .eq('status', 'pending');
         
       if (invitationsError) throw invitationsError;
-      setInvitations(invitationsData as TeamInvitation[]);
-    } catch (error: any) {
+      setInvitations(invitationsData);
+    } catch (error) {
       toast({
         title: "Error",
         description: `Failed to fetch team data: ${error.message}`,
@@ -142,20 +102,18 @@ export function TeamSettings() {
     }
   };
 
-  const handleRemoveMember = async (memberId: string) => {
+  const handleRemoveMember = async (memberId) => {
     if (!currentTeam) return;
     
     const success = await removeTeamMember(currentTeam.id, memberId);
     if (success) {
-      setConfirmDelete({ open: false, memberId: null });
       fetchTeamData();
     }
   };
 
-  const handleRoleChange = async (memberId: string, newRole: string) => {
+  const handleRoleChange = async (memberId, newRole) => {
     try {
       await updateTeamMemberRole(memberId, newRole);
-      setEditingRole(null);
       fetchTeamData();
       toast({
         title: "Role updated",
@@ -171,10 +129,9 @@ export function TeamSettings() {
     }
   };
 
-  const handleCancelInvitation = async (invitationId: string) => {
+  const handleCancelInvitation = async (invitationId) => {
     try {
       await cancelTeamInvitation(invitationId);
-      setConfirmCancelInvite({ open: false, invitationId: null });
       fetchTeamData();
       toast({
         title: "Invitation cancelled",
@@ -250,122 +207,24 @@ export function TeamSettings() {
     }
   };
 
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return '';
-    return new Date(dateString).toLocaleDateString();
-  };
-
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(part => part.charAt(0))
-      .join('')
-      .toUpperCase()
-      .substring(0, 2);
-  };
-
-  const getRoleBadgeColor = (role: string) => {
-    switch (role) {
-      case 'owner':
-        return 'bg-indigo-100 text-indigo-800 hover:bg-indigo-200';
-      case 'admin':
-        return 'bg-blue-100 text-blue-800 hover:bg-blue-200';
-      default:
-        return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
-    }
-  };
-
-  const getStatusBadgeColor = (status: string) => {
-    switch (status) {
-      case 'active':
-        return 'bg-green-100 text-green-800 hover:bg-green-200';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200';
-      case 'inactive':
-        return 'bg-red-100 text-red-800 hover:bg-red-200';
-      default:
-        return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
-    }
-  };
-
   const canManageTeam = userRole === 'owner' || userRole === 'admin';
 
   if (!teams || teams.length === 0) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Team Management</CardTitle>
-          <CardDescription>
-            Create a team to collaborate with others
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col items-center justify-center py-8 space-y-4">
-            <Users className="h-12 w-12 text-gray-400" />
-            <div className="text-center">
-              <h3 className="text-lg font-medium">No Teams Yet</h3>
-              <p className="text-sm text-gray-500 mt-1">
-                Create a team to start collaborating with your colleagues.
-              </p>
-            </div>
-            <Button onClick={() => fetchTeams()}>
-              <Plus className="mr-2 h-4 w-4" />
-              Create Team
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return <NoTeamState type="no-teams" onCreateTeam={fetchTeams} />;
   }
 
   if (!currentTeam) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Team Management</CardTitle>
-          <CardDescription>
-            Select a team to manage members
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col items-center justify-center py-8 space-y-4">
-            <Users className="h-12 w-12 text-gray-400" />
-            <div className="text-center">
-              <h3 className="text-lg font-medium">No Team Selected</h3>
-              <p className="text-sm text-gray-500 mt-1">
-                Select a team from the dropdown in the navigation bar.
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return <NoTeamState type="no-selection" />;
   }
 
   return (
     <Card>
       <CardHeader>
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle>Team Management</CardTitle>
-            <CardDescription>
-              Manage your team members and invitations
-            </CardDescription>
-          </div>
-          <div className="flex gap-2">
-            {canManageTeam && (
-              <Button variant="outline" size="sm" onClick={handleExportTeamReport}>
-                <Download className="h-4 w-4 mr-2" />
-                Export Report
-              </Button>
-            )}
-            <Avatar className="h-10 w-10">
-              <AvatarFallback className="bg-indigo-100 text-indigo-700">
-                {getInitials(currentTeam.name)}
-              </AvatarFallback>
-            </Avatar>
-          </div>
-        </div>
+        <TeamSettingsHeader 
+          currentTeam={currentTeam} 
+          handleExportTeamReport={handleExportTeamReport}
+          canManageTeam={canManageTeam}
+        />
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -390,151 +249,26 @@ export function TeamSettings() {
               </TabsList>
               
               <TabsContent value="members">
-                <div className="space-y-4">
-                  {members.map((member) => (
-                    <div key={member.id} className="flex items-center justify-between p-3 border rounded-md">
-                      <div className="flex items-center space-x-3">
-                        <Avatar className="h-10 w-10">
-                          <AvatarFallback className="bg-gray-100">
-                            {getInitials(member.user?.full_name || 'User')}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="font-medium">{member.user?.full_name || 'Unknown User'}</div>
-                          <div className="text-sm text-gray-500">{member.user?.email}</div>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        {editingRole && editingRole.memberId === member.id ? (
-                          <Select 
-                            defaultValue={editingRole.currentRole}
-                            onValueChange={(value) => handleRoleChange(member.id, value)}
-                          >
-                            <SelectTrigger className="w-[120px]">
-                              <SelectValue placeholder="Select role" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="admin">Admin</SelectItem>
-                              <SelectItem value="member">Member</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        ) : (
-                          <Badge 
-                            className={`${getRoleBadgeColor(member.role)} cursor-pointer`}
-                            onClick={() => canManageTeam && member.role !== 'owner' && setEditingRole({ 
-                              memberId: member.id, 
-                              currentRole: member.role 
-                            })}
-                          >
-                            {member.role === 'owner' && <Shield className="h-3 w-3 mr-1" />}
-                            {member.role}
-                          </Badge>
-                        )}
-                        <Badge className={getStatusBadgeColor(member.status)}>
-                          {member.status === 'active' && <Check className="h-3 w-3 mr-1" />}
-                          {member.status === 'pending' && <Clock className="h-3 w-3 mr-1" />}
-                          {member.status === 'inactive' && <X className="h-3 w-3 mr-1" />}
-                          {member.status}
-                        </Badge>
-                        
-                        {/* Only owners can remove members and admins cannot remove owners */}
-                        {canManageTeam && member.role !== 'owner' && userRole === 'owner' && (
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            className="h-8 w-8 text-gray-500 hover:text-red-500"
-                            onClick={() => setConfirmDelete({ 
-                              open: true, 
-                              memberId: member.id 
-                            })}
-                          >
-                            <UserX className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                  
-                  {canManageTeam && (
-                    <div className="pt-6 border-t mt-6">
-                      <h3 className="text-lg font-medium mb-4">Add Team Member</h3>
-                      <div className="flex gap-3">
-                        <div className="flex-1">
-                          <Input
-                            value={inviteEmail}
-                            onChange={(e) => setInviteEmail(e.target.value)}
-                            placeholder="Email address"
-                            type="email"
-                          />
-                        </div>
-                        <Select 
-                          value={inviteRole} 
-                          onValueChange={(value) => setInviteRole(value as "admin" | "member")}
-                        >
-                          <SelectTrigger className="w-[120px]">
-                            <SelectValue placeholder="Role" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="member">Member</SelectItem>
-                            <SelectItem value="admin">Admin</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Button onClick={handleInviteMember}>
-                          <UserPlus className="mr-2 h-4 w-4" />
-                          Invite
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <MembersTab 
+                  members={members}
+                  inviteEmail={inviteEmail}
+                  setInviteEmail={setInviteEmail}
+                  inviteRole={inviteRole}
+                  setInviteRole={setInviteRole}
+                  handleInviteMember={handleInviteMember}
+                  handleRemoveMember={handleRemoveMember}
+                  handleRoleChange={handleRoleChange}
+                  canManageTeam={canManageTeam}
+                  userRole={userRole}
+                />
               </TabsContent>
               
               <TabsContent value="invitations">
-                <div className="space-y-4">
-                  {invitations.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                      <Mail className="h-12 w-12 mx-auto mb-2" />
-                      <p>No pending invitations</p>
-                    </div>
-                  ) : (
-                    invitations.map((invitation) => (
-                      <div key={invitation.id} className="flex items-center justify-between p-3 border rounded-md">
-                        <div className="flex items-center space-x-3">
-                          <Mail className="h-5 w-5 text-gray-400" />
-                          <div>
-                            <div className="font-medium">{invitation.email}</div>
-                            <div className="text-xs text-gray-500">
-                              Invited: {formatDate(invitation.created_at)} • 
-                              Expires: {formatDate(invitation.expires_at)}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Badge className={getRoleBadgeColor(invitation.role)}>
-                            {invitation.role}
-                          </Badge>
-                          <Badge className="bg-yellow-100 text-yellow-800">
-                            <Clock className="h-3 w-3 mr-1" />
-                            Pending
-                          </Badge>
-                          {canManageTeam && (
-                            <Button 
-                              variant="ghost" 
-                              size="icon"
-                              className="h-8 w-8 text-gray-500 hover:text-red-500"
-                              onClick={() => setConfirmCancelInvite({
-                                open: true,
-                                invitationId: invitation.id
-                              })}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
+                <InvitationsTab
+                  invitations={invitations} 
+                  canManageTeam={canManageTeam}
+                  handleCancelInvitation={handleCancelInvitation}
+                />
               </TabsContent>
               
               <TabsContent value="reports">
@@ -548,54 +282,6 @@ export function TeamSettings() {
           </>
         )}
       </CardContent>
-      
-      <AlertDialog 
-        open={confirmDelete.open} 
-        onOpenChange={(open) => setConfirmDelete({ ...confirmDelete, open })}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Remove Team Member</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to remove this member from the team? 
-              They will lose access to all team resources.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              className="bg-red-600 hover:bg-red-700"
-              onClick={() => confirmDelete.memberId && handleRemoveMember(confirmDelete.memberId)}
-            >
-              Remove
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-      
-      <AlertDialog 
-        open={confirmCancelInvite.open} 
-        onOpenChange={(open) => setConfirmCancelInvite({ ...confirmCancelInvite, open })}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Cancel Invitation</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to cancel this invitation?
-              The invitee will no longer be able to join the team.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              className="bg-red-600 hover:bg-red-700"
-              onClick={() => confirmCancelInvite.invitationId && handleCancelInvitation(confirmCancelInvite.invitationId)}
-            >
-              Cancel Invitation
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </Card>
   );
 }
