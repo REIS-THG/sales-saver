@@ -76,7 +76,7 @@ export function CustomFieldsSection({
               </div>
             )}
 
-            {field.field_type === "select" && field.options && (
+            {field.field_type === "multi-select" && field.options && (
               <Select
                 value={values[field.field_name] || ""}
                 onValueChange={(value) => handleFieldChange(field.field_name, value)}
@@ -86,8 +86,8 @@ export function CustomFieldsSection({
                 </SelectTrigger>
                 <SelectContent>
                   {field.options.map((option) => (
-                    <SelectItem key={option} value={option}>
-                      {option}
+                    <SelectItem key={option.value || option} value={option.value || option}>
+                      {option.label || option}
                     </SelectItem>
                   ))}
                 </SelectContent>

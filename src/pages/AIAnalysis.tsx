@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useApiError } from "@/hooks/use-api-error";
 import { useAuth } from "@/hooks/useAuth";
 import { useTeam } from "@/contexts/TeamContext";
-import { useAiAnalysis } from "@/hooks/use-ai-analysis";
+import { useAIAnalysis } from "@/hooks/use-ai-analysis";
 import { useAnalysisActions } from "@/hooks/use-analysis-actions";
 import { Deal, Insight } from "@/types/types";
 
@@ -27,6 +27,9 @@ export default function AIAnalysis() {
   const [activeTab, setActiveTab] = useState("deal-analysis");
   const [showAnalysisExplainer, setShowAnalysisExplainer] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [piiFilter, setPiiFilter] = useState(false);
+  const [retainAnalysis, setRetainAnalysis] = useState(true);
+  
   const navigate = useNavigate();
   const { user } = useAuth();
   const { currentTeam } = useTeam();
@@ -43,16 +46,14 @@ export default function AIAnalysis() {
     resetAnalysis,
     exportInsights,
     handleDealSelect,
-  } = useAiAnalysis();
-
-  const {
+    subscriptionTier,
     markActionItem,
     saveFollowupMessage,
     isActioning,
     generatedFollowup,
     generateFollowup,
-    generatedFollowups,
-  } = useAnalysisActions();
+    generatedFollowups
+  } = useAIAnalysis();
 
   const { handleError, handleAuthCheck } = useApiError();
 
@@ -146,6 +147,7 @@ export default function AIAnalysis() {
       <MainHeader userData={user} />
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6 max-w-7xl mx-auto">
         <AnalysisHeader
+          subscriptionTier={subscriptionTier}
           deals={deals}
           selectedDeal={selectedDeal}
           onDealSelect={handleDealSelect}
@@ -156,13 +158,23 @@ export default function AIAnalysis() {
         />
 
         {analysisId && (
-          <AnalysisTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+          <AnalysisTabs 
+            activeTab={activeTab} 
+            setActiveTab={setActiveTab}
+            deals={deals}
+            selectedDeal={selectedDeal}
+            isAnalyzing={isAnalyzing}
+            isAnalysisLimited={isAnalysisLimited}
+            insights={insights}
+            onDealSelect={handleDealSelect}
+            onAnalyze={analyzeDeals}
+          />
         )}
 
         {activeTab === "history" ? (
           <div className="analysis-history my-4">
             {analysisHistory?.length ? (
-              analysisHistory.map((analysis) => (
+              analysisHistory.map((analysis: any) => (
                 <div
                   key={analysis.id}
                   className="cursor-pointer p-4 border rounded-lg mb-2 hover:bg-gray-50"
@@ -189,7 +201,8 @@ export default function AIAnalysis() {
             isAnalyzing={isAnalyzing}
             isAnalysisLimited={isAnalysisLimited}
             insights={insights}
-            onExport={exportInsights}
+            onDealSelect={handleDealSelect}
+            onAnalyze={analyzeDeals}
             onMarkActionItem={markActionItem}
             onSaveFollowup={saveFollowupMessage}
             isActioning={isActioning}
@@ -197,6 +210,7 @@ export default function AIAnalysis() {
             generatedFollowup={generatedFollowup}
             generatedFollowups={generatedFollowups}
             hasTeam={!!currentTeam}
+            onExport={exportInsights}
           />
         )}
       </div>
@@ -209,6 +223,11 @@ export default function AIAnalysis() {
       <AnalysisSettingsPanel
         open={showSettings}
         onOpenChange={setShowSettings}
+        piiFilter={piiFilter}
+        setPiiFilter={setPiiFilter}
+        retainAnalysis={retainAnalysis}
+        setRetainAnalysis={setRetainAnalysis}
+        subscriptionTier={subscriptionTier}
       />
     </div>
   );

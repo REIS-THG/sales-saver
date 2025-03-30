@@ -11,29 +11,29 @@ import { TabHeader } from "./components/TabHeader";
 interface AnalysisTabsProps {
   activeTab: string;
   setActiveTab: (value: string) => void;
-  deals: Deal[];
-  selectedDeal: string | null;
-  isAnalyzing: boolean;
-  isAnalysisLimited: boolean;
-  insights: Insight[];
-  onDealSelect: (dealId: string) => void;
-  onAnalyze: (dealId: string) => void;
-  onFileUpload: (file: File, type: 'transcript' | 'email' | 'voice' | 'audio') => void;
-  isLoading: boolean;
+  deals?: Deal[];
+  selectedDeal?: string | null;
+  isAnalyzing?: boolean;
+  isAnalysisLimited?: boolean;
+  insights?: Insight[];
+  onDealSelect?: (dealId: string) => void;
+  onAnalyze?: (dealId: string) => void;
+  onFileUpload?: (file: File, type: 'transcript' | 'email' | 'voice' | 'audio') => void;
+  isLoading?: boolean;
 }
 
 export function AnalysisTabs({
   activeTab,
   setActiveTab,
-  deals,
-  selectedDeal,
-  isAnalyzing,
-  isAnalysisLimited,
-  insights,
-  onDealSelect,
-  onAnalyze,
-  onFileUpload,
-  isLoading
+  deals = [],
+  selectedDeal = null,
+  isAnalyzing = false,
+  isAnalysisLimited = false,
+  insights = [],
+  onDealSelect = () => {},
+  onAnalyze = () => {},
+  onFileUpload = () => {},
+  isLoading = false
 }: AnalysisTabsProps) {
   const isMobile = useIsMobile();
 

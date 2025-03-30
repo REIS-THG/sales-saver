@@ -62,4 +62,4 @@ export interface TeamPresenceData {
   page: string;
 }
 
-export { User };
+export type { User };

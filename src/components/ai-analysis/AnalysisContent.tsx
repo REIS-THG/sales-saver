@@ -12,15 +12,23 @@ interface AnalysisContentProps {
   isAnalyzing: boolean;
   isAnalysisLimited: boolean;
   insights: Insight[];
-  onDealSelect: (dealId: string) => void;
-  onAnalyze: (dealId: string) => void;
-  onFileUpload: (file: File, type: 'transcript' | 'email' | 'voice' | 'audio') => void;
-  isLoading: boolean;
-  piiFilter: boolean;
-  setPiiFilter: (value: boolean) => void;
-  retainAnalysis: boolean;
-  setRetainAnalysis: (value: boolean) => void;
-  subscriptionTier: SubscriptionStatus;
+  onDealSelect?: (dealId: string) => void;
+  onAnalyze?: (dealId: string) => void;
+  onFileUpload?: (file: File, type: 'transcript' | 'email' | 'voice' | 'audio') => void;
+  isLoading?: boolean;
+  piiFilter?: boolean;
+  setPiiFilter?: (value: boolean) => void;
+  retainAnalysis?: boolean;
+  setRetainAnalysis?: (value: boolean) => void;
+  subscriptionTier?: SubscriptionStatus;
+  onMarkActionItem?: (id: string, status: boolean) => void;
+  onSaveFollowup?: (id: string, content: string) => void;
+  isActioning?: boolean;
+  onGenerateFollowup?: (dealId: string, type: string) => void;
+  generatedFollowup?: string;
+  generatedFollowups?: any[];
+  hasTeam?: boolean;
+  onExport?: () => void;
 }
 
 export function AnalysisContent({
@@ -31,15 +39,23 @@ export function AnalysisContent({
   isAnalyzing,
   isAnalysisLimited,
   insights,
-  onDealSelect,
-  onAnalyze,
-  onFileUpload,
-  isLoading,
-  piiFilter,
-  setPiiFilter,
-  retainAnalysis,
-  setRetainAnalysis,
-  subscriptionTier
+  onDealSelect = () => {},
+  onAnalyze = () => {},
+  onFileUpload = () => {},
+  isLoading = false,
+  piiFilter = false,
+  setPiiFilter = () => {},
+  retainAnalysis = true,
+  setRetainAnalysis = () => {},
+  subscriptionTier = 'free',
+  onMarkActionItem,
+  onSaveFollowup,
+  isActioning,
+  onGenerateFollowup,
+  generatedFollowup,
+  generatedFollowups,
+  hasTeam = false,
+  onExport
 }: AnalysisContentProps) {
   return (
     <Card className="overflow-hidden">
@@ -50,14 +66,6 @@ export function AnalysisContent({
             Analyze your deals, get next step recommendations, and track progress over time
           </p>
         </div>
-        
-        <AnalysisSettingsPanel
-          piiFilter={piiFilter}
-          setPiiFilter={setPiiFilter}
-          retainAnalysis={retainAnalysis}
-          setRetainAnalysis={setRetainAnalysis}
-          subscriptionTier={subscriptionTier}
-        />
 
         <AnalysisTabs
           activeTab={activeTab}

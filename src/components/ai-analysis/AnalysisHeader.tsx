@@ -4,12 +4,29 @@ import { Badge } from "@/components/ui/badge";
 import { BrainCircuit, Sparkles, Lock } from "lucide-react";
 import { ContextualHelp } from "@/components/ui/contextual-help";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Deal } from "@/types/types";
 
 interface AnalysisHeaderProps {
   subscriptionTier: string;
+  deals?: Deal[];
+  selectedDeal?: string | null;
+  onDealSelect?: (dealId: string) => void;
+  onAnalyze?: (dealId: string) => void;
+  isAnalyzing?: boolean;
+  onShowSettings?: () => void;
+  onShowExplainer?: () => void;
 }
 
-export function AnalysisHeader({ subscriptionTier }: AnalysisHeaderProps) {
+export function AnalysisHeader({ 
+  subscriptionTier,
+  deals,
+  selectedDeal,
+  onDealSelect,
+  onAnalyze,
+  isAnalyzing,
+  onShowSettings,
+  onShowExplainer
+}: AnalysisHeaderProps) {
   const isMobile = useIsMobile();
   
   return (
@@ -37,23 +54,31 @@ export function AnalysisHeader({ subscriptionTier }: AnalysisHeaderProps) {
       </div>
       
       <div className="flex items-center gap-2">
-        <ContextualHelp
-          id="ai-analysis-intro"
-          title="Using AI Analysis"
-          description={
-            <div className="space-y-2 text-sm">
-              <p>AI Analysis helps you:</p>
-              <ul className="list-disc pl-4">
-                <li>Identify potential issues in your deals</li>
-                <li>Get personalized recommendations</li>
-                <li>Generate follow-up messages</li>
-                <li>Analyze sales documents and communications</li>
-              </ul>
-              <p className="text-xs text-muted-foreground mt-2">Free accounts are limited to 1 analysis per month</p>
-            </div>
-          }
-          initialShow={true}
-        />
+        {onShowSettings && (
+          <Button variant="outline" size="sm" onClick={onShowSettings}>
+            Settings
+          </Button>
+        )}
+        
+        {onShowExplainer && (
+          <ContextualHelp
+            id="ai-analysis-intro"
+            title="Using AI Analysis"
+            description={
+              <div className="space-y-2 text-sm">
+                <p>AI Analysis helps you:</p>
+                <ul className="list-disc pl-4">
+                  <li>Identify potential issues in your deals</li>
+                  <li>Get personalized recommendations</li>
+                  <li>Generate follow-up messages</li>
+                  <li>Analyze sales documents and communications</li>
+                </ul>
+                <p className="text-xs text-muted-foreground mt-2">Free accounts are limited to 1 analysis per month</p>
+              </div>
+            }
+            initialShow={true}
+          />
+        )}
       </div>
     </div>
   );
