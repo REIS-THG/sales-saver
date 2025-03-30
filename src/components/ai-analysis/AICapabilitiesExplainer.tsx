@@ -1,123 +1,126 @@
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Brain,
-  FileSearch,
-  MessageSquare,
-  PieChart,
-  Mail,
-  Lightbulb,
-  Shield,
-  Mic,
-} from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
-const CapabilityCard = ({
-  icon,
-  title,
-  description,
-  toolTip
-}: {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  toolTip: string;
-}) => (
-  <TooltipProvider>
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <div className="flex flex-col items-center p-4 border rounded-lg bg-white hover:bg-blue-50 transition-colors duration-200 cursor-help">
-          <div className="mb-2 text-blue-600">{icon}</div>
-          <h3 className="text-sm font-medium">{title}</h3>
-          <p className="text-xs text-gray-500 text-center mt-1">{description}</p>
-        </div>
-      </TooltipTrigger>
-      <TooltipContent className="max-w-[250px]">
-        <p className="text-sm">{toolTip}</p>
-      </TooltipContent>
-    </Tooltip>
-  </TooltipProvider>
-);
+interface AICapabilitiesExplainerProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
 
-export function AICapabilitiesExplainer() {
-  const capabilities = [
-    {
-      icon: <Brain className="h-6 w-6" />,
-      title: "Deal Intelligence",
-      description: "Analyzes deal health and potential",
-      toolTip: "AI evaluates your deal data to identify risks, opportunities, and recommended actions, providing a health score."
-    },
-    {
-      icon: <MessageSquare className="h-6 w-6" />,
-      title: "Note Analysis",
-      description: "Extracts insights from your notes",
-      toolTip: "Automatically analyzes the content of your notes to identify key points, sentiment, and next steps."
-    },
-    {
-      icon: <Mail className="h-6 w-6" />,
-      title: "Message Generation",
-      description: "Creates follow-up messages",
-      toolTip: "Generate personalized email, message, or call scripts based on deal context and analysis."
-    },
-    {
-      icon: <PieChart className="h-6 w-6" />,
-      title: "Performance Insights",
-      description: "Identifies sales trends",
-      toolTip: "Analyzes your performance data to highlight patterns and suggest improvements to your sales approach."
-    },
-    {
-      icon: <FileSearch className="h-6 w-6" />,
-      title: "Document Analysis",
-      description: "Extracts data from documents",
-      toolTip: "Upload documents for AI to extract and analyze information relevant to your deals."
-    },
-    {
-      icon: <Lightbulb className="h-6 w-6" />,
-      title: "Coaching Suggestions",
-      description: "Provides improvement tips",
-      toolTip: "Personalized coaching suggestions to help improve your sales approach based on analysis."
-    },
-    {
-      icon: <Shield className="h-6 w-6" />,
-      title: "Risk Detection",
-      description: "Identifies potential issues",
-      toolTip: "Proactively detects potential risks in your deals based on patterns and data analysis."
-    },
-    {
-      icon: <Mic className="h-6 w-6" />,
-      title: "Call Analysis",
-      description: "Analyzes conversation content",
-      toolTip: "Upload call recordings for AI to analyze conversation flow, topics discussed, and sentiment."
-    },
-  ];
+export function AICapabilitiesExplainer({ 
+  isOpen = false, 
+  onClose = () => {},
+  open,
+  onOpenChange
+}: AICapabilitiesExplainerProps) {
+  // For backward compatibility, support both prop styles
+  const isDialogOpen = open !== undefined ? open : isOpen;
+  const handleOpenChange = onOpenChange || ((isOpen: boolean) => {
+    if (!isOpen) onClose();
+  });
 
   return (
-    <Card className="mt-6">
-      <CardHeader className="pb-3">
-        <CardTitle>AI Capabilities</CardTitle>
-        <CardDescription>
-          Discover how our AI can help you analyze deals and improve your sales process
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {capabilities.map((capability, index) => (
-            <CapabilityCard
-              key={index}
-              icon={capability.icon}
-              title={capability.title}
-              description={capability.description}
-              toolTip={capability.toolTip}
-            />
-          ))}
+    <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
+      <DialogContent className="max-w-4xl">
+        <DialogHeader>
+          <DialogTitle>AI Capabilities and Features</DialogTitle>
+        </DialogHeader>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
+          <div className="space-y-3">
+            <h3 className="text-lg font-medium">Deal Analysis</h3>
+            <p className="text-sm text-muted-foreground">
+              Our AI analyzes your sales conversations and deal data to identify key patterns, risks, and opportunities.
+            </p>
+            <ul className="space-y-2 text-sm">
+              <li className="flex gap-2">
+                <span className="text-blue-500">•</span>
+                <span>Risk assessment and opportunity highlighting</span>
+              </li>
+              <li className="flex gap-2">
+                <span className="text-blue-500">•</span>
+                <span>Sentiment analysis of customer communications</span>
+              </li>
+              <li className="flex gap-2">
+                <span className="text-blue-500">•</span>
+                <span>Deal health scoring based on multiple factors</span>
+              </li>
+            </ul>
+          </div>
+          
+          <div className="space-y-3">
+            <h3 className="text-lg font-medium">Content Generation</h3>
+            <p className="text-sm text-muted-foreground">
+              Generate professional follow-up messages, proposals, and other sales content automatically.
+            </p>
+            <ul className="space-y-2 text-sm">
+              <li className="flex gap-2">
+                <span className="text-blue-500">•</span>
+                <span>Personalized follow-up emails</span>
+              </li>
+              <li className="flex gap-2">
+                <span className="text-blue-500">•</span>
+                <span>Objection handling templates</span>
+              </li>
+              <li className="flex gap-2">
+                <span className="text-blue-500">•</span>
+                <span>Proposal outlines based on customer needs</span>
+              </li>
+            </ul>
+          </div>
+          
+          <div className="space-y-3">
+            <h3 className="text-lg font-medium">Coaching & Recommendations</h3>
+            <p className="text-sm text-muted-foreground">
+              Get personalized coaching and recommendations on your sales approach and strategy.
+            </p>
+            <ul className="space-y-2 text-sm">
+              <li className="flex gap-2">
+                <span className="text-blue-500">•</span>
+                <span>Sales technique suggestions</span>
+              </li>
+              <li className="flex gap-2">
+                <span className="text-blue-500">•</span>
+                <span>Pricing strategy recommendations</span>
+              </li>
+              <li className="flex gap-2">
+                <span className="text-blue-500">•</span>
+                <span>Timing and approach guidance</span>
+              </li>
+            </ul>
+          </div>
+          
+          <div className="space-y-3">
+            <h3 className="text-lg font-medium">Data Processing</h3>
+            <p className="text-sm text-muted-foreground">
+              Process and analyze various types of sales data to extract valuable insights.
+            </p>
+            <ul className="space-y-2 text-sm">
+              <li className="flex gap-2">
+                <span className="text-blue-500">•</span>
+                <span>Call transcript analysis</span>
+              </li>
+              <li className="flex gap-2">
+                <span className="text-blue-500">•</span>
+                <span>Email correspondence review</span>
+              </li>
+              <li className="flex gap-2">
+                <span className="text-blue-500">•</span>
+                <span>Document and proposal evaluation</span>
+              </li>
+            </ul>
+          </div>
         </div>
-      </CardContent>
-    </Card>
+        
+        <div className="mt-4 border-t pt-4">
+          <h3 className="font-medium mb-2">Privacy and Security</h3>
+          <p className="text-sm text-muted-foreground">
+            All data is processed securely, and we offer PII (Personally Identifiable Information) 
+            filtering for Pro users to ensure compliance with privacy regulations.
+          </p>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -62,4 +62,5 @@ export interface TeamPresenceData {
   page: string;
 }
 
+// Re-export using export type to fix the TypeScript error
 export type { User };

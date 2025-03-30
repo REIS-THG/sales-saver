@@ -8,22 +8,12 @@ import { Deal } from "@/types/types";
 
 interface AnalysisHeaderProps {
   subscriptionTier: string;
-  deals?: Deal[];
-  selectedDeal?: string | null;
-  onDealSelect?: (dealId: string) => void;
-  onAnalyze?: (dealId: string) => void;
-  isAnalyzing?: boolean;
   onShowSettings?: () => void;
   onShowExplainer?: () => void;
 }
 
 export function AnalysisHeader({ 
   subscriptionTier,
-  deals,
-  selectedDeal,
-  onDealSelect,
-  onAnalyze,
-  isAnalyzing,
   onShowSettings,
   onShowExplainer
 }: AnalysisHeaderProps) {

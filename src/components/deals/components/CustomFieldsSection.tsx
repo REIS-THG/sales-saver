@@ -85,11 +85,17 @@ export function CustomFieldsSection({
                   <SelectValue placeholder={`Select ${field.field_name.toLowerCase()}`} />
                 </SelectTrigger>
                 <SelectContent>
-                  {field.options.map((option) => (
-                    <SelectItem key={option.value || option} value={option.value || option}>
-                      {option.label || option}
-                    </SelectItem>
-                  ))}
+                  {field.options.map((option) => {
+                    // Extract value and label properly
+                    const value = typeof option === 'string' ? option : option.value;
+                    const label = typeof option === 'string' ? option : option.label;
+                    
+                    return (
+                      <SelectItem key={value.toString()} value={value.toString()}>
+                        {label}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             )}

@@ -6,7 +6,6 @@ import { useApiError } from "@/hooks/use-api-error";
 import { useAuth } from "@/hooks/useAuth";
 import { useTeam } from "@/contexts/TeamContext";
 import { useAIAnalysis } from "@/hooks/use-ai-analysis";
-import { useAnalysisActions } from "@/hooks/use-analysis-actions";
 import { Deal, Insight } from "@/types/types";
 
 // Components
@@ -148,11 +147,6 @@ export default function AIAnalysis() {
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6 max-w-7xl mx-auto">
         <AnalysisHeader
           subscriptionTier={subscriptionTier}
-          deals={deals}
-          selectedDeal={selectedDeal}
-          onDealSelect={handleDealSelect}
-          onAnalyze={analyzeDeals}
-          isAnalyzing={isAnalyzing}
           onShowSettings={() => setShowSettings(true)}
           onShowExplainer={() => setShowAnalysisExplainer(true)}
         />
@@ -216,8 +210,8 @@ export default function AIAnalysis() {
       </div>
 
       <AICapabilitiesExplainer 
-        open={showAnalysisExplainer} 
-        onOpenChange={setShowAnalysisExplainer} 
+        isOpen={showAnalysisExplainer}
+        onClose={() => setShowAnalysisExplainer(false)}
       />
 
       <AnalysisSettingsPanel
