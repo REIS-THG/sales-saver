@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { useTeam } from '@/contexts/TeamContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -14,7 +15,7 @@ export function TeamPresence() {
   const { currentTeam } = useTeam();
   const { user } = useAuth();
   const [presenceState, setPresenceState] = useState<PresenceState>({});
-  const [channel, setChannel] = useState<any>(null);
+  const [presenceChannel, setPresenceChannel] = useState<any>(null);
 
   useEffect(() => {
     if (!currentTeam || !user) return;
@@ -22,7 +23,7 @@ export function TeamPresence() {
     const channelName = `team_presence:${currentTeam.id}`;
     
     // Create a new channel with the team ID
-    const presenceChannel = supabase.channel(channelName, {
+    const channel = supabase.channel(channelName, {
       config: {
         presence: {
           key: user.user_id,
@@ -31,9 +32,9 @@ export function TeamPresence() {
     });
 
     // Set up presence handlers
-    presenceChannel
+    channel
       .on('presence', { event: 'sync' }, () => {
-        const state = presenceChannel.presenceState();
+        const state = channel.presenceState();
         setPresenceState(state);
       })
       .on('presence', { event: 'join' }, ({ key, newPresences }) => {
@@ -44,26 +45,26 @@ export function TeamPresence() {
       });
 
     // Subscribe to the channel
-    presenceChannel.subscribe(async (status) => {
+    channel.subscribe(async (status) => {
       if (status === 'SUBSCRIBED') {
         // Track presence once subscribed
         const pathname = window.location.pathname;
-        await presenceChannel.track({
+        await channel.track({
           user_id: user.user_id,
           full_name: user.full_name || 'Unknown User',
-          avatar_url: user.user_metadata?.avatar_url || null,
+          avatar_url: user.avatar_url || null,
           last_seen: new Date().toISOString(),
           page: pathname,
         });
       }
     });
 
-    setChannel(presenceChannel);
+    setPresenceChannel(channel);
 
     // Cleanup function
     return () => {
-      if (presenceChannel) {
-        supabase.removeChannel(presenceChannel);
+      if (channel) {
+        channel.unsubscribe();
       }
     };
   }, [currentTeam, user]);
@@ -71,12 +72,12 @@ export function TeamPresence() {
   // Update presence on route change
   useEffect(() => {
     const updatePresence = async () => {
-      if (channel && user) {
+      if (presenceChannel && user) {
         const pathname = window.location.pathname;
-        await channel.track({
+        await presenceChannel.track({
           user_id: user.user_id,
           full_name: user.full_name || 'Unknown User',
-          avatar_url: user.user_metadata?.avatar_url || null,
+          avatar_url: user.avatar_url || null,
           last_seen: new Date().toISOString(),
           page: pathname,
         });
@@ -84,7 +85,7 @@ export function TeamPresence() {
     };
 
     updatePresence();
-  }, [window.location.pathname, channel, user]);
+  }, [window.location.pathname, presenceChannel, user]);
 
   if (!currentTeam || Object.keys(presenceState).length === 0) {
     return null;

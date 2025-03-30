@@ -61,3 +61,5 @@ export interface TeamPresenceData {
   last_seen: string;
   page: string;
 }
+
+export { User };

@@ -1,195 +1,215 @@
 
-import { useEffect, useState } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
-import { useAIAnalysis } from "@/hooks/use-ai-analysis";
-import { AnalysisHeader } from "@/components/ai-analysis/AnalysisHeader";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useApiError } from "@/hooks/use-api-error";
 import { useAuth } from "@/hooks/useAuth";
 import { useTeam } from "@/contexts/TeamContext";
+import { useAiAnalysis } from "@/hooks/use-ai-analysis";
+import { useAnalysisActions } from "@/hooks/use-analysis-actions";
+import { Deal, Insight } from "@/types/types";
+
+// Components
 import { MainHeader } from "@/components/layout/MainHeader";
-import { Insight, SubscriptionStatus } from "@/types/types";
-import { AnalysisAlerts } from "@/components/ai-analysis/AnalysisAlerts";
-import { FirstTimeExperience } from "@/components/ai-analysis/FirstTimeExperience";
+import { AILoadingState } from "@/components/ai-analysis/AILoadingState";
+import { AnalysisHeader } from "@/components/ai-analysis/AnalysisHeader";
+import { AnalysisTabs } from "@/components/ai-analysis/AnalysisTabs";
 import { AnalysisContent } from "@/components/ai-analysis/AnalysisContent";
-import { AnalysisLoadingStates } from "@/components/ai-analysis/AnalysisLoadingStates";
-import { useTour } from "@/hooks/use-tour";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { TeamPresence } from "@/components/team/TeamPresence";
+import { AnalysisSettingsPanel } from "@/components/ai-analysis/AnalysisSettingsPanel";
+import { FirstTimeExperience } from "@/components/ai-analysis/FirstTimeExperience";
+import { AICapabilitiesExplainer } from "@/components/ai-analysis/AICapabilitiesExplainer";
 
-interface AnalysisParams {
-  salesApproach: 'consultative_selling' | 'solution_selling' | 'transactional_selling' | 'value_based_selling';
-  industry: string;
-  purposeNotes: string;
-  toneAnalysis: {
-    formality: number;
-    persuasiveness: number;
-    urgency: number;
-  };
-  communicationChannel: 'f2f' | 'email' | 'social_media';
-  piiFilter: boolean;
-  retainAnalysis: boolean;
-}
-
-const AIAnalysis = () => {
-  const [searchParams] = useSearchParams();
+export default function AIAnalysis() {
+  const [selectedDeal, setSelectedDeal] = useState("");
+  const [deals, setDeals] = useState<Deal[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isFirstTime, setIsFirstTime] = useState(true);
+  const [activeTab, setActiveTab] = useState("deal-analysis");
+  const [showAnalysisExplainer, setShowAnalysisExplainer] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const navigate = useNavigate();
-  const { user, isLoading: userLoading } = useAuth();
+  const { user } = useAuth();
   const { currentTeam } = useTeam();
-  const { TourComponent, resetTour } = useTour('ai-analysis');
-  const isMobile = useIsMobile();
   
   const {
-    deals,
-    selectedDeal,
-    setSelectedDeal,
-    insights: rawInsights,
-    isLoading: dataLoading,
+    insights,
     isAnalyzing,
-    error,
-    analysisCount,
-    subscriptionTier,
-    fetchDeals,
+    analysisId,
+    isAnalysisLimited,
+    analysisHistory,
     fetchInsights,
-    analyzeDeal,
-    handleFileUpload,
-  } = useAIAnalysis();
+    analyzeDeals,
+    loadAnalysisHistory,
+    resetAnalysis,
+    exportInsights,
+    handleDealSelect,
+  } = useAiAnalysis();
 
-  const [activeTab, setActiveTab] = useState<string>("analysis");
-  const [piiFilter, setPiiFilter] = useState(true);
-  const [retainAnalysis, setRetainAnalysis] = useState(user?.subscription_status === 'pro');
-  const [isFirstVisit, setIsFirstVisit] = useState(false);
+  const {
+    markActionItem,
+    saveFollowupMessage,
+    isActioning,
+    generatedFollowup,
+    generateFollowup,
+    generatedFollowups,
+  } = useAnalysisActions();
+
+  const { handleError, handleAuthCheck } = useApiError();
 
   useEffect(() => {
-    const hasVisitedAIAnalysis = localStorage.getItem('hasVisitedAIAnalysis');
-    if (!hasVisitedAIAnalysis) {
-      setIsFirstVisit(true);
-      localStorage.setItem('hasVisitedAIAnalysis', 'true');
-    }
+    const checkAuth = async () => {
+      try {
+        const userId = await handleAuthCheck();
+        if (!userId) {
+          navigate("/auth");
+          return;
+        }
+        fetchDeals();
+        loadAnalysisHistory();
+        checkFirstTimeUser();
+      } catch (err) {
+        console.error("Auth check error:", err);
+      }
+    };
+    checkAuth();
   }, []);
 
   useEffect(() => {
-    if (!userLoading && !user) {
-      navigate("/auth");
-    }
-    if (user) {
-      setRetainAnalysis(user.subscription_status === 'pro');
-    }
-  }, [userLoading, user, navigate]);
-
-  const insights: Insight[] = rawInsights.map(insight => ({
-    ...insight,
-    priority: insight.priority as "high" | "medium" | "low",
-    status: insight.status as "open" | "acknowledged" | "resolved"
-  }));
-
-  useEffect(() => {
+    // Refetch deals when teams change
     if (user) {
       fetchDeals();
-      const dealId = searchParams.get('dealId');
-      if (dealId) {
-        setSelectedDeal(dealId);
-        fetchInsights(dealId);
+    }
+  }, [currentTeam, user]);
+
+  const fetchDeals = async () => {
+    setIsLoading(true);
+    try {
+      let query = supabase.from("deals").select("*");
+      
+      if (currentTeam) {
+        query = query.eq("team_id", currentTeam.id);
+      } else {
+        const userId = user?.user_id || (await supabase.auth.getUser()).data.user?.id;
+        if (userId) {
+          query = query.eq("user_id", userId);
+        }
       }
-    }
-  }, [searchParams, user, currentTeam]);
 
-  const userSubscriptionTier = user?.subscription_status || 'free';
-  const isAnalysisLimited = userSubscriptionTier === 'free' && analysisCount >= 1;
+      const { data, error } = await query;
 
-  const handleDealSelect = (dealId: string) => {
-    setSelectedDeal(dealId);
-    fetchInsights(dealId);
-  };
-
-  const handleAnalyze = async (dealId: string) => {
-    const params: AnalysisParams = {
-      salesApproach: 'consultative_selling',
-      industry: 'technology',
-      purposeNotes: '',
-      toneAnalysis: {
-        formality: 0.7,
-        persuasiveness: 0.8,
-        urgency: 0.5,
-      },
-      communicationChannel: 'email',
-      piiFilter,
-      retainAnalysis,
-    };
-    await analyzeDeal(dealId, params);
-  };
-
-  const handleTryNow = () => {
-    setIsFirstVisit(false);
-    if (deals.length > 0 && !selectedDeal) {
-      handleDealSelect(deals[0].id);
+      if (error) throw error;
+      setDeals(data || []);
+    } catch (error) {
+      console.error("Error fetching deals:", error);
+      handleError(error, "Failed to fetch deals");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const isLoading = userLoading || dataLoading;
+  const checkFirstTimeUser = async () => {
+    try {
+      // This would typically check user preferences in the database
+      // For now we'll use localStorage as an example
+      const hasSeenAITutorial = localStorage.getItem("hasSeenAITutorial");
+      setIsFirstTime(!hasSeenAITutorial);
+    } catch (error) {
+      console.error("Error checking first time status:", error);
+    }
+  };
 
-  const loadingState = (
-    <AnalysisLoadingStates
-      isLoading={isLoading}
-      isAnalyzing={isAnalyzing}
-      user={user}
-      selectedDeal={selectedDeal}
-      deals={deals}
-    />
-  );
+  const handleCompleteFirstTime = () => {
+    localStorage.setItem("hasSeenAITutorial", "true");
+    setIsFirstTime(false);
+  };
 
   if (isLoading) {
-    return loadingState;
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <MainHeader userData={user} />
+        <AILoadingState message="Loading AI Analysis..." />
+      </div>
+    );
+  }
+
+  if (isFirstTime) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <MainHeader userData={user} />
+        <FirstTimeExperience onComplete={handleCompleteFirstTime} />
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <TourComponent />
       <MainHeader userData={user} />
-
-      <div className={`mx-auto ${isMobile ? 'px-2' : 'px-4 sm:px-6 lg:px-8'} py-4 sm:py-6 max-w-7xl`}>
-        <div className="flex justify-between items-center">
-          <AnalysisHeader subscriptionTier={userSubscriptionTier} />
-          
-          {selectedDeal && currentTeam && (
-            <TeamPresence analysisId={selectedDeal} />
-          )}
-        </div>
-
-        <AnalysisAlerts error={error} isAnalysisLimited={isAnalysisLimited} />
-
-        <FirstTimeExperience 
-          isFirstVisit={isFirstVisit} 
+      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6 max-w-7xl mx-auto">
+        <AnalysisHeader
+          deals={deals}
+          selectedDeal={selectedDeal}
+          onDealSelect={handleDealSelect}
+          onAnalyze={analyzeDeals}
           isAnalyzing={isAnalyzing}
-          onTryNow={handleTryNow} 
+          onShowSettings={() => setShowSettings(true)}
+          onShowExplainer={() => setShowAnalysisExplainer(true)}
         />
 
-        {isAnalyzing && loadingState}
+        {analysisId && (
+          <AnalysisTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+        )}
 
-        {(!isFirstVisit || selectedDeal) && (
-          <div className={`grid grid-cols-1 gap-4 sm:gap-6 ${isMobile ? 'mt-3' : 'mt-6'}`}>
-            <AnalysisContent
-              activeTab={activeTab}
-              setActiveTab={setActiveTab}
-              deals={deals}
-              selectedDeal={selectedDeal}
-              isAnalyzing={isAnalyzing}
-              isAnalysisLimited={isAnalysisLimited}
-              insights={insights}
-              onDealSelect={handleDealSelect}
-              onAnalyze={handleAnalyze}
-              onFileUpload={handleFileUpload}
-              isLoading={isLoading}
-              piiFilter={piiFilter}
-              setPiiFilter={setPiiFilter}
-              retainAnalysis={retainAnalysis}
-              setRetainAnalysis={setRetainAnalysis}
-              subscriptionTier={userSubscriptionTier as SubscriptionStatus}
-              teamContext={currentTeam ? true : false}
-            />
+        {activeTab === "history" ? (
+          <div className="analysis-history my-4">
+            {analysisHistory?.length ? (
+              analysisHistory.map((analysis) => (
+                <div
+                  key={analysis.id}
+                  className="cursor-pointer p-4 border rounded-lg mb-2 hover:bg-gray-50"
+                  onClick={() => {
+                    /* Add code to load a specific analysis */
+                  }}
+                >
+                  <div className="font-medium">{analysis.deal?.deal_name || "Unnamed Deal"}</div>
+                  <div className="text-sm text-gray-500">
+                    {new Date(analysis.created_at).toLocaleString()}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-8 text-gray-500">No analysis history found</div>
+            )}
           </div>
+        ) : (
+          <AnalysisContent
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            deals={deals}
+            selectedDeal={selectedDeal}
+            isAnalyzing={isAnalyzing}
+            isAnalysisLimited={isAnalysisLimited}
+            insights={insights}
+            onExport={exportInsights}
+            onMarkActionItem={markActionItem}
+            onSaveFollowup={saveFollowupMessage}
+            isActioning={isActioning}
+            onGenerateFollowup={generateFollowup}
+            generatedFollowup={generatedFollowup}
+            generatedFollowups={generatedFollowups}
+            hasTeam={!!currentTeam}
+          />
         )}
       </div>
+
+      <AICapabilitiesExplainer 
+        open={showAnalysisExplainer} 
+        onOpenChange={setShowAnalysisExplainer} 
+      />
+
+      <AnalysisSettingsPanel
+        open={showSettings}
+        onOpenChange={setShowSettings}
+      />
     </div>
   );
-};
-
-export default AIAnalysis;
+}

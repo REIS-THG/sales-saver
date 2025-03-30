@@ -2,7 +2,7 @@
 import { useState } from "react";
 import DealCreateModal from "@/components/deals/DealCreateModal";
 import { AutomationSettingsDialog as DealAutomationSettings } from "@/components/dashboard/AutomationSettingsDialog";
-import { QuickNoteModal as DealQuickNoteModal } from "@/components/dashboard/QuickNoteModal";
+import { QuickNoteModal } from "@/components/dashboard/QuickNoteModal";
 import type { Deal, CustomField, User, Team } from "@/types/types";
 
 interface DashboardModalsProps {
@@ -55,7 +55,7 @@ export function DashboardModals({
         userData={userData}
       />
       
-      <DealQuickNoteModal
+      <QuickNoteModal
         open={isQuickNoteModalOpen}
         onOpenChange={setIsQuickNoteModalOpen}
         dealId={selectedDealId}

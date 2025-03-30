@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { TeamMember, User } from "@/types/team-types";
+import { TeamMember } from "@/types/team-types";
+import { User } from "@/types/types";
 
 /**
  * Fetches all members of a team

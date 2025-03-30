@@ -7,6 +7,7 @@ import { useTeam } from "@/contexts/TeamContext";
 import { supabase } from "@/integrations/supabase/client";
 import { cancelTeamInvitation, updateTeamMemberRole } from "@/services/team";
 import { TeamReportsAccess } from "@/components/team/TeamReportsAccess";
+import { Team as TeamType } from "@/types/team-types";
 
 // Import refactored components
 import { TeamSettingsHeader } from "./team/TeamSettingsHeader";
@@ -221,7 +222,7 @@ export function TeamSettings() {
     <Card>
       <CardHeader>
         <TeamSettingsHeader 
-          currentTeam={currentTeam} 
+          currentTeam={currentTeam as TeamType} 
           handleExportTeamReport={handleExportTeamReport}
           canManageTeam={canManageTeam}
         />

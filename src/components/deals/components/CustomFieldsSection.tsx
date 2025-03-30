@@ -1,171 +1,101 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { CustomField } from "@/types/types";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { CustomField, CustomFieldOption, Product } from "@/types/types";
-import { supabase } from "@/integrations/supabase/client";
-import { Badge } from "@/components/ui/badge";
-import { formatCurrency } from "@/lib/utils";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface CustomFieldsSectionProps {
   customFields: CustomField[];
-  values: Record<string, string | number | boolean>;
-  onChange: (fieldName: string, value: string | number | boolean) => void;
+  values: Record<string, any>;
+  onChange: React.Dispatch<React.SetStateAction<Record<string, any>>>;
 }
 
-export const CustomFieldsSection = ({
+export function CustomFieldsSection({
   customFields,
   values,
   onChange,
-}: CustomFieldsSectionProps) => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+}: CustomFieldsSectionProps) {
+  if (!customFields.length) return null;
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      setIsLoading(true);
-      try {
-        const { data: productsData, error } = await supabase
-          .from('products')
-          .select('*');
-        
-        if (!error && productsData) {
-          setProducts(productsData);
-        }
-      } catch (error) {
-        console.error("Error fetching products:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchProducts();
-  }, []);
-
-  if (customFields.length === 0) return null;
+  const handleFieldChange = (fieldName: string, value: string | number | boolean) => {
+    onChange((prevValues) => ({
+      ...prevValues,
+      [fieldName]: value,
+    }));
+  };
 
   return (
-    <>
-      <Separator className="my-4" />
-      <h3 className="text-sm font-medium mb-2">Custom Fields</h3>
-      <div className="space-y-4">
+    <div className="space-y-4">
+      <h3 className="text-lg font-medium">Custom Fields</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {customFields.map((field) => (
           <div key={field.id} className="space-y-2">
-            <Label htmlFor={field.field_name}>
+            <Label htmlFor={field.id}>
               {field.field_name}
               {field.is_required && <span className="text-red-500 ml-1">*</span>}
             </Label>
+
             {field.field_type === "text" && (
               <Input
-                id={field.field_name}
-                value={values[field.field_name] as string || ""}
-                onChange={(e) => onChange(field.field_name, e.target.value)}
-                required={field.is_required}
-                placeholder={field.placeholder || ""}
+                id={field.id}
+                value={values[field.field_name] || ""}
+                onChange={(e) => handleFieldChange(field.field_name, e.target.value)}
+                placeholder={`Enter ${field.field_name.toLowerCase()}`}
               />
             )}
+
             {field.field_type === "number" && (
               <Input
-                id={field.field_name}
+                id={field.id}
                 type="number"
-                value={values[field.field_name] as number || ""}
-                onChange={(e) => onChange(field.field_name, parseFloat(e.target.value))}
-                required={field.is_required}
-                placeholder={field.placeholder || ""}
+                value={values[field.field_name] || ""}
+                onChange={(e) => handleFieldChange(field.field_name, parseFloat(e.target.value) || 0)}
+                placeholder={`Enter ${field.field_name.toLowerCase()}`}
               />
             )}
+
             {field.field_type === "boolean" && (
               <div className="flex items-center space-x-2">
                 <Switch
-                  id={field.field_name}
-                  checked={values[field.field_name] as boolean || false}
-                  onCheckedChange={(checked) => onChange(field.field_name, checked)}
+                  id={field.id}
+                  checked={values[field.field_name] || false}
+                  onCheckedChange={(checked) => handleFieldChange(field.field_name, checked)}
                 />
-                <Label htmlFor={field.field_name} className="text-sm font-normal">
+                <Label htmlFor={field.id}>
                   {values[field.field_name] ? "Yes" : "No"}
                 </Label>
               </div>
             )}
-            {field.field_type === "date" && (
-              <Input
-                id={field.field_name}
-                type="date"
-                value={values[field.field_name] as string || ""}
-                onChange={(e) => onChange(field.field_name, e.target.value)}
-                required={field.is_required}
-              />
-            )}
-            {field.field_type === "product" && (
-              <div className="space-y-2">
-                <Select
-                  value={values[field.field_name] as string || ""}
-                  onValueChange={(value) => onChange(field.field_name, value)}
-                  disabled={isLoading}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a product" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {products.map((product) => (
-                      <SelectItem key={product.id} value={product.id}>
-                        {product.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                
-                {values[field.field_name] && (
-                  <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-md">
-                    {(() => {
-                      const selectedProduct = products.find(p => p.id === values[field.field_name]);
-                      if (!selectedProduct) return null;
-                      
-                      return (
-                        <div className="space-y-2">
-                          <div className="flex justify-between items-center">
-                            <h4 className="font-medium">{selectedProduct.name}</h4>
-                            {selectedProduct.price && (
-                              <Badge variant="outline">
-                                {formatCurrency(selectedProduct.price)}
-                              </Badge>
-                            )}
-                          </div>
-                          {selectedProduct.description && (
-                            <p className="text-sm text-gray-500">{selectedProduct.description}</p>
-                          )}
-                        </div>
-                      );
-                    })()}
-                  </div>
-                )}
-              </div>
-            )}
-            {field.field_type === "multi-select" && field.options && (
+
+            {field.field_type === "select" && field.options && (
               <Select
-                value={values[field.field_name] as string || ""}
-                onValueChange={(value) => onChange(field.field_name, value)}
+                value={values[field.field_name] || ""}
+                onValueChange={(value) => handleFieldChange(field.field_name, value)}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select an option" />
+                <SelectTrigger id={field.id}>
+                  <SelectValue placeholder={`Select ${field.field_name.toLowerCase()}`} />
                 </SelectTrigger>
                 <SelectContent>
                   {field.options.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
+                    <SelectItem key={option} value={option}>
+                      {option}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             )}
-            {field.help_text && (
-              <p className="text-xs text-gray-500">{field.help_text}</p>
-            )}
           </div>
         ))}
       </div>
-    </>
+    </div>
   );
-};
+}

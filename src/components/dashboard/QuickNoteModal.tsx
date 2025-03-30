@@ -15,17 +15,19 @@ import { Spinner } from "@/components/ui/spinner";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-interface QuickNoteModalProps {
+export interface QuickNoteModalProps {
   deal: Deal | null;
-  isOpen: boolean;
-  onClose: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  dealId: string | null;
   onNoteAdded: () => void;
 }
 
 export function QuickNoteModal({
   deal,
-  isOpen,
-  onClose,
+  open,
+  onOpenChange,
+  dealId,
   onNoteAdded,
 }: QuickNoteModalProps) {
   const [note, setNote] = React.useState("");
@@ -33,10 +35,10 @@ export function QuickNoteModal({
   const { toast } = useToast();
 
   React.useEffect(() => {
-    if (isOpen) {
+    if (open) {
       setNote("");
     }
-  }, [isOpen]);
+  }, [open]);
 
   const handleSubmit = async () => {
     if (!deal || !note.trim()) return;
@@ -64,7 +66,7 @@ export function QuickNoteModal({
       });
       
       onNoteAdded();
-      onClose();
+      onOpenChange(false);
     } catch (error) {
       console.error("Error adding note:", error);
       toast({
@@ -80,7 +82,7 @@ export function QuickNoteModal({
   if (!deal) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Add Note to {deal.deal_name}</DialogTitle>
@@ -99,7 +101,7 @@ export function QuickNoteModal({
         </div>
         
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button 
             onClick={handleSubmit}
             disabled={isSubmitting || !note.trim()}
