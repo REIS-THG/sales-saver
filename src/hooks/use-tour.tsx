@@ -32,6 +32,10 @@ const tourSteps: Record<TourId, Step[]> = {
       target: '.analysis-tabs',
       content: 'Switch between different analysis views using these tabs',
     },
+    {
+      target: '.analysis-settings',
+      content: 'Configure your analysis settings here, including PII filtering and retention options',
+    },
   ],
   reports: [
     {
@@ -43,6 +47,10 @@ const tourSteps: Record<TourId, Step[]> = {
       target: '.report-list',
       content: 'View your saved reports here',
     },
+    {
+      target: '.create-report-button',
+      content: 'Click here to create a new custom report',
+    },
   ],
   subscription: [
     {
@@ -53,6 +61,10 @@ const tourSteps: Record<TourId, Step[]> = {
     {
       target: '.subscription-plans',
       content: 'View and compare available plans',
+    },
+    {
+      target: '.subscription-usage',
+      content: 'Monitor your usage against plan limits',
     },
   ],
 };

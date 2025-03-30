@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAIAnalysis } from "@/hooks/use-ai-analysis";
@@ -9,6 +10,7 @@ import { AnalysisAlerts } from "@/components/ai-analysis/AnalysisAlerts";
 import { FirstTimeExperience } from "@/components/ai-analysis/FirstTimeExperience";
 import { AnalysisContent } from "@/components/ai-analysis/AnalysisContent";
 import { AnalysisLoadingStates } from "@/components/ai-analysis/AnalysisLoadingStates";
+import { useTour } from "@/hooks/use-tour";
 
 interface AnalysisParams {
   salesApproach: 'consultative_selling' | 'solution_selling' | 'transactional_selling' | 'value_based_selling';
@@ -28,6 +30,7 @@ const AIAnalysis = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user, isLoading: userLoading } = useAuth();
+  const { TourComponent, resetTour } = useTour('ai-analysis');
   
   const {
     deals,
@@ -134,6 +137,7 @@ const AIAnalysis = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <TourComponent />
       <MainHeader userData={user} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
