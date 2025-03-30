@@ -45,7 +45,7 @@ export function TeamPresence() {
       });
 
     // Subscribe to the channel
-    channel.subscribe(async (status) => {
+    channel.subscribe(async (status: string) => {
       if (status !== 'SUBSCRIBED') { return }
 
       // Track presence once subscribed

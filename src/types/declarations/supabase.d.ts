@@ -15,6 +15,7 @@ declare module '@supabase/supabase-js' {
     functions: {
       invoke(name: string, options?: any): Promise<{ data: any; error: any }>;
     };
+    channel(name: string, options?: any): any;
   }
 
   export function createClient(url: string, key: string, options?: any): SupabaseClient;
