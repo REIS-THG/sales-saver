@@ -22,7 +22,7 @@ export function TeamPresence() {
 
     const channelName = `team_presence:${currentTeam.id}`;
     
-    // Create a new channel with the team ID
+    // Create a new presence channel with the team ID
     const channel = supabase.channel(channelName, {
       config: {
         presence: {
@@ -46,17 +46,17 @@ export function TeamPresence() {
 
     // Subscribe to the channel
     channel.subscribe(async (status) => {
-      if (status === 'SUBSCRIBED') {
-        // Track presence once subscribed
-        const pathname = window.location.pathname;
-        await channel.track({
-          user_id: user.user_id,
-          full_name: user.full_name || 'Unknown User',
-          avatar_url: user.avatar_url || null,
-          last_seen: new Date().toISOString(),
-          page: pathname,
-        });
-      }
+      if (status !== 'SUBSCRIBED') { return }
+
+      // Track presence once subscribed
+      const pathname = window.location.pathname;
+      await channel.track({
+        user_id: user.user_id,
+        full_name: user.full_name || 'Unknown User',
+        avatar_url: user.avatar_url || null,
+        last_seen: new Date().toISOString(),
+        page: pathname,
+      });
     });
 
     setPresenceChannel(channel);

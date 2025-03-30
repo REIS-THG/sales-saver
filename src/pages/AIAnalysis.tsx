@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -123,6 +122,10 @@ export default function AIAnalysis() {
     setIsFirstTime(false);
   };
 
+  const handleAnalyzeDeal = (dealId: string) => {
+    analyzeDeals(dealId, {}); // Call with empty params object
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -161,7 +164,7 @@ export default function AIAnalysis() {
             isAnalysisLimited={isAnalysisLimited}
             insights={insights}
             onDealSelect={handleDealSelect}
-            onAnalyze={analyzeDeals}
+            onAnalyze={handleAnalyzeDeal}
           />
         )}
 
@@ -196,7 +199,7 @@ export default function AIAnalysis() {
             isAnalysisLimited={isAnalysisLimited}
             insights={insights}
             onDealSelect={handleDealSelect}
-            onAnalyze={analyzeDeals}
+            onAnalyze={handleAnalyzeDeal}
             onMarkActionItem={markActionItem}
             onSaveFollowup={saveFollowupMessage}
             isActioning={isActioning}
