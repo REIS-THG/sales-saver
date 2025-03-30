@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -45,7 +44,6 @@ export const TeamProvider: React.FC<{children: React.ReactNode}> = ({ children }
       setIsLoading(true);
       setError(null);
       
-      // Fetch teams the user belongs to (either as owner or member)
       const { data: ownedTeams, error: ownedError } = await supabase
         .from('teams')
         .select('*')
@@ -61,21 +59,18 @@ export const TeamProvider: React.FC<{children: React.ReactNode}> = ({ children }
         
       if (memberError) throw memberError;
       
-      // Combine and deduplicate teams
       const memberTeamsData = memberTeams
-        .filter(item => item.teams) // Filter out null values
+        .filter(item => item.teams)
         .map(item => item.teams);
       
       const allTeams = [...ownedTeams, ...memberTeamsData];
       
-      // Remove duplicates based on team id
       const uniqueTeams = Array.from(
         new Map(allTeams.map(team => [team.id, team])).values()
       );
       
       setTeams(uniqueTeams as Team[]);
       
-      // Set current team if not already set
       if (!currentTeam && uniqueTeams.length > 0) {
         const savedTeamId = localStorage.getItem('currentTeamId');
         const savedTeam = savedTeamId 
@@ -295,14 +290,16 @@ export const TeamProvider: React.FC<{children: React.ReactNode}> = ({ children }
   
   const acceptInvitation = useCallback(async (teamId: string, email: string): Promise<boolean> => {
     try {
-      const { data, error } = await supabase.rpc(
-        'accept_team_invitation', 
-        { p_email: email, p_team_id: teamId }
-      );
+      const { data, error } = await supabase.functions.invoke('accept-team-invitation', {
+        body: { 
+          email: email,
+          teamId: teamId 
+        }
+      });
       
       if (error) throw error;
       
-      if (data) {
+      if (data && data.success) {
         toast({
           title: 'Invitation accepted',
           description: `You have joined the team successfully.`,
@@ -332,25 +329,22 @@ export const TeamProvider: React.FC<{children: React.ReactNode}> = ({ children }
   
   const getUserTeamRole = useCallback(async (teamId: string): Promise<string | null> => {
     try {
-      const { data, error } = await supabase.rpc(
-        'get_user_team_role',
-        { p_team_id: teamId }
-      );
+      const { data, error } = await supabase.functions.invoke('get-user-team-role', {
+        body: { teamId }
+      });
       
       if (error) throw error;
-      return data;
+      return data?.role || null;
     } catch (err) {
       console.error('Error getting user team role:', err);
       return null;
     }
   }, []);
 
-  // Effect to load teams when user is available
   useEffect(() => {
     fetchTeams();
   }, [fetchTeams]);
   
-  // Effect to save current team to localStorage
   useEffect(() => {
     if (currentTeam) {
       localStorage.setItem('currentTeamId', currentTeam.id);

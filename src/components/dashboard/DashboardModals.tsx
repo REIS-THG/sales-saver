@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { DealCreateModal } from "@/components/deals/DealCreateModal";
+import DealCreateModal from "@/components/deals/DealCreateModal";
 import { DealAutomationSettings } from "@/components/deals/DealAutomationSettings";
 import { DealQuickNoteModal } from "@/components/deals/DealQuickNoteModal";
 import type { Deal, CustomField, User, Team } from "@/types/types";

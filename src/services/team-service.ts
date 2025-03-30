@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Team, TeamMember, User, TeamInvitation } from "@/types/types";
 
@@ -163,17 +162,21 @@ export async function inviteTeamMember(teamId: string, email: string, role: Team
 }
 
 export async function acceptTeamInvitation(teamId: string, email: string) {
-  const { data, error } = await supabase.rpc(
-    'accept_team_invitation',
-    { p_email: email, p_team_id: teamId }
-  );
-  
-  if (error) {
-    console.error('Error accepting invitation:', error);
-    throw error;
+  try {
+    const { data, error } = await supabase.functions.invoke('accept-team-invitation', {
+      body: { email, teamId }
+    });
+    
+    if (error) {
+      console.error('Error accepting invitation:', error);
+      throw error;
+    }
+    
+    return data?.success || false;
+  } catch (err) {
+    console.error('Error accepting invitation:', err);
+    throw err;
   }
-  
-  return data;
 }
 
 export async function removeTeamMember(memberId: string) {
@@ -191,15 +194,49 @@ export async function removeTeamMember(memberId: string) {
 }
 
 export async function getUserTeamRole(teamId: string) {
-  const { data, error } = await supabase.rpc(
-    'get_user_team_role',
-    { p_team_id: teamId }
-  );
-  
-  if (error) {
-    console.error('Error getting user team role:', error);
+  try {
+    const { data, error } = await supabase.functions.invoke('get-user-team-role', {
+      body: { teamId }
+    });
+    
+    if (error) {
+      console.error('Error getting user team role:', error);
+      return null;
+    }
+    
+    return data?.role || null;
+  } catch (err) {
+    console.error('Error getting user team role:', err);
     return null;
   }
-  
+}
+
+export async function updateTeamMemberRole(memberId: string, newRole: string) {
+  const { data, error } = await supabase
+    .from("team_members")
+    .update({ role: newRole })
+    .eq("id", memberId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error updating team member role:", error);
+    throw error;
+  }
+
   return data;
+}
+
+export async function cancelTeamInvitation(invitationId: string) {
+  const { error } = await supabase
+    .from("team_invitations")
+    .delete()
+    .eq("id", invitationId);
+
+  if (error) {
+    console.error("Error canceling team invitation:", error);
+    throw error;
+  }
+
+  return true;
 }

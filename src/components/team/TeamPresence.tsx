@@ -1,161 +1,132 @@
+
 import { useEffect, useState } from 'react';
 import { useTeam } from '@/contexts/TeamContext';
-import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Eye } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
-interface TeamPresenceProps {
-  dealId?: string;
-  reportId?: string;
-  analysisId?: string;
-}
+type PresenceState = {
+  [key: string]: {
+    user_id: string;
+    full_name: string;
+    avatar_url?: string;
+    last_seen: string;
+    page: string;
+  }[];
+};
 
-interface UserPresence {
-  userId: string;
-  fullName: string;
-  email: string;
-  viewing: {
-    dealId?: string;
-    reportId?: string;
-    analysisId?: string;
-  };
-  lastActive: string;
-}
-
-export function TeamPresence({ dealId, reportId, analysisId }: TeamPresenceProps) {
+export function TeamPresence() {
   const { currentTeam } = useTeam();
   const { user } = useAuth();
-  const [activeUsers, setActiveUsers] = useState<UserPresence[]>([]);
-  
+  const [presenceState, setPresenceState] = useState<PresenceState>({});
+  const [channel, setChannel] = useState<any>(null);
+
   useEffect(() => {
     if (!currentTeam || !user) return;
+
+    const channelName = `team_presence:${currentTeam.id}`;
     
-    // Set up realtime presence
-    const presenceChannel = supabase.channel(`team-presence-${currentTeam.id}`);
-    
-    const userStatus = {
-      userId: user.user_id,
-      fullName: user.full_name,
-      email: user.email || '',
-      viewing: {
-        dealId,
-        reportId,
-        analysisId
+    // Create a new channel with the team ID
+    const presenceChannel = supabase.realtime.channel(channelName, {
+      config: {
+        presence: {
+          key: user.user_id,
+        },
       },
-      lastActive: new Date().toISOString()
-    };
-    
+    });
+
+    // Set up presence handlers
     presenceChannel
       .on('presence', { event: 'sync' }, () => {
-        const presenceState = presenceChannel.presenceState();
-        const users: UserPresence[] = [];
-        
-        Object.keys(presenceState).forEach(key => {
-          const userPresences = presenceState[key] as UserPresence[];
-          if (userPresences && userPresences.length > 0) {
-            users.push(userPresences[0]);
-          }
-        });
-        
-        setActiveUsers(users);
+        const state = presenceChannel.presenceState();
+        setPresenceState(state);
       })
       .on('presence', { event: 'join' }, ({ key, newPresences }) => {
         console.log('User joined:', key, newPresences);
       })
       .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
         console.log('User left:', key, leftPresences);
-      })
-      .subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') {
-          await presenceChannel.track(userStatus);
-        }
       });
-    
-    // Update presence every 30 seconds to keep connection alive
-    const interval = setInterval(async () => {
-      await presenceChannel.track({
-        ...userStatus,
-        lastActive: new Date().toISOString()
-      });
-    }, 30000);
-    
+
+    // Subscribe to the channel
+    presenceChannel.subscribe(async (status) => {
+      if (status === 'SUBSCRIBED') {
+        // Track presence once subscribed
+        const pathname = window.location.pathname;
+        await presenceChannel.track({
+          user_id: user.user_id,
+          full_name: user.full_name || 'Unknown User',
+          avatar_url: user.avatar_url,
+          last_seen: new Date().toISOString(),
+          page: pathname,
+        });
+      }
+    });
+
+    setChannel(presenceChannel);
+
+    // Cleanup function
     return () => {
-      supabase.removeChannel(presenceChannel);
-      clearInterval(interval);
+      if (presenceChannel) {
+        supabase.realtime.removeChannel(presenceChannel);
+      }
     };
-  }, [currentTeam, user, dealId, reportId, analysisId]);
-  
-  // Filter only users viewing the current resource
-  const usersViewingCurrent = activeUsers.filter(u => {
-    if (dealId && u.viewing.dealId === dealId) return true;
-    if (reportId && u.viewing.reportId === reportId) return true;
-    if (analysisId && u.viewing.analysisId === analysisId) return true;
-    return false;
-  });
-  
-  // Don't include the current user
-  const otherUsersViewingCurrent = usersViewingCurrent.filter(
-    u => u.userId !== user?.user_id
-  );
-  
-  if (!currentTeam || otherUsersViewingCurrent.length === 0) {
+  }, [currentTeam, user]);
+
+  // Update presence on route change
+  useEffect(() => {
+    const updatePresence = async () => {
+      if (channel && user) {
+        const pathname = window.location.pathname;
+        await channel.track({
+          user_id: user.user_id,
+          full_name: user.full_name || 'Unknown User',
+          avatar_url: user.avatar_url,
+          last_seen: new Date().toISOString(),
+          page: pathname,
+        });
+      }
+    };
+
+    updatePresence();
+  }, [window.location.pathname, channel, user]);
+
+  if (!currentTeam || Object.keys(presenceState).length === 0) {
     return null;
   }
-  
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(part => part.charAt(0))
-      .join('')
-      .toUpperCase()
-      .substring(0, 2);
-  };
-  
+
+  // Flatten presences and remove duplicates by user_id
+  const presentUsers = Object.values(presenceState).flat();
+  const uniqueUsers = presentUsers.filter((user, index, self) =>
+    index === self.findIndex(u => u.user_id === user.user_id)
+  );
+
   return (
-    <div className="flex items-center space-x-1">
-      {otherUsersViewingCurrent.length > 0 && (
-        <Badge variant="outline" className="bg-indigo-50 text-indigo-800 px-2 py-0 h-6 flex items-center">
-          <Eye className="h-3 w-3 mr-1" />
-          <span className="text-xs">{otherUsersViewingCurrent.length}</span>
-        </Badge>
-      )}
-      
-      <div className="flex -space-x-2">
-        <TooltipProvider>
-          {otherUsersViewingCurrent.slice(0, 3).map((userPresence, index) => (
-            <Tooltip key={userPresence.userId}>
-              <TooltipTrigger asChild>
-                <Avatar className="h-6 w-6 border-2 border-white">
-                  <AvatarFallback className="text-xs bg-indigo-100 text-indigo-800">
-                    {getInitials(userPresence.fullName)}
+    <div className="flex -space-x-2 overflow-hidden">
+      <TooltipProvider>
+        {uniqueUsers.map((presence) => (
+          <Tooltip key={presence.user_id}>
+            <TooltipTrigger asChild>
+              <Avatar className="h-8 w-8 border-2 border-background">
+                {presence.avatar_url ? (
+                  <AvatarImage src={presence.avatar_url} alt={presence.full_name} />
+                ) : (
+                  <AvatarFallback className="bg-indigo-500 text-white text-xs">
+                    {presence.full_name.split(' ').map(n => n[0]).join('').toUpperCase()}
                   </AvatarFallback>
-                </Avatar>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">
-                <p className="text-sm">{userPresence.fullName} is viewing this</p>
-              </TooltipContent>
-            </Tooltip>
-          ))}
-          
-          {otherUsersViewingCurrent.length > 3 && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Avatar className="h-6 w-6 border-2 border-white">
-                  <AvatarFallback className="text-xs">
-                    +{otherUsersViewingCurrent.length - 3}
-                  </AvatarFallback>
-                </Avatar>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">
-                <p className="text-sm">{otherUsersViewingCurrent.length - 3} more team members viewing</p>
-              </TooltipContent>
-            </Tooltip>
-          )}
-        </TooltipProvider>
-      </div>
+                )}
+              </Avatar>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{presence.full_name}</p>
+              <p className="text-xs text-muted-foreground">
+                On: {presence.page.replace('/', '').replace('-', ' ') || 'Home'}
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        ))}
+      </TooltipProvider>
     </div>
   );
 }
