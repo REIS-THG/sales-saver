@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useTeam } from '@/contexts/TeamContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';

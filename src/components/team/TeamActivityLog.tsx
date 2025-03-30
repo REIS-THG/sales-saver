@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { LoaderCircle, User, UserPlus, UserMinus, Settings, Mail } from "lucide-react";
-import { fetchTeamActivity } from "@/services/team-service";
+import { fetchTeamActivity } from "@/services/team";
 import { TeamActivity } from "@/types/team-types";
 
 interface TeamActivityLogProps {

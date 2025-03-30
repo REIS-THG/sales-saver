@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useTeam } from "@/contexts/TeamContext";
 import { supabase } from "@/integrations/supabase/client";
-import { cancelTeamInvitation, updateTeamMemberRole } from "@/services/team-service";
+import { cancelTeamInvitation, updateTeamMemberRole } from "@/services/team";
 import { TeamReportsAccess } from "@/components/team/TeamReportsAccess";
 
 // Import refactored components
