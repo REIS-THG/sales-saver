@@ -1,8 +1,8 @@
 
 import { useState } from "react";
 import DealCreateModal from "@/components/deals/DealCreateModal";
-import { DealAutomationSettings } from "@/components/deals/DealAutomationSettings";
-import { DealQuickNoteModal } from "@/components/deals/DealQuickNoteModal";
+import { DealAutomationSettings } from "@/components/dashboard/AutomationSettingsDialog";
+import { DealQuickNoteModal } from "@/components/dashboard/QuickNoteModal";
 import type { Deal, CustomField, User, Team } from "@/types/types";
 
 interface DashboardModalsProps {

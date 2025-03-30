@@ -28,7 +28,7 @@ export function TeamPresence() {
     const channelName = `team_presence:${currentTeam.id}`;
     
     // Create a new channel with the team ID
-    const presenceChannel = supabase.realtime.channel(channelName, {
+    const presenceChannel = supabase.channel(channelName, {
       config: {
         presence: {
           key: user.user_id,
@@ -57,7 +57,7 @@ export function TeamPresence() {
         await presenceChannel.track({
           user_id: user.user_id,
           full_name: user.full_name || 'Unknown User',
-          avatar_url: user.avatar_url,
+          avatar_url: user.avatar_url || null,
           last_seen: new Date().toISOString(),
           page: pathname,
         });
@@ -69,7 +69,7 @@ export function TeamPresence() {
     // Cleanup function
     return () => {
       if (presenceChannel) {
-        supabase.realtime.removeChannel(presenceChannel);
+        supabase.removeChannel(presenceChannel);
       }
     };
   }, [currentTeam, user]);
@@ -82,7 +82,7 @@ export function TeamPresence() {
         await channel.track({
           user_id: user.user_id,
           full_name: user.full_name || 'Unknown User',
-          avatar_url: user.avatar_url,
+          avatar_url: user.avatar_url || null,
           last_seen: new Date().toISOString(),
           page: pathname,
         });

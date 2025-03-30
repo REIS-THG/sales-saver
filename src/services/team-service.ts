@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Team, TeamMember, User, TeamInvitation } from "@/types/types";
 
@@ -239,4 +240,102 @@ export async function cancelTeamInvitation(invitationId: string) {
   }
 
   return true;
+}
+
+export async function getTeamReportAccess(teamId: string) {
+  try {
+    const { data, error } = await supabase
+      .from("team_report_access")
+      .select("report_id")
+      .eq("team_id", teamId);
+
+    if (error) throw error;
+    
+    return data.map(item => item.report_id);
+  } catch (err) {
+    console.error("Error fetching team report access:", err);
+    throw err;
+  }
+}
+
+export async function updateTeamReportAccess(teamId: string, reportIds: string[]) {
+  try {
+    // First delete all existing access entries
+    const { error: deleteError } = await supabase
+      .from("team_report_access")
+      .delete()
+      .eq("team_id", teamId);
+      
+    if (deleteError) throw deleteError;
+    
+    // If there are no reports to add, we're done
+    if (reportIds.length === 0) return true;
+    
+    // Insert new access entries
+    const accessEntries = reportIds.map(reportId => ({
+      team_id: teamId,
+      report_id: reportId
+    }));
+    
+    const { error: insertError } = await supabase
+      .from("team_report_access")
+      .insert(accessEntries);
+      
+    if (insertError) throw insertError;
+    
+    return true;
+  } catch (err) {
+    console.error("Error updating team report access:", err);
+    throw err;
+  }
+}
+
+export async function fetchTeamActivity(teamId: string) {
+  try {
+    // In a real implementation, you would create a team_activity_log table
+    // For now, we'll return mock data
+    return [];
+  } catch (err) {
+    console.error("Error fetching team activity:", err);
+    throw err;
+  }
+}
+
+export async function exportTeamReport(teamId: string) {
+  try {
+    const { data: team, error: teamError } = await supabase
+      .from("teams")
+      .select("*")
+      .eq("id", teamId)
+      .single();
+      
+    if (teamError) throw teamError;
+    
+    const { data: members, error: membersError } = await supabase
+      .from("team_members")
+      .select(`
+        *,
+        user:users(*)
+      `)
+      .eq("team_id", teamId);
+      
+    if (membersError) throw membersError;
+    
+    const { data: invitations, error: invitationsError } = await supabase
+      .from("team_invitations")
+      .select("*")
+      .eq("team_id", teamId)
+      .eq("status", "pending");
+      
+    if (invitationsError) throw invitationsError;
+    
+    return {
+      team,
+      members,
+      invitations
+    };
+  } catch (err) {
+    console.error("Error exporting team report:", err);
+    throw err;
+  }
 }
