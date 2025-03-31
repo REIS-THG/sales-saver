@@ -1,4 +1,3 @@
-
 export type FieldType = "text" | "number" | "boolean" | "date" | "product" | "multi-select";
 export type DealStatus = "open" | "won" | "lost" | "stalled";
 export type UserRole = "sales_rep" | "manager";
@@ -68,6 +67,7 @@ export interface User {
     activityBoostRate: number;
     enableAutoStatusChange: boolean;
   };
+  avatar_url?: string | null;
 }
 
 export interface Deal {

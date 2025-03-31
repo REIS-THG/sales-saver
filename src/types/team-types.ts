@@ -57,10 +57,10 @@ export interface TeamActivity {
 export interface TeamPresenceData {
   user_id: string;
   full_name: string;
-  avatar_url?: string;
+  avatar_url?: string | null;
   last_seen: string;
   page: string;
 }
 
-// Re-export using export type to fix the TypeScript error
+// Re-export User type
 export type { User };
