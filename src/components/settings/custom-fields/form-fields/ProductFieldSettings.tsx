@@ -8,6 +8,7 @@ import { useFieldArray } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import type { UseFormReturn } from "react-hook-form";
 import type { CustomFieldFormData } from "../schema/field-schema";
 import type { Product } from "@/types/types";
@@ -19,6 +20,7 @@ interface ProductFieldSettingsProps {
 export function ProductFieldSettings({ form }: ProductFieldSettingsProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -50,15 +52,20 @@ export function ProductFieldSettings({ form }: ProductFieldSettingsProps) {
             });
           });
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error fetching products:", error);
+        toast({
+          variant: "destructive",
+          title: "Error fetching products",
+          description: error.message,
+        });
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchProducts();
-  }, [append]);
+  }, [append, fields.length, toast]);
 
   if (isLoading) {
     return (
@@ -79,7 +86,13 @@ export function ProductFieldSettings({ form }: ProductFieldSettingsProps) {
         </p>
       </div>
 
-      {fields.length === 0 && (
+      {fields.length === 0 && products.length === 0 && (
+        <div className="text-sm text-gray-500 italic">
+          No products available. Please create products first to associate them with this field.
+        </div>
+      )}
+
+      {fields.length === 0 && products.length > 0 && (
         <div className="text-sm text-gray-500 italic">
           No products configured. Add products to make them available for selection.
         </div>
@@ -167,6 +180,25 @@ export function ProductFieldSettings({ form }: ProductFieldSettingsProps) {
             ))}
         </select>
       </div>
+
+      {products.length === 0 && (
+        <div className="pt-2">
+          <Button 
+            type="button" 
+            variant="outline"
+            onClick={() => {
+              // This would open a product creation modal in a real implementation
+              toast({
+                title: "Create Products First",
+                description: "You need to create products before associating them with this field.",
+              });
+            }}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Create New Product
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

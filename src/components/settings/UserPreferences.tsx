@@ -47,6 +47,7 @@ export function UserPreferences({
         throw new Error("User not authenticated");
       }
 
+      // Fix: Ensure we're updating the correct user record with consistent field names
       const { error } = await supabase
         .from("users")
         .update({
@@ -80,14 +81,14 @@ export function UserPreferences({
       
       toast({
         title: "Preferences saved",
-        description: "Your preferences have been updated",
+        description: "Your preferences have been updated successfully",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving preferences:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to save preferences",
+        description: `Failed to save preferences: ${error.message}`,
       });
     } finally {
       setIsSaving(false);

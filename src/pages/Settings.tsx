@@ -4,6 +4,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { ReportsLoadingState } from "@/components/reports/ReportsLoadingState";
 import { MainHeader } from "@/components/layout/MainHeader";
+import { Button } from "@/components/ui/button";
+import { LogOut } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 // Lazy-load components
 const AccountSettings = lazy(() => import("@/components/settings/AccountSettings"));
@@ -20,6 +25,8 @@ export default function Settings() {
     defaultView: "kanban",
     language: "en"
   });
+  const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (user) {
@@ -44,6 +51,24 @@ export default function Settings() {
     setUserPreferences(prev => ({ ...prev, language }));
   };
 
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast({
+        title: "Signed out successfully",
+        description: "You have been signed out of your account",
+      });
+      navigate("/auth");
+    } catch (error: any) {
+      console.error("Error signing out:", error);
+      toast({
+        variant: "destructive",
+        title: "Error signing out",
+        description: error.message,
+      });
+    }
+  };
+
   if (isLoading) {
     return <ReportsLoadingState />;
   }
@@ -52,7 +77,14 @@ export default function Settings() {
     <div className="min-h-screen bg-gray-50">
       <MainHeader userData={user} />
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6 max-w-7xl mx-auto">
-        <h2 className="text-3xl font-bold tracking-tight">Settings</h2>
+        <div className="flex justify-between items-center">
+          <h2 className="text-3xl font-bold tracking-tight">Settings</h2>
+          <Button variant="outline" onClick={handleSignOut} className="flex items-center gap-2">
+            <LogOut className="h-4 w-4" />
+            Sign Out
+          </Button>
+        </div>
+        
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList>
             <TabsTrigger value="account">Account</TabsTrigger>
