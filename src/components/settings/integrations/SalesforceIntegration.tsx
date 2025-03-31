@@ -1,291 +1,323 @@
 
 import { useState } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { 
-  Card, 
-  CardHeader, 
-  CardTitle, 
-  CardDescription, 
-  CardContent, 
-  CardFooter 
-} from "@/components/ui/card";
-import { 
-  Form, 
-  FormField, 
-  FormItem, 
-  FormLabel, 
-  FormControl, 
-  FormDescription, 
-  FormMessage 
-} from "@/components/ui/form";
-import { useForm } from "react-hook-form";
-import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
-interface SalesforceIntegrationProps {
-  isActive: boolean;
-  onActivate: () => void;
-}
-
-interface SalesforceFormValues {
-  syncDeals: boolean;
-  syncContacts: boolean;
-  syncInterval: "realtime" | "hourly" | "daily";
-}
-
-export default function SalesforceIntegration({ isActive, onActivate }: SalesforceIntegrationProps) {
+export function SalesforceIntegration() {
   const [isConnected, setIsConnected] = useState(false);
-  const [isConfiguring, setIsConfiguring] = useState(false);
-  const [isAuthenticating, setIsAuthenticating] = useState(false);
-  const [oauthWindow, setOauthWindow] = useState<Window | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [showConfig, setShowConfig] = useState(false);
+  const [oauth, setOauth] = useState({
+    clientId: "",
+    clientSecret: "",
+    redirectUri: window.location.origin + '/salesforce-callback',
+    environment: "production" as "production" | "sandbox" | "custom"
+  });
+  const [syncSettings, setSyncSettings] = useState({
+    syncDeals: true,
+    syncContacts: true,
+    syncProducts: false,
+    syncCustomFields: true,
+    syncInterval: "hourly" as "hourly" | "daily" | "weekly"
+  });
   const { toast } = useToast();
 
-  const form = useForm<SalesforceFormValues>({
-    defaultValues: {
-      syncDeals: true,
-      syncContacts: false,
-      syncInterval: "realtime"
-    }
-  });
-
   const handleConnect = () => {
-    // Simulate OAuth flow with Salesforce
-    if (!isConnected) {
-      setIsAuthenticating(true);
-      
-      // Open OAuth popup window
+    setIsConnecting(true);
+    
+    // Simulate OAuth flow
+    setTimeout(() => {
+      // Open a popup window for OAuth authentication
       const width = 600;
       const height = 700;
-      const left = window.screenX + (window.outerWidth - width) / 2;
-      const top = window.screenY + (window.outerHeight - height) / 2;
+      const left = window.innerWidth / 2 - width / 2;
+      const top = window.innerHeight / 2 - height / 2;
       
-      // In a real implementation, this would point to a Salesforce OAuth endpoint
-      const oauthUrl = 'https://login.salesforce.com/services/oauth2/authorize' + 
-        '?response_type=code' + 
-        '&client_id=DEMO_CLIENT_ID' + // This would be your actual Salesforce client ID
-        '&redirect_uri=' + encodeURIComponent(window.location.origin + '/oauth/callback') +
-        '&state=salesforce';
-      
-      const popup = window.open(
-        oauthUrl,
-        'salesforce_oauth',
+      const oauthWindow = window.open(
+        'about:blank', 
+        'Salesforce OAuth', 
         `width=${width},height=${height},left=${left},top=${top}`
       );
       
-      setOauthWindow(popup);
-      
-      // Handle messaging from the popup
-      const handleMessage = (event: MessageEvent) => {
-        // In a real implementation, verify the origin
-        if (event.data.type === 'salesforce_oauth_success') {
-          // Successfully authenticated
+      if (oauthWindow) {
+        // Simulate the OAuth flow
+        oauthWindow.document.write(`
+          <html>
+            <head>
+              <title>Salesforce OAuth</title>
+              <style>
+                body { font-family: Arial, sans-serif; margin: 0; padding: 20px; color: #333; }
+                h1 { color: #0176d3; }
+                .container { max-width: 500px; margin: 0 auto; }
+                .btn { background: #0176d3; color: white; border: none; padding: 10px 15px; 
+                       border-radius: 4px; cursor: pointer; font-size: 16px; }
+                .field { margin-bottom: 15px; }
+                label { display: block; margin-bottom: 5px; font-weight: bold; }
+                input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+                .logo { max-width: 180px; margin-bottom: 20px; }
+                .footer { margin-top: 20px; font-size: 12px; color: #666; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <img src="https://www.salesforce.com/content/dam/web/en_us/www/images/home/logo-salesforce.svg" class="logo" alt="Salesforce Logo">
+                <h1>Connect to Salesforce</h1>
+                <p>Authorize the application to access your Salesforce data</p>
+                
+                <div class="field">
+                  <label for="username">Username</label>
+                  <input type="text" id="username" placeholder="your-email@example.com">
+                </div>
+                
+                <div class="field">
+                  <label for="password">Password</label>
+                  <input type="password" id="password" placeholder="Your password">
+                </div>
+                
+                <button class="btn" id="authorize">Authorize</button>
+                
+                <div class="footer">
+                  <p>This application will be able to:</p>
+                  <ul>
+                    <li>Access your basic information</li>
+                    <li>View and manage your deals</li>
+                    <li>Access your contacts and accounts</li>
+                  </ul>
+                </div>
+              </div>
+              
+              <script>
+                document.getElementById('authorize').addEventListener('click', function() {
+                  document.body.innerHTML = '<div class="container"><h1>Authorization Successful!</h1><p>You can close this window now.</p></div>';
+                  setTimeout(function() {
+                    window.close();
+                  }, 1500);
+                });
+              </script>
+            </body>
+          </html>
+        `);
+        
+        // Simulate successful OAuth completion after a delay
+        setTimeout(() => {
           setIsConnected(true);
-          onActivate();
-          setIsAuthenticating(false);
-          popup?.close();
+          setIsConnecting(false);
+          setShowConfig(true);
           
           toast({
             title: "Connected to Salesforce",
             description: "Your Salesforce account has been successfully connected.",
           });
-        }
-      };
-      
-      window.addEventListener('message', handleMessage);
-      
-      // For demo purposes, simulate a successful OAuth flow after 2 seconds
-      setTimeout(() => {
-        setIsConnected(true);
-        onActivate();
-        setIsAuthenticating(false);
-        popup?.close();
-        
+        }, 3000);
+      } else {
+        setIsConnecting(false);
         toast({
-          title: "Connected to Salesforce",
-          description: "Your Salesforce account has been successfully connected.",
+          variant: "destructive",
+          title: "Connection Error",
+          description: "Pop-up was blocked. Please allow pop-ups and try again.",
         });
-        
-        window.removeEventListener('message', handleMessage);
-      }, 2000);
-    }
+      }
+    }, 1000);
   };
 
   const handleDisconnect = () => {
     setIsConnected(false);
+    setShowConfig(false);
+    
     toast({
       title: "Disconnected from Salesforce",
       description: "Your Salesforce integration has been disabled.",
     });
   };
 
-  const handleFormSubmit = (values: SalesforceFormValues) => {
-    console.log("Salesforce integration settings:", values);
-    // Save configuration to backend
-    setIsConfiguring(false);
-    
+  const handleSaveSettings = () => {
     toast({
-      title: "Settings saved",
+      title: "Settings Saved",
       description: "Your Salesforce integration settings have been updated.",
     });
   };
 
   return (
-    <div>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <div>
-          <CardTitle className="text-2xl font-bold">Salesforce</CardTitle>
-          <CardDescription>
-            Connect your Salesforce account to sync deals and contacts
-          </CardDescription>
-        </div>
-        <img 
-          src="https://www.salesforce.com/news/wp-content/uploads/sites/3/2021/05/Salesforce-logo.jpg" 
-          alt="Salesforce logo" 
-          className="h-10 w-auto object-contain" 
-        />
+    <Card>
+      <CardHeader>
+        <CardTitle>Salesforce Integration</CardTitle>
+        <CardDescription>
+          Connect your Salesforce account to sync deals, contacts, and other data.
+        </CardDescription>
       </CardHeader>
-      
-      <CardContent>
+      <CardContent className="space-y-6">
         {!isConnected ? (
           <div className="flex flex-col space-y-4">
-            <p className="text-sm">
-              Connect your Salesforce account to automatically sync deals, contacts and other data between platforms.
-              We use OAuth to securely connect to your Salesforce instance without storing your credentials.
+            <p className="text-sm text-muted-foreground">
+              Connecting to Salesforce allows you to automatically sync your deals and contacts between platforms.
+              Click the button below to start the OAuth connection process.
             </p>
-            <Button onClick={handleConnect} disabled={isAuthenticating}>
-              {isAuthenticating ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Connecting...
-                </>
-              ) : (
-                "Connect Salesforce"
-              )}
+            <Button 
+              onClick={handleConnect} 
+              disabled={isConnecting}
+              className="w-full sm:w-auto"
+            >
+              {isConnecting ? "Connecting..." : "Connect to Salesforce"}
             </Button>
           </div>
         ) : (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium">Connected to Salesforce</p>
-                <p className="text-sm text-muted-foreground">Last synced: Just now</p>
+                <h3 className="font-medium">Connected to Salesforce</h3>
+                <p className="text-sm text-muted-foreground">
+                  Your account is connected and syncing
+                </p>
               </div>
-              <div className="space-x-2">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setIsConfiguring(!isConfiguring)}
-                >
-                  Configure
-                </Button>
-                <Button 
-                  variant="destructive" 
-                  onClick={handleDisconnect}
-                >
-                  Disconnect
-                </Button>
-              </div>
+              <Button variant="outline" onClick={handleDisconnect}>
+                Disconnect
+              </Button>
             </div>
-
-            {isConfiguring && (
-              <div className="pt-4">
-                <Separator className="mb-6" />
-                <Form {...form}>
-                  <form 
-                    onSubmit={form.handleSubmit(handleFormSubmit)} 
-                    className="space-y-6"
-                  >
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-medium">Sync Settings</h3>
-                      
-                      <FormField
-                        control={form.control}
-                        name="syncDeals"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                            <div className="space-y-0.5">
-                              <FormLabel className="text-base">Sync Deals</FormLabel>
-                              <FormDescription>
-                                Keep deals in sync between Salesforce and this platform in real-time
-                              </FormDescription>
-                            </div>
-                            <FormControl>
-                              <Switch
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="syncContacts"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                            <div className="space-y-0.5">
-                              <FormLabel className="text-base">Sync Contacts</FormLabel>
-                              <FormDescription>
-                                Keep contacts in sync between Salesforce and this platform
-                              </FormDescription>
-                            </div>
-                            <FormControl>
-                              <Switch
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="syncInterval"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Sync Frequency</FormLabel>
-                            <Select
-                              value={field.value}
-                              onValueChange={field.onChange}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select sync frequency" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="realtime">Real-time</SelectItem>
-                                <SelectItem value="hourly">Hourly</SelectItem>
-                                <SelectItem value="daily">Daily</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormDescription>
-                              How often to synchronize data between platforms
-                            </FormDescription>
-                          </FormItem>
-                        )}
+            
+            {showConfig && (
+              <div className="space-y-6">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">OAuth Configuration</h3>
+                  <div className="grid gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="clientId">Client ID</Label>
+                        <Input 
+                          id="clientId" 
+                          value={oauth.clientId}
+                          onChange={(e) => setOauth({...oauth, clientId: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="clientSecret">Client Secret</Label>
+                        <Input 
+                          id="clientSecret" 
+                          type="password"
+                          value={oauth.clientSecret}
+                          onChange={(e) => setOauth({...oauth, clientSecret: e.target.value})}
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="redirectUri">Redirect URI</Label>
+                      <Input 
+                        id="redirectUri" 
+                        value={oauth.redirectUri}
+                        onChange={(e) => setOauth({...oauth, redirectUri: e.target.value})}
                       />
                     </div>
-
-                    <div className="flex justify-end space-x-2">
-                      <Button 
-                        variant="outline" 
-                        onClick={() => setIsConfiguring(false)}
-                        type="button"
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="environment">Environment</Label>
+                      <Select 
+                        value={oauth.environment}
+                        onValueChange={(value) => setOauth({...oauth, environment: value as "production" | "sandbox" | "custom"})}
                       >
-                        Cancel
-                      </Button>
-                      <Button type="submit">Save Settings</Button>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select environment" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="production">Production</SelectItem>
+                          <SelectItem value="sandbox">Sandbox</SelectItem>
+                          <SelectItem value="custom">Custom</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
-                  </form>
-                </Form>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Sync Settings</h3>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="syncDeals">Sync Deals</Label>
+                        <div className="text-sm text-muted-foreground">
+                          Sync your deals with Salesforce Opportunities
+                        </div>
+                      </div>
+                      <Switch 
+                        id="syncDeals"
+                        checked={syncSettings.syncDeals}
+                        onCheckedChange={(checked) => setSyncSettings({...syncSettings, syncDeals: checked})}
+                      />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="syncContacts">Sync Contacts</Label>
+                        <div className="text-sm text-muted-foreground">
+                          Sync your contacts with Salesforce Contacts
+                        </div>
+                      </div>
+                      <Switch 
+                        id="syncContacts"
+                        checked={syncSettings.syncContacts}
+                        onCheckedChange={(checked) => setSyncSettings({...syncSettings, syncContacts: checked})}
+                      />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="syncProducts">Sync Products</Label>
+                        <div className="text-sm text-muted-foreground">
+                          Sync your products with Salesforce Products
+                        </div>
+                      </div>
+                      <Switch 
+                        id="syncProducts"
+                        checked={syncSettings.syncProducts}
+                        onCheckedChange={(checked) => setSyncSettings({...syncSettings, syncProducts: checked})}
+                      />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="syncCustomFields">Sync Custom Fields</Label>
+                        <div className="text-sm text-muted-foreground">
+                          Sync your custom fields with Salesforce custom fields
+                        </div>
+                      </div>
+                      <Switch 
+                        id="syncCustomFields"
+                        checked={syncSettings.syncCustomFields}
+                        onCheckedChange={(checked) => setSyncSettings({...syncSettings, syncCustomFields: checked})}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="syncInterval">Sync Interval</Label>
+                      <Select 
+                        value={syncSettings.syncInterval}
+                        onValueChange={(value) => setSyncSettings({...syncSettings, syncInterval: value as "hourly" | "daily" | "weekly"})}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select interval" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="hourly">Hourly</SelectItem>
+                          <SelectItem value="daily">Daily</SelectItem>
+                          <SelectItem value="weekly">Weekly</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+                
+                <Button onClick={handleSaveSettings}>Save Settings</Button>
               </div>
             )}
           </div>
         )}
       </CardContent>
-    </div>
+    </Card>
   );
 }
+

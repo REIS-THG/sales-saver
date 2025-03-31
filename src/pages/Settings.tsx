@@ -74,7 +74,7 @@ export default function Settings() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <MainHeader userData={user} />
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6 max-w-7xl mx-auto">
         <div className="flex justify-between items-center">
@@ -86,7 +86,7 @@ export default function Settings() {
         </div>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList>
+          <TabsList className="w-full sm:w-auto">
             <TabsTrigger value="account">Account</TabsTrigger>
             <TabsTrigger value="preferences">Preferences</TabsTrigger>
             <TabsTrigger value="customFields">Custom Fields</TabsTrigger>

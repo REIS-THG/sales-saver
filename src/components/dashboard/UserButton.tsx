@@ -49,7 +49,7 @@ export function UserButton({ onSignOut }: UserButtonProps) {
           <User className="h-5 w-5" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuItem onClick={() => navigate("/settings")}>
           <Settings className="h-4 w-4 mr-2" />
           Settings

@@ -47,7 +47,7 @@ export function UserPreferences({
         throw new Error("User not authenticated");
       }
 
-      // Fix: Ensure we're updating the correct user record with consistent field names
+      // Update the user's preferences in the database
       const { error } = await supabase
         .from("users")
         .update({

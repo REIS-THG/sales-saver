@@ -1,17 +1,21 @@
-
+import { useEffect, useState } from "react";
+import { UseFormReturn } from "react-hook-form";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useState, useEffect } from "react";
-import { useFieldArray } from "react-hook-form";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import type { UseFormReturn } from "react-hook-form";
-import type { CustomFieldFormData } from "../schema/field-schema";
-import type { Product } from "@/types/types";
+import { CustomFieldFormData } from "../schema/field-schema";
+
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  description?: string;
+}
 
 interface ProductFieldSettingsProps {
   form: UseFormReturn<CustomFieldFormData>;
@@ -19,60 +23,87 @@ interface ProductFieldSettingsProps {
 
 export function ProductFieldSettings({ form }: ProductFieldSettingsProps) {
   const [products, setProducts] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
 
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: "product_options",
-  });
+  const productOptions = form.watch("product_options") || [];
 
+  // Fetch products on mount
   useEffect(() => {
-    const fetchProducts = async () => {
-      setIsLoading(true);
+    async function fetchProducts() {
       try {
-        const { data: userData } = await supabase.auth.getUser();
-        if (!userData.user) return;
-
+        setLoading(true);
+        // Fetch products from the database
         const { data, error } = await supabase
           .from("products")
           .select("*")
-          .eq("user_id", userData.user.id);
+          .order("name");
 
-        if (error) throw error;
+        if (error) {
+          console.error("Error fetching products:", error);
+          return;
+        }
+
         setProducts(data || []);
 
-        // Initialize form with existing products if none are already set
-        if (fields.length === 0 && data && data.length > 0) {
-          data.forEach((product) => {
-            append({ 
-              product_id: product.id, 
-              include_in_documents: true,
-              display_price: true 
-            });
-          });
-        }
-      } catch (error: any) {
-        console.error("Error fetching products:", error);
-        toast({
-          variant: "destructive",
-          title: "Error fetching products",
-          description: error.message,
-        });
+        // Initialize selected products from form data
+        const initialSelectedIds = productOptions.map(po => po.product_id);
+        setSelectedProductIds(initialSelectedIds);
+      } catch (err) {
+        console.error("Error loading products:", err);
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
-    };
+    }
 
     fetchProducts();
-  }, [append, fields.length, toast]);
+  }, []);
 
-  if (isLoading) {
+  // Update form when selections change
+  useEffect(() => {
+    const newProductOptions = selectedProductIds.map(productId => {
+      // Check if this product already has options in the form
+      const existingOption = productOptions.find(po => po.product_id === productId);
+      
+      // If it exists, keep its settings, otherwise use defaults
+      return existingOption || {
+        product_id: productId,
+        include_in_documents: true,
+        display_price: true
+      };
+    });
+    
+    form.setValue("product_options", newProductOptions);
+  }, [selectedProductIds, form]);
+
+  const handleProductToggle = (productId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedProductIds(prev => [...prev, productId]);
+    } else {
+      setSelectedProductIds(prev => prev.filter(id => id !== productId));
+    }
+  };
+
+  const handleOptionChange = (productId: string, field: 'include_in_documents' | 'display_price', value: boolean) => {
+    const newOptions = productOptions.map(option => {
+      if (option.product_id === productId) {
+        return { ...option, [field]: value };
+      }
+      return option;
+    });
+    
+    form.setValue("product_options", newOptions);
+  };
+
+  if (loading) {
+    return <div className="text-center py-4">Loading products...</div>;
+  }
+
+  if (products.length === 0) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-4 w-1/2" />
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-10 w-full" />
+      <div className="bg-muted/50 rounded-lg p-4 text-center">
+        <p className="text-muted-foreground">No products found in your database.</p>
+        <p className="text-sm mt-2">Products will appear here once they are added to your system.</p>
       </div>
     );
   }
@@ -80,125 +111,65 @@ export function ProductFieldSettings({ form }: ProductFieldSettingsProps) {
   return (
     <div className="space-y-4">
       <div>
-        <Label className="text-base">Product Options</Label>
-        <p className="text-sm text-gray-500">
-          Configure which products are available for selection and how they appear in documents
+        <Label className="text-base">Select Products to Track</Label>
+        <p className="text-sm text-muted-foreground mb-3">
+          Choose which products this custom field will track in deals
         </p>
       </div>
 
-      {fields.length === 0 && products.length === 0 && (
-        <div className="text-sm text-gray-500 italic">
-          No products available. Please create products first to associate them with this field.
-        </div>
-      )}
-
-      {fields.length === 0 && products.length > 0 && (
-        <div className="text-sm text-gray-500 italic">
-          No products configured. Add products to make them available for selection.
-        </div>
-      )}
-
-      {fields.map((field, index) => {
-        const product = products.find(p => p.id === field.product_id);
-        return (
-          <div key={field.id} className="border p-4 rounded-md space-y-3">
-            <div className="flex justify-between items-center">
-              <h4 className="font-medium">{product?.name || "Unknown Product"}</h4>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => remove(index)}
-              >
-                <Trash2 className="h-4 w-4 text-destructive" />
-              </Button>
-            </div>
-            
-            <div className="grid grid-cols-1 gap-4">
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id={`product_options.${index}.include_in_documents`}
-                  checked={form.watch(`product_options.${index}.include_in_documents`)}
-                  onCheckedChange={(checked) => 
-                    form.setValue(`product_options.${index}.include_in_documents`, checked)
-                  }
-                />
-                <Label htmlFor={`product_options.${index}.include_in_documents`}>
-                  Include in generated documents
-                </Label>
+      <div className="space-y-3">
+        {products.map(product => (
+          <Card key={product.id} className="overflow-hidden">
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between">
+                <div className="flex items-start space-x-3">
+                  <Checkbox
+                    id={`product-${product.id}`}
+                    checked={selectedProductIds.includes(product.id)}
+                    onCheckedChange={(checked) => handleProductToggle(product.id, checked === true)}
+                    className="mt-1"
+                  />
+                  <div>
+                    <Label htmlFor={`product-${product.id}`} className="font-medium cursor-pointer">
+                      {product.name}
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      ${product.price.toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+                
+                {selectedProductIds.includes(product.id) && (
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center justify-end space-x-2">
+                      <Label htmlFor={`include-docs-${product.id}`} className="text-xs">
+                        Include in documents
+                      </Label>
+                      <Switch
+                        id={`include-docs-${product.id}`}
+                        checked={productOptions.find(p => p.product_id === product.id)?.include_in_documents ?? true}
+                        onCheckedChange={(checked) => handleOptionChange(product.id, 'include_in_documents', checked)}
+                        size="sm"
+                      />
+                    </div>
+                    <div className="flex items-center justify-end space-x-2">
+                      <Label htmlFor={`display-price-${product.id}`} className="text-xs">
+                        Display price
+                      </Label>
+                      <Switch
+                        id={`display-price-${product.id}`}
+                        checked={productOptions.find(p => p.product_id === product.id)?.display_price ?? true}
+                        onCheckedChange={(checked) => handleOptionChange(product.id, 'display_price', checked)}
+                        size="sm"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
-              
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id={`product_options.${index}.display_price`}
-                  checked={form.watch(`product_options.${index}.display_price`)}
-                  onCheckedChange={(checked) => 
-                    form.setValue(`product_options.${index}.display_price`, checked)
-                  }
-                />
-                <Label htmlFor={`product_options.${index}.display_price`}>
-                  Display price in documents
-                </Label>
-              </div>
-            </div>
-          </div>
-        );
-      })}
-
-      <div className="flex items-center space-x-2">
-        <Label>Add Product:</Label>
-        <select 
-          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-          onChange={(e) => {
-            if (e.target.value) {
-              // Check if this product is already added
-              const alreadyAdded = fields.some(
-                (field) => field.product_id === e.target.value
-              );
-              if (!alreadyAdded) {
-                append({ 
-                  product_id: e.target.value, 
-                  include_in_documents: true,
-                  display_price: true 
-                });
-              }
-              e.target.value = ''; // Reset select after adding
-            }
-          }}
-          value=""
-        >
-          <option value="">Select a product</option>
-          {products
-            .filter(
-              (product) =>
-                !fields.some((field) => field.product_id === product.id)
-            )
-            .map((product) => (
-              <option key={product.id} value={product.id}>
-                {product.name}
-              </option>
-            ))}
-        </select>
+            </CardContent>
+          </Card>
+        ))}
       </div>
-
-      {products.length === 0 && (
-        <div className="pt-2">
-          <Button 
-            type="button" 
-            variant="outline"
-            onClick={() => {
-              // This would open a product creation modal in a real implementation
-              toast({
-                title: "Create Products First",
-                description: "You need to create products before associating them with this field.",
-              });
-            }}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Create New Product
-          </Button>
-        </div>
-      )}
     </div>
   );
 }
