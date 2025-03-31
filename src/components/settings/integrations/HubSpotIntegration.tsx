@@ -7,20 +7,20 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
-import { Cloud, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Laptop, AlertCircle, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
-export function SalesforceIntegration() {
+export function HubSpotIntegration() {
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [connectionDetails, setConnectionDetails] = useState<any>(null);
   const { toast } = useToast();
 
-  // Salesforce OAuth configuration
-  const SF_CLIENT_ID = "your-salesforce-client-id"; // Replace with your actual client ID
+  // HubSpot OAuth configuration
+  const HS_CLIENT_ID = "your-hubspot-client-id"; // Replace with your actual client ID
   const REDIRECT_URI = `${window.location.origin}/settings`;
-  const SF_LOGIN_URL = "https://login.salesforce.com/services/oauth2/authorize";
+  const HS_AUTH_URL = "https://app.hubspot.com/oauth/authorize";
   
   useEffect(() => {
     // Check if we have an OAuth response in the URL
@@ -28,8 +28,7 @@ export function SalesforceIntegration() {
     const code = urlParams.get("code");
     const state = urlParams.get("state");
     
-    // Remove the query parameters from the URL
-    if (code && state === "salesforce-oauth") {
+    if (code && state === "hubspot-oauth") {
       window.history.replaceState({}, document.title, window.location.pathname);
       handleOAuthCallback(code);
     }
@@ -45,7 +44,7 @@ export function SalesforceIntegration() {
       if (!user) return;
       
       const { data, error } = await supabase
-        .from("salesforce_connections")
+        .from("hubspot_connections")
         .select("*")
         .eq("user_id", user.id)
         .single();
@@ -68,12 +67,19 @@ export function SalesforceIntegration() {
     setIsConnecting(true);
     
     // Generate random state for CSRF protection
-    const state = "salesforce-oauth";
+    const state = "hubspot-oauth";
     
     // Construct the OAuth URL
-    const oauthUrl = `${SF_LOGIN_URL}?response_type=code&client_id=${SF_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&state=${state}`;
+    const scopes = [
+      "crm.objects.contacts.read",
+      "crm.objects.contacts.write",
+      "crm.objects.deals.read",
+      "crm.objects.deals.write"
+    ].join(" ");
     
-    // Open Salesforce login window
+    const oauthUrl = `${HS_AUTH_URL}?client_id=${HS_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${encodeURIComponent(scopes)}&state=${state}`;
+    
+    // Open HubSpot login window
     window.location.href = oauthUrl;
   };
 
@@ -82,8 +88,7 @@ export function SalesforceIntegration() {
     
     try {
       // Exchange authorization code for access token
-      // This should be done in a secure backend to protect your client secret
-      const { data, error } = await supabase.functions.invoke('salesforce-oauth-callback', {
+      const { data, error } = await supabase.functions.invoke('hubspot-oauth-callback', {
         body: { 
           code,
           redirect_uri: REDIRECT_URI
@@ -97,11 +102,11 @@ export function SalesforceIntegration() {
       
       if (!user) throw new Error("Not authenticated");
       
-      await supabase.from("salesforce_connections").upsert({
+      await supabase.from("hubspot_connections").upsert({
         user_id: user.id,
         access_token: data.access_token,
         refresh_token: data.refresh_token,
-        instance_url: data.instance_url,
+        hub_domain: data.hub_domain,
         connected_at: new Date().toISOString()
       });
       
@@ -110,8 +115,8 @@ export function SalesforceIntegration() {
       setIsConnecting(false);
       
       toast({
-        title: "Connected to Salesforce",
-        description: "Your Salesforce account has been successfully connected",
+        title: "Connected to HubSpot",
+        description: "Your HubSpot account has been successfully connected",
       });
     } catch (error: any) {
       console.error("OAuth error:", error);
@@ -120,7 +125,7 @@ export function SalesforceIntegration() {
       toast({
         variant: "destructive",
         title: "Connection failed",
-        description: error.message || "Failed to connect to Salesforce",
+        description: error.message || "Failed to connect to HubSpot",
       });
     }
   };
@@ -131,8 +136,8 @@ export function SalesforceIntegration() {
       
       if (!user) throw new Error("Not authenticated");
       
-      // Revoke Salesforce tokens
-      await supabase.functions.invoke('salesforce-revoke-token', {
+      // Revoke HubSpot tokens
+      await supabase.functions.invoke('hubspot-revoke-token', {
         body: { 
           user_id: user.id 
         }
@@ -140,7 +145,7 @@ export function SalesforceIntegration() {
       
       // Delete connection from database
       await supabase
-        .from("salesforce_connections")
+        .from("hubspot_connections")
         .delete()
         .eq("user_id", user.id);
       
@@ -148,8 +153,8 @@ export function SalesforceIntegration() {
       setConnectionDetails(null);
       
       toast({
-        title: "Disconnected from Salesforce",
-        description: "Your Salesforce integration has been disconnected",
+        title: "Disconnected from HubSpot",
+        description: "Your HubSpot integration has been disconnected",
         variant: "destructive",
       });
     } catch (error: any) {
@@ -158,7 +163,7 @@ export function SalesforceIntegration() {
       toast({
         variant: "destructive",
         title: "Disconnect failed",
-        description: error.message || "Failed to disconnect from Salesforce",
+        description: error.message || "Failed to disconnect from HubSpot",
       });
     }
   };
@@ -169,7 +174,7 @@ export function SalesforceIntegration() {
         <Alert className="bg-green-50 border-green-200">
           <CheckCircle2 className="h-4 w-4 text-green-600" />
           <AlertDescription className="text-green-800">
-            Your Salesforce account is connected and syncing data
+            Your HubSpot account is connected and syncing data
           </AlertDescription>
         </Alert>
         
@@ -198,16 +203,16 @@ export function SalesforceIntegration() {
             <Card>
               <CardContent className="pt-6 space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="instance-url">Salesforce Instance URL</Label>
+                  <Label htmlFor="portal-id">HubSpot Portal ID</Label>
                   <Input 
-                    id="instance-url" 
-                    value={connectionDetails?.instance_url || "https://mycompany.my.salesforce.com"} 
+                    id="portal-id" 
+                    value={connectionDetails?.portal_id || "12345678"} 
                     readOnly 
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="api-version">API Version</Label>
-                  <Input id="api-version" value="v56.0" />
+                  <Input id="api-version" value="v3" />
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
@@ -221,7 +226,7 @@ export function SalesforceIntegration() {
           )}
           
           <Button variant="destructive" onClick={handleDisconnect}>
-            Disconnect from Salesforce
+            Disconnect from HubSpot
           </Button>
         </div>
       </div>
@@ -231,15 +236,15 @@ export function SalesforceIntegration() {
   return (
     <div className="space-y-6">
       <div className="text-center p-6 border border-dashed border-slate-300 rounded-lg bg-slate-50">
-        <Cloud className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-        <h3 className="text-lg font-medium mb-2">Connect to Salesforce</h3>
+        <Laptop className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+        <h3 className="text-lg font-medium mb-2">Connect to HubSpot</h3>
         <p className="text-slate-500 mb-4">
-          Sync your deals, contacts, and opportunities with Salesforce CRM
+          Sync your deals, contacts, and marketing data with HubSpot
         </p>
         <Button 
           onClick={handleOAuthConnect} 
           disabled={isConnecting}
-          className="bg-[#00A1E0] hover:bg-[#0078BD]"
+          className="bg-[#FF7A59] hover:bg-[#FF5C35] text-white"
         >
           {isConnecting ? "Connecting..." : "Connect with OAuth"}
         </Button>
@@ -249,7 +254,7 @@ export function SalesforceIntegration() {
         <h3 className="font-medium">Integration Benefits</h3>
         <ul className="space-y-1 list-disc pl-5 text-sm text-slate-600">
           <li>Automatic deal and contact synchronization</li>
-          <li>Keep opportunity stages in sync</li>
+          <li>Sync marketing campaigns and lead data</li>
           <li>Map custom fields between systems</li>
           <li>Bidirectional updates</li>
         </ul>

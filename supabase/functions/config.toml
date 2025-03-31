@@ -1,11 +1,5 @@
 
 project_id = "fawdeexfzrfquhmxiaae"
 
-[generate-contract]
-verify_jwt = true
-
-[generate-sow]
-verify_jwt = true
-
-[generate-invoice]
-verify_jwt = true
+[global.env_variables]
+# Keys will be added through the Supabase dashboard
