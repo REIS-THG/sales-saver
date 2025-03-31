@@ -149,7 +149,6 @@ export function ProductFieldSettings({ form }: ProductFieldSettingsProps) {
                         id={`include-docs-${product.id}`}
                         checked={productOptions.find(p => p.product_id === product.id)?.include_in_documents ?? true}
                         onCheckedChange={(checked) => handleOptionChange(product.id, 'include_in_documents', checked)}
-                        size="sm"
                       />
                     </div>
                     <div className="flex items-center justify-end space-x-2">
@@ -160,7 +159,6 @@ export function ProductFieldSettings({ form }: ProductFieldSettingsProps) {
                         id={`display-price-${product.id}`}
                         checked={productOptions.find(p => p.product_id === product.id)?.display_price ?? true}
                         onCheckedChange={(checked) => handleOptionChange(product.id, 'display_price', checked)}
-                        size="sm"
                       />
                     </div>
                   </div>
