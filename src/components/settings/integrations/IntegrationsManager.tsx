@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SalesforceIntegration } from "./SalesforceIntegration";
 import { HubSpotIntegration } from "./HubSpotIntegration";
+import { ZapierIntegration } from "./ZapierIntegration";
 
 export function IntegrationsManager() {
   const [activeTab, setActiveTab] = useState("salesforce");
@@ -30,9 +31,7 @@ export function IntegrationsManager() {
             <HubSpotIntegration />
           </TabsContent>
           <TabsContent value="zapier">
-            <div className="p-4 bg-muted/50 rounded-lg text-center">
-              <p className="text-muted-foreground">Zapier integration coming soon</p>
-            </div>
+            <ZapierIntegration />
           </TabsContent>
         </Tabs>
       </CardContent>

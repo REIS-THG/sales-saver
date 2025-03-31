@@ -34,7 +34,7 @@ serve(async (req) => {
     // Get the connection from the database
     const { data: connection, error: fetchError } = await supabase
       .from("hubspot_connections")
-      .select("access_token")
+      .select("refresh_token")
       .eq("user_id", user_id)
       .single();
     
@@ -46,14 +46,28 @@ serve(async (req) => {
       });
     }
 
-    if (connection?.access_token) {
-      // Revoke the access token
+    if (connection?.refresh_token) {
+      // Revoke the refresh token
       const revokeUrl = 'https://api.hubapi.com/oauth/v1/refresh-tokens';
-      await fetch(`${revokeUrl}/${connection.access_token}`, {
+      await fetch(`${revokeUrl}/${connection.refresh_token}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
         }
+      });
+    }
+
+    // Delete the connection record
+    const { error: deleteError } = await supabase
+      .from("hubspot_connections")
+      .delete()
+      .eq("user_id", user_id);
+      
+    if (deleteError) {
+      console.error("Error deleting connection:", deleteError);
+      return new Response(JSON.stringify({ error: "Failed to delete connection record" }), { 
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
 

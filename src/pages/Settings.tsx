@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 // Lazy-load components
 const AccountSettings = lazy(() => import("@/components/settings/AccountSettings"));
@@ -19,14 +19,23 @@ const IntegrationsManager = lazy(() => import("@/components/settings/integration
 
 export default function Settings() {
   const { user, isLoading } = useAuth();
-  const [activeTab, setActiveTab] = useState("account");
+  const [activeTab, setActiveTab] = useState(() => {
+    // Get tab from URL or localStorage, default to "account"
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get("tab");
+    const savedTab = localStorage.getItem("settingsActiveTab");
+    return tabParam || savedTab || "account";
+  });
+  
   const [userPreferences, setUserPreferences] = useState({
     theme: "light",
     defaultView: "kanban",
     language: "en"
   });
+  
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     if (user) {
@@ -34,10 +43,21 @@ export default function Settings() {
       setUserPreferences({
         theme: user.theme || "light",
         defaultView: user.default_deal_view || "kanban",
-        language: "en" // Default language, could be stored in user profile
+        language: user.preferred_language || "en"
       });
     }
   }, [user]);
+
+  // Update URL when tab changes
+  useEffect(() => {
+    // Save to localStorage
+    localStorage.setItem("settingsActiveTab", activeTab);
+    
+    // Update URL without full page reload
+    const url = new URL(window.location.href);
+    url.searchParams.set("tab", activeTab);
+    window.history.replaceState({}, "", url);
+  }, [activeTab]);
 
   const handleThemeChange = (theme: string) => {
     setUserPreferences(prev => ({ ...prev, theme }));
@@ -86,7 +106,7 @@ export default function Settings() {
         </div>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="w-full sm:w-auto">
+          <TabsList className="w-full sm:w-auto overflow-x-auto">
             <TabsTrigger value="account">Account</TabsTrigger>
             <TabsTrigger value="preferences">Preferences</TabsTrigger>
             <TabsTrigger value="customFields">Custom Fields</TabsTrigger>
