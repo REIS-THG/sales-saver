@@ -47,14 +47,29 @@ serve(async (req) => {
     }
 
     if (connection?.refresh_token) {
-      // Revoke the refresh token
-      const revokeUrl = 'https://api.hubapi.com/oauth/v1/refresh-tokens';
-      await fetch(`${revokeUrl}/${connection.refresh_token}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
+      try {
+        // Revoke the refresh token
+        const revokeUrl = 'https://api.hubapi.com/oauth/v1/refresh-tokens';
+        
+        if (!HUBSPOT_CLIENT_ID || !HUBSPOT_CLIENT_SECRET) {
+          throw new Error("HubSpot API credentials not configured");
         }
-      });
+        
+        // Create basic auth header
+        const auth = btoa(`${HUBSPOT_CLIENT_ID}:${HUBSPOT_CLIENT_SECRET}`);
+        
+        await fetch(`${revokeUrl}/${connection.refresh_token}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Basic ${auth}`,
+            'Content-Type': 'application/json',
+          }
+        });
+        console.log("Successfully revoked HubSpot token");
+      } catch (revokeError) {
+        console.error("Error revoking token:", revokeError);
+        // Continue with deletion even if token revocation fails
+      }
     }
 
     // Delete the connection record

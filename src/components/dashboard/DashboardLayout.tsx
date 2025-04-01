@@ -54,6 +54,7 @@ export function DashboardLayout({
         userData={userData}
         onResetTour={resetTour}
         className="dashboard-header"
+        setShowCreateDealModal={setShowCreateDealModal}
       />
 
       <main className="flex-1 px-4 sm:px-6 py-6 max-w-7xl mx-auto">

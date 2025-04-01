@@ -31,6 +31,14 @@ serve(async (req) => {
       });
     }
 
+    if (!HUBSPOT_CLIENT_ID || !HUBSPOT_CLIENT_SECRET) {
+      console.error("Missing HubSpot API credentials");
+      return new Response(JSON.stringify({ error: "HubSpot API credentials not configured" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
     // Exchange authorization code for access token
     const tokenUrl = 'https://api.hubapi.com/oauth/v1/token';
     const formData = new URLSearchParams({
@@ -41,6 +49,8 @@ serve(async (req) => {
       code: code
     });
 
+    console.log(`Exchanging code for token with redirect URI: ${redirect_uri}`);
+    
     const tokenResponse = await fetch(tokenUrl, {
       method: 'POST',
       headers: {
@@ -64,7 +74,8 @@ serve(async (req) => {
       access_token: tokenData.access_token,
       refresh_token: tokenData.refresh_token,
       hub_domain: tokenData.hub_domain,
-      portal_id: tokenData.hub_id
+      portal_id: tokenData.hub_id,
+      expires_in: tokenData.expires_in
     }), { 
       headers: { ...corsHeaders, "Content-Type": "application/json" }
     });

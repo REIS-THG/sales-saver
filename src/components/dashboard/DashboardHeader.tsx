@@ -29,6 +29,7 @@ interface DashboardHeaderProps {
   userData: User | null;
   onResetTour?: () => void;
   className?: string;
+  setShowCreateDealModal: (show: boolean) => void;
 }
 
 export function DashboardHeader({
@@ -38,7 +39,8 @@ export function DashboardHeader({
   onSignOut,
   userData,
   onResetTour,
-  className
+  className,
+  setShowCreateDealModal
 }: DashboardHeaderProps) {
   const [isCreatingDeal, setIsCreatingDeal] = useState(false);
   const isMobile = useIsMobile();
@@ -48,7 +50,7 @@ export function DashboardHeader({
     try {
       const canCreate = await onBeforeCreate();
       if (canCreate) {
-        onDealCreated();
+        setShowCreateDealModal(true);
       }
     } finally {
       setIsCreatingDeal(false);

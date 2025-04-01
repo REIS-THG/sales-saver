@@ -18,8 +18,8 @@ export function HubSpotIntegration() {
   const { toast } = useToast();
 
   // HubSpot OAuth configuration
-  const HS_CLIENT_ID = "your-hubspot-client-id"; // Replace with your actual client ID
-  const REDIRECT_URI = `${window.location.origin}/settings`;
+  // The client ID should be added through Supabase secrets
+  const REDIRECT_URI = `${window.location.origin}/settings?tab=integrations`;
   const HS_AUTH_URL = "https://app.hubspot.com/oauth/authorize";
   
   useEffect(() => {
@@ -29,7 +29,7 @@ export function HubSpotIntegration() {
     const state = urlParams.get("state");
     
     if (code && state === "hubspot-oauth") {
-      window.history.replaceState({}, document.title, window.location.pathname);
+      window.history.replaceState({}, document.title, window.location.pathname + "?tab=integrations");
       handleOAuthCallback(code);
     }
 
@@ -50,7 +50,9 @@ export function HubSpotIntegration() {
         .single();
       
       if (error) {
-        console.error("Error checking connection:", error);
+        if (error.code !== 'PGRST116') { // Code for "no rows returned"
+          console.error("Error checking connection:", error);
+        }
         return;
       }
       
@@ -63,24 +65,47 @@ export function HubSpotIntegration() {
     }
   };
 
-  const handleOAuthConnect = () => {
+  const handleOAuthConnect = async () => {
     setIsConnecting(true);
     
-    // Generate random state for CSRF protection
-    const state = "hubspot-oauth";
-    
-    // Construct the OAuth URL
-    const scopes = [
-      "crm.objects.contacts.read",
-      "crm.objects.contacts.write",
-      "crm.objects.deals.read",
-      "crm.objects.deals.write"
-    ].join(" ");
-    
-    const oauthUrl = `${HS_AUTH_URL}?client_id=${HS_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${encodeURIComponent(scopes)}&state=${state}`;
-    
-    // Open HubSpot login window
-    window.location.href = oauthUrl;
+    try {
+      // Get the client ID from Supabase
+      const { data: secretData, error: secretError } = await supabase.functions.invoke('get-hubspot-client-id', {
+        body: {}
+      });
+      
+      if (secretError) {
+        throw new Error(`Failed to get HubSpot client ID: ${secretError.message}`);
+      }
+      
+      if (!secretData || !secretData.client_id) {
+        throw new Error("HubSpot client ID not configured");
+      }
+      
+      // Generate random state for CSRF protection
+      const state = "hubspot-oauth";
+      
+      // Construct the OAuth URL
+      const scopes = [
+        "crm.objects.contacts.read",
+        "crm.objects.contacts.write",
+        "crm.objects.deals.read",
+        "crm.objects.deals.write"
+      ].join(" ");
+      
+      const oauthUrl = `${HS_AUTH_URL}?client_id=${secretData.client_id}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${encodeURIComponent(scopes)}&state=${state}`;
+      
+      // Open HubSpot login window
+      window.location.href = oauthUrl;
+    } catch (error: any) {
+      console.error("Error starting OAuth flow:", error);
+      toast({
+        variant: "destructive",
+        title: "Connection failed",
+        description: error.message || "Failed to start HubSpot connection process",
+      });
+      setIsConnecting(false);
+    }
   };
 
   const handleOAuthCallback = async (code: string) => {
@@ -96,6 +121,10 @@ export function HubSpotIntegration() {
       });
       
       if (error) throw error;
+      
+      if (!data || data.error) {
+        throw new Error(data?.error || "Failed to exchange code for token");
+      }
       
       // Save connection details to database
       const { data: { user } } = await supabase.auth.getUser();
@@ -142,12 +171,6 @@ export function HubSpotIntegration() {
           user_id: user.id 
         }
       });
-      
-      // Delete connection from database
-      await supabase
-        .from("hubspot_connections")
-        .delete()
-        .eq("user_id", user.id);
       
       setIsConnected(false);
       setConnectionDetails(null);

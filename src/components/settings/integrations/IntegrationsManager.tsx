@@ -5,9 +5,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SalesforceIntegration } from "./SalesforceIntegration";
 import { HubSpotIntegration } from "./HubSpotIntegration";
 import { ZapierIntegration } from "./ZapierIntegration";
+import { useToast } from "@/hooks/use-toast";
 
 export function IntegrationsManager() {
   const [activeTab, setActiveTab] = useState("salesforce");
+  const { toast } = useToast();
+
+  const handleIntegrationError = (error: Error, provider: string) => {
+    console.error(`${provider} integration error:`, error);
+    toast({
+      variant: "destructive",
+      title: `${provider} Integration Error`,
+      description: error.message || "Failed to connect to the service"
+    });
+  };
 
   return (
     <Card>

@@ -59,6 +59,7 @@ export interface User {
   };
   stripe_customer_id?: string;
   stripe_subscription_id?: string;
+  preferred_language?: string;
   preferred_currency?: string;
   deal_automation_settings?: {
     enableTimeDecay: boolean;
