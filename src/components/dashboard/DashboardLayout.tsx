@@ -8,7 +8,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { HelpButton } from "@/components/ui/help-button";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { ArrowRight, Plus } from "lucide-react";
 import { ReportsLoadingState } from "@/components/reports/ReportsLoadingState";
 import { useTour } from "@/hooks/use-tour";
 import type { User } from "@/types/types";
@@ -70,7 +70,7 @@ export function DashboardLayout({
               size={isMobile ? "sm" : "default"}
             >
               <Plus className="h-4 w-4 mr-1" />
-              Create Deal
+              Create Deal <ArrowRight className="h-4 w-4 ml-1" />
             </Button>
           </div>
         )}

@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import DealCreateModal from "@/components/deals/DealCreateModal";
+import DealCreateDrawer from "@/components/deals/DealCreateDrawer";
 import { AutomationSettingsDialog as DealAutomationSettings } from "@/components/dashboard/AutomationSettingsDialog";
 import { QuickNoteModal } from "@/components/dashboard/QuickNoteModal";
 import type { Deal, CustomField, User, Team } from "@/types/types";
@@ -40,7 +40,7 @@ export function DashboardModals({
 }: DashboardModalsProps) {
   return (
     <>
-      <DealCreateModal
+      <DealCreateDrawer
         open={showCreateDealModal}
         onOpenChange={onCloseCreateModal}
         onDealCreated={onDealCreated}
