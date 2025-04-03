@@ -161,6 +161,7 @@ export function useDashboardPage() {
     handleStatusChange,
     handleSearch,
     handleFilterChange,
+    handleDealDelete,
     
     // Sorting
     sortField,
