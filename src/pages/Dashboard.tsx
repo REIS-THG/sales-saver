@@ -42,6 +42,7 @@ export default function Dashboard() {
     handleStatusChange,
     handleSearch,
     handleFilterChange,
+    handleDealDelete,
     
     // Sorting
     sortField,
